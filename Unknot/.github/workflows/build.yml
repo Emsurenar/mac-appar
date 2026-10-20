@@ -1,0 +1,35 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build universal app
+        run: ./build.sh --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Strackis
+          path: dist/Strackis.zip
+
+      - name: Attach to GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/Strackis.zip --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/Strackis.zip --title "Sträckis ${GITHUB_REF_NAME#v}" --generate-notes
+          fi

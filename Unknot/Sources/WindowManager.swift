@@ -125,15 +125,17 @@ final class WindowManager: NSObject, NSWindowDelegate {
 final class SettingsTabViewController: NSTabViewController {
     var animatesResize = true
 
-    override func tabView(_ tabView: NSTabView, didSelect tabViewItem: NSTabViewItem?) {
-        super.tabView(tabView, didSelect: tabViewItem)
-        guard let size = tabViewItem?.viewController?.preferredContentSize, size != .zero,
-              let window = view.window else { return }
-        let target = window.frameRect(forContentRect: NSRect(origin: .zero, size: size)).size
-        var frame = window.frame
-        frame.origin.y += frame.height - target.height
-        frame.size = target
-        window.setFrame(frame, display: true, animate: animatesResize && window.isVisible)
+    // The window gets its new size before the tab's view goes in. A SwiftUI form that's put into a window
+    // and then grows with it keeps a toolbar-high blur over its first rows on macOS 26.
+    override func tabView(_ tabView: NSTabView, willSelect tabViewItem: NSTabViewItem?) {
+        if let size = tabViewItem?.viewController?.preferredContentSize, size != .zero, let window = view.window {
+            let target = window.frameRect(forContentRect: NSRect(origin: .zero, size: size)).size
+            var frame = window.frame
+            frame.origin.y += frame.height - target.height
+            frame.size = target
+            window.setFrame(frame, display: true, animate: animatesResize && window.isVisible)
+        }
+        super.tabView(tabView, willSelect: tabViewItem)
     }
 }
 

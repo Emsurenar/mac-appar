@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.8.1 – 2026-10-21
+
+- **Smoother animations.** The crew now moves at the display's own refresh rate, up to 120 frames a second,
+  instead of 30. A frame takes well under a millisecond to draw.
+- **Fixed:** on macOS 26, switching to a taller settings tab (from Stretch Crew to Exercises, say) could leave a
+  white band over the first rows. The window now gets its new size before the tab is shown.
+- The README animation runs at 20 frames a second.
+
 ## 1.8.0 – 2026-10-21
 
 - **Live cues.** The label at the top of a break keeps time with the move: *Breathe in · 3* during deep

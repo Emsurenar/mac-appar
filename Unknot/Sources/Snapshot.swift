@@ -22,6 +22,7 @@ enum Snapshot {
         if let path = value("--menubar-icons") { menuBarIcons(to: path); return true }
         if let dir = value("--capture-drop") { captureDrop(in: dir); return true }
         if args.contains("--verify-latest-release") { verifyLatestRelease(); return true }
+        if args.contains("--benchmark") { benchmark(); return true }
         if args.contains("--selftest") { exit(selfTest() ? 0 : 1) }
         return false
     }
@@ -182,7 +183,7 @@ enum Snapshot {
         for i in 0...Int(NotchDrop.openDuration * morphFPS) {             // out of the notch
             frames.append((CGFloat(Double(i) / (NotchDrop.openDuration * morphFPS)), .happy, 1 / morphFPS))
         }
-        let fps = 12.0
+        let fps = 20.0
         let secondsPerMove = 2.6
         let activeFrames = Int(secondsPerMove * fps) * picks.count
         let doneFrames = Int(2.0 * fps)
@@ -310,6 +311,24 @@ enum Snapshot {
             done = true
         }
         while !done { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
+    }
+
+    /// How long one frame of each crew member takes to draw, at the size of the break panel.
+    static func benchmark() {
+        let context = CGContext(data: nil, width: 232, height: 232, bitsPerComponent: 8, bytesPerRow: 0,
+                                space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        for buddy in Buddy.allCases {
+            let frames = 240
+            let start = Date()
+            for i in 0..<frames {
+                let t = Double(i) / 120
+                let renderer = ImageRenderer(content: BuddyView(move: allExercises[i % allExercises.count].move, buddy: buddy, fixedTime: t)
+                    .frame(width: 116, height: 116))
+                renderer.render { _, draw in draw(context) }
+            }
+            let ms = Date().timeIntervalSince(start) / Double(frames) * 1000
+            print(String(format: "%-8@ %.2f ms per frame", buddy.rawValue as NSString, ms))
+        }
     }
 
     // MARK: Self-test

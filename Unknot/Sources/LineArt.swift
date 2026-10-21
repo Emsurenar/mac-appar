@@ -359,7 +359,9 @@ struct BuddyView: View {
             if let t = fixedTime {
                 canvas(t)
             } else {
-                TimelineView(.animation(minimumInterval: 1.0 / 30)) { timeline in
+                // Every frame the display shows, up to 120 a second on ProMotion screens. A frame takes well
+                // under a millisecond to draw (`Unknot --benchmark`).
+                TimelineView(.animation) { timeline in
                     canvas(epoch.map { timeline.date.timeIntervalSince($0) } ?? timeline.date.timeIntervalSinceReferenceDate)
                 }
             }

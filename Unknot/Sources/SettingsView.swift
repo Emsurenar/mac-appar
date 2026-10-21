@@ -235,6 +235,7 @@ struct BuddyCard: View {
     let stillTime: Double
     let toggle: () -> Void
     @State private var hovering = false
+    @State private var hoverStart = Date()
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
@@ -243,7 +244,8 @@ struct BuddyCard: View {
             if !isLocked { toggle() }
         } label: {
             VStack(spacing: 6) {
-                BuddyView(move: .wave, buddy: buddy, fixedTime: hovering ? nil : stillTime)
+                // On hover the still frame comes to life from where it is
+                BuddyView(move: .wave, buddy: buddy, fixedTime: hovering ? nil : stillTime, epoch: hoverStart, startAt: stillTime)
                     .frame(width: 72, height: 72)
                     .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Pen.paper))
                     .paperTone(scheme)
@@ -270,7 +272,10 @@ struct BuddyCard: View {
             .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .buttonStyle(.plain)
-        .onHover { hovering = $0 }
+        .onHover { inside in
+            if inside { hoverStart = Date() }
+            hovering = inside
+        }
         .help(isLocked ? L("Your crew needs at least one member.") : "")
         .accessibilityLabel(buddy.name)
         .accessibilityAddTraits(isOn ? .isSelected : [])
@@ -332,11 +337,12 @@ struct ExerciseRow: View {
     @Binding var isOn: Bool
     var isLocked: Bool
     @State private var hovering = false
+    @State private var hoverStart = Date()
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         HStack(spacing: 12) {
-            BuddyView(move: exercise.move, buddy: buddy, fixedTime: hovering ? nil : 1.2)
+            BuddyView(move: exercise.move, buddy: buddy, fixedTime: hovering ? nil : 1.2, epoch: hoverStart, startAt: 1.2)
                 .frame(width: 48, height: 48)
                 .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Pen.paper))
                 .paperTone(scheme)
@@ -358,7 +364,10 @@ struct ExerciseRow: View {
         }
         .padding(.vertical, 2)
         .contentShape(Rectangle())
-        .onHover { hovering = $0 }
+        .onHover { inside in
+            if inside { hoverStart = Date() }
+            hovering = inside
+        }
     }
 }
 

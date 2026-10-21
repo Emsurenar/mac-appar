@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.9.1 – 2026-10-21
+
+- **No more jumps between exercises.** When a break moves on to the next exercise, the crew used to snap
+  back to standing from wherever it was, arms halfway up or a hand over its eyes. Now it blends into the
+  next move over half a second. The same goes for the cheer at the end.
+- Hovering over a crew member in the settings brings the still picture to life from where it is, instead
+  of jumping to another pose.
+- `Unknot --transitions` draws the frames around every change of exercise, for checking new moves.
+
 ## 1.9.0 – 2026-10-21
 
 - **Pick a position by looking at it.** Settings → General shows five small screens with the panel where it

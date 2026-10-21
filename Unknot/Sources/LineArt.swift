@@ -237,7 +237,10 @@ func drawArm(_ pen: Pen, side: CGFloat, shoulder: CGPoint, angle: Double, art: C
     case .noodle(let base, let hand):
         let length = armReach(base, angle, extra: art.reachExtra)
         var end = handPoint(from: shoulder, side: side, angle: angle, length: length)
-        if side > 0, f.pose.handToBrow, let brow = art.brow { end = pt(brow.x, brow.y + CGFloat(sin(f.t * 1.4)) * 1.2) }
+        if side > 0, f.pose.handToBrow > 0, let brow = art.brow {
+            let k = CGFloat(f.pose.handToBrow)
+            end = pt(end.x + (brow.x - end.x) * k, end.y + (brow.y + CGFloat(sin(f.t * 1.4)) * 1.2 - end.y) * k)
+        }
         end = pt(end.x + wobble.x, end.y + wobble.y)
         let dx = end.x - shoulder.x, dy = end.y - shoulder.y
         let len = max(1, sqrt(dx * dx + dy * dy))
@@ -261,7 +264,10 @@ func drawArm(_ pen: Pen, side: CGFloat, shoulder: CGPoint, angle: Double, art: C
     case .bold(let base):
         let length = armReach(base, angle, extra: art.reachExtra)
         var end = handPoint(from: shoulder, side: side, angle: angle, length: length)
-        if side > 0, f.pose.handToBrow, let brow = art.brow { end = brow }
+        if side > 0, f.pose.handToBrow > 0, let brow = art.brow {
+            let k = CGFloat(f.pose.handToBrow)
+            end = pt(end.x + (brow.x - end.x) * k, end.y + (brow.y - end.y) * k)
+        }
         let mid = pt((shoulder.x + end.x) / 2 + side * 3, (shoulder.y + end.y) / 2 + 2)
         pen.c.stroke(bend(shoulder, mid, end), with: .color(Pen.ink), style: StrokeStyle(lineWidth: 9, lineCap: .round))
     case .flap(let shapePath, let hatch, let rest, _):
@@ -322,7 +328,7 @@ func drawCrew(_ ctx: inout GraphicsContext, _ buddy: Buddy, _ p: Pose, t: Double
     if case .flap(_, _, _, let inFront) = art.arm { alwaysInFront = inFront }
     func isInFront(_ i: Int) -> Bool {
         if alwaysInFront || angles[i] < -6 { return true }
-        if i == 1 && p.handToBrow && art.brow != nil { return true }
+        if i == 1 && p.handToBrow > 0.5 && art.brow != nil { return true }
         if let below = art.armsInFrontBelow { return angles[i] < below }
         return false
     }
@@ -347,12 +353,19 @@ func drawCrew(_ ctx: inout GraphicsContext, _ buddy: Buddy, _ p: Pose, t: Double
     arms(inFront: true)
 }
 
-/// A member of the crew, animated. Pass `fixedTime` for a still frame, or `epoch` to start the move from rest.
+/// A member of the crew, animated. Pass `fixedTime` for a still frame, or `epoch` to start the move from rest
+/// (or from `startAt` seconds in). With `previous`, the first half second blends over from the move before,
+/// so the figure never jumps when the exercise changes.
 struct BuddyView: View {
     let move: Move
     var buddy: Buddy = .mochi
     var fixedTime: Double? = nil
     var epoch: Date? = nil
+    var startAt: Double = 0
+    /// The move before this one, and how long it had been running when this one began.
+    var previous: (move: Move, ranFor: Double)? = nil
+
+    static let blendDuration = 0.5
 
     var body: some View {
         Group {
@@ -362,11 +375,17 @@ struct BuddyView: View {
                 // Every frame the display shows, up to 120 a second on ProMotion screens. A frame takes well
                 // under a millisecond to draw (`Unknot --benchmark`).
                 TimelineView(.animation) { timeline in
-                    canvas(epoch.map { timeline.date.timeIntervalSince($0) } ?? timeline.date.timeIntervalSinceReferenceDate)
+                    canvas(epoch.map { startAt + timeline.date.timeIntervalSince($0) } ?? timeline.date.timeIntervalSinceReferenceDate)
                 }
             }
         }
         .accessibilityHidden(true)
+    }
+
+    private func currentPose(_ t: Double) -> Pose {
+        let now = pose(for: move, at: t)
+        guard let previous, t < Self.blendDuration else { return now }
+        return mix(pose(for: previous.move, at: previous.ranFor + t), now, ease(t / Self.blendDuration))
     }
 
     private func canvas(_ t: Double) -> some View {
@@ -377,7 +396,7 @@ struct BuddyView: View {
             ctx.translateBy(x: (size.width - view.width * k) / 2, y: (size.height - view.height * k) / 2)
             ctx.scaleBy(x: k, y: k)
             ctx.translateBy(x: -view.minX, y: -view.minY)
-            drawCrew(&ctx, buddy, pose(for: move, at: t), t: t)
+            drawCrew(&ctx, buddy, currentPose(t), t: t)
         }
     }
 }

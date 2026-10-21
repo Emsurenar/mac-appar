@@ -19,11 +19,15 @@ final class ReminderSession: NSObject, ObservableObject {
     @Published private(set) var finished = false
     /// Freezes the buddy animation at a given time (used for screenshots).
     var fixedTime: Double?
+    /// How long each move really plays, when that differs from the clock (the README animation is sped up).
+    var moveDurationOverride: Double?
     var onClose: ((BreakOutcome) -> Void)?
 
     private var timer: Timer?
     private var startDate = Date()
     private var finishDate = Date()
+    /// The move that was showing when the break finished, and for how long.
+    private var finishedFrom: (move: Move, ranFor: Double)?
 
     init(exercises: [Exercise], buddy: Buddy = .mochi, nextMinutes: Int, snoozeMinutes: Int = 5, total: Double) {
         self.exercises = exercises.isEmpty ? [allExercises[0]] : exercises
@@ -46,6 +50,12 @@ final class ReminderSession: NSObject, ObservableObject {
     var index: Int { min(Int(elapsed / perExercise), exercises.count - 1) }
     /// How far into the current move the buddy is, in seconds.
     var moveTime: Double { fixedTime ?? Date().timeIntervalSince(moveStart) }
+    /// The move before the one showing now, so the buddy can blend over from it instead of jumping.
+    var previousMove: (move: Move, ranFor: Double)? {
+        if finished { return finishedFrom }
+        guard index > 0 else { return nil }
+        return (exercises[index - 1].move, moveDurationOverride ?? perExercise)
+    }
     var current: Exercise { exercises[index] }
     var remaining: Int { max(0, Int((total - elapsed).rounded(.up))) }
 
@@ -68,6 +78,7 @@ final class ReminderSession: NSObject, ObservableObject {
     func complete() {
         guard !finished else { return }
         timer?.invalidate()
+        finishedFrom = (current.move, elapsed - Double(index) * perExercise)
         finished = true
         finishDate = Date()
         perform(#selector(closeAfterCheer), with: nil, afterDelay: 2.4)
@@ -81,6 +92,7 @@ final class ReminderSession: NSObject, ObservableObject {
 
     /// Shows the finished state immediately (used for screenshots).
     func markFinishedForPreview() {
+        finishedFrom = (current.move, moveDurationOverride ?? perExercise)
         finished = true
         finishDate = Date()
     }
@@ -136,7 +148,7 @@ struct ReminderView: View {
                 .fill(Pen.paper)
                 .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.black.opacity(dark ? 0 : 0.05)))
                 .overlay(BuddyView(move: s.finished ? .celebrate : s.current.move, buddy: s.buddy,
-                                   fixedTime: s.fixedTime, epoch: s.moveStart).padding(4))
+                                   fixedTime: s.fixedTime, epoch: s.moveStart, previous: s.previousMove).padding(4))
                 .frame(width: 116, height: 116)
                 .paperTone(scheme)
 

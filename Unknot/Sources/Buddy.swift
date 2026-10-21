@@ -29,7 +29,7 @@ struct Pose {
     var sproutSway = 0.0    // sprouts, tufts and flowers sway with this
     var handOrbit = 0.0     // hands draw small circles (wrist circles)
     var handPhase = 0.0
-    var handToBrow = false  // the right hand shades the eyes
+    var handToBrow = 0.0    // 1 when the right hand shades the eyes; in between while it gets there
 }
 
 // MARK: Timing helpers
@@ -58,6 +58,30 @@ func hold(_ x: Double, _ a: Double, _ b: Double, _ c: Double, _ d: Double) -> Do
 func bump(_ x: Double, at center: Double, width: Double) -> Double {
     let d = abs(x - center) / width
     return d >= 1 ? 0 : 0.5 + 0.5 * cos(d * .pi)
+}
+
+/// Somewhere between two poses, for the change from one move to the next. Eyes and mouth switch halfway.
+func mix(_ a: Pose, _ b: Pose, _ k: Double) -> Pose {
+    func m(_ x: Double, _ y: Double) -> Double { x + (y - x) * k }
+    var p = b
+    p.tilt = m(a.tilt, b.tilt)
+    p.lift = m(a.lift, b.lift)
+    p.scaleX = m(a.scaleX, b.scaleX)
+    p.scaleY = m(a.scaleY, b.scaleY)
+    p.leftArm = m(a.leftArm, b.leftArm)
+    p.rightArm = m(a.rightArm, b.rightArm)
+    p.shoulderLift = m(a.shoulderLift, b.shoulderLift)
+    p.faceShiftX = m(a.faceShiftX, b.faceShiftX)
+    p.lookX = m(a.lookX, b.lookX)
+    p.sproutSway = m(a.sproutSway, b.sproutSway)
+    p.handOrbit = m(a.handOrbit, b.handOrbit)
+    p.handPhase = m(a.handPhase, b.handPhase)
+    p.handToBrow = m(a.handToBrow, b.handToBrow)
+    if k < 0.5 {
+        p.eyes = a.eyes
+        p.mouth = a.mouth
+    }
+    return p
 }
 
 // MARK: Moves
@@ -150,7 +174,7 @@ func pose(for move: Move, at t: Double) -> Pose {
         p.lookX = look * 3.6
         p.faceShiftX = look * 2.5
         p.rightArm = -152 + sin(t * 1.4) * 2.5
-        p.handToBrow = true
+        p.handToBrow = 1
         p.leftArm = 18
         p.tilt = look * 1.5
         if bump(c, at: 0.52, width: 0.025) > 0.3 || bump(c, at: 0.02, width: 0.02) > 0.3 { p.eyes = .closed }

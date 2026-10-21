@@ -23,6 +23,7 @@ enum Snapshot {
         if let dir = value("--capture-drop") { captureDrop(in: dir); return true }
         if args.contains("--verify-latest-release") { verifyLatestRelease(); return true }
         if args.contains("--benchmark") { benchmark(); return true }
+        if let path = value("--transitions") { transitions(to: path); return true }
         if args.contains("--selftest") { exit(selfTest() ? 0 : 1) }
         return false
     }
@@ -145,6 +146,31 @@ enum Snapshot {
         save(VStack(spacing: 0) { row(false); row(true) }, to: path, scale: 8)
     }
 
+    /// The frames around a change of exercise: the end of one move, then the next one blending in.
+    static func transitions(to path: String) {
+        let pairs: [(Buddy, Move, Move)] = [(.frog, .twist, .armsUp), (.cat, .lookAway, .hug), (.panda, .hug, .celebrate),
+                                            (.semla, .wristCircles, .sideBend), (.chick, .wiggle, .breathe)]
+        let ranFor = 10.0
+        let sheet = VStack(alignment: .leading, spacing: 0) {
+            ForEach(pairs.indices, id: \.self) { r in
+                let (buddy, from, to) = pairs[r]
+                HStack(spacing: 0) {
+                    Text(verbatim: "\(from.rawValue) → \(to.rawValue)").font(.system(size: 11, weight: .semibold)).frame(width: 150, alignment: .leading)
+                    ForEach([-0.2, -0.1, 0.0], id: \.self) { dt in
+                        BuddyView(move: from, buddy: buddy, fixedTime: ranFor + dt).frame(width: 90, height: 90)
+                    }
+                    Rectangle().fill(Color.red.opacity(0.5)).frame(width: 1, height: 70)
+                    ForEach([0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.7], id: \.self) { t in
+                        BuddyView(move: to, buddy: buddy, fixedTime: t, previous: (from, ranFor)).frame(width: 90, height: 90)
+                    }
+                }
+            }
+        }
+        .padding(12)
+        .background(Pen.paper)
+        save(sheet, to: path, scale: 1.5)
+    }
+
     /// The whole Stretch Crew waving, with their names, for the README.
     static func buddiesImage(to path: String) {
         let rows = [Array(Buddy.allCases.prefix(5)), Array(Buddy.allCases.dropFirst(5))]
@@ -185,6 +211,7 @@ enum Snapshot {
         }
         let fps = 20.0
         let secondsPerMove = 2.6
+        s.moveDurationOverride = secondsPerMove
         let activeFrames = Int(secondsPerMove * fps) * picks.count
         let doneFrames = Int(2.0 * fps)
         let closeFrames = Int(NotchDrop.closeDuration * morphFPS)

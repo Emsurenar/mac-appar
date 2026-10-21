@@ -83,9 +83,9 @@ extension Snapshot {
 
         stats.setEnabled(Buddy.cat, false)
         check(!stats.enabledBuddies.contains(.cat), "A buddy can be turned off")
-        for buddy in Buddy.allCases where buddy != .toast { stats.setEnabled(buddy, false) }
-        check(stats.enabledBuddies == [.toast], "The last buddy can't be turned off")
-        check(stats.randomBuddy(avoiding: .toast) == .toast, "With one buddy left, it's always that one")
+        for buddy in Buddy.allCases where buddy != .crispbread { stats.setEnabled(buddy, false) }
+        check(stats.enabledBuddies == [.crispbread], "The last buddy can't be turned off")
+        check(stats.randomBuddy(avoiding: .crispbread) == .crispbread, "With one buddy left, it's always that one")
         stats.disabledBuddies = []
         check((0..<20).allSatisfy { _ in stats.randomBuddy(avoiding: .mochi) != .mochi }, "The same buddy never comes twice in a row")
 

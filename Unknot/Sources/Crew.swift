@@ -63,8 +63,8 @@ enum CrewArtwork {
     static let mochi = MochiArt()
     static let all: [Buddy: CrewArt] = [
         .mochi: mochi, .cat: CatArt(), .panda: PandaArt(), .bunny: BunnyArt(), .frog: FrogArt(),
-        .semla: SemlaArt(), .chick: ChickArt(), .toast: ToastArt(), .onigiri: OnigiriArt(), .stefan: StefanArt(),
-        .jesus: JesusArt(), .gandhi: GandhiArt(), .descartes: DescartesArt(), .kaknas: KaknasArt(),
+        .semla: SemlaArt(), .chick: ChickArt(), .crispbread: CrispbreadArt(), .onigiri: OnigiriArt(), .stefan: StefanArt(),
+        .jesus: JesusArt(), .gandhi: GandhiArt(), .descartes: DescartesArt(), .bard: BardArt(), .kaknas: KaknasArt(),
     ]
 }
 
@@ -714,87 +714,114 @@ struct ChickArt: CrewArt {
     func detail(_ f: CrewFrame) -> Path { Path() }
 }
 
-// MARK: - Toast
+// MARK: - Crispbread
 
-struct ToastArt: CrewArt {
-    let accent = Color(hex: 0xEBCB95)
-    let detailColor = Color(hex: 0xF4D77E)
+/// Finn, a thin rye crispbread standing on end: an edge that's broken rather than cut, a pale side where it's
+/// thin enough to show, and a surface full of little craters of every size, with a few white grains.
+struct CrispbreadArt: CrewArt {
+    let accent = Color(hex: 0xB39A7A)            // rye
+    let detailColor = Color(hex: 0xDCC9A8)       // the paler crumb at the edge
     let body: Path
-    let crumb: Path
-    let crust: Path
     let wash: Path
     let hatches: [Hatch]
-    let pores: Path
-    let shoulders = [pt(59, 128), pt(141, 128)]
-    let brow: CGPoint? = pt(115, 115)
-    let arm = ArmStyle.noodle(length: 23.3, hand: .loop)
+    let edge: Path
+    let pits: Path                               // the small holes, filled
+    let rims: Path                               // the bigger craters, outlined
+    let hollows: Path                            // the shadow inside each crater
+    let grains: Path
+    let shoulders = [pt(73, 128), pt(127, 128)]
+    let arm = ArmStyle.noodle(length: 24, hand: .loop)
+    let armOffset = -10.0
+    let brow: CGPoint? = pt(110, 104)
+    let reachExtra: CGFloat = 28
     let groundWidth: CGFloat = 76
-    private let butterTransform = CGAffineTransform(rotationAngle: -8 * .pi / 180).concatenating(CGAffineTransform(translationX: 112, y: 96))
-    private let pat = Path(roundedRect: CGRect(x: -12, y: -7, width: 24, height: 14), cornerRadius: 3.5)
+    var anchor: CGPoint { pt(100, 166) }
 
     init() {
-        func bread(_ s: CGFloat) -> Path {
-            let w: CGFloat = 88, h: CGFloat = 86, bx: CGFloat = 100, by: CGFloat = 160
-            let r = w / 2 * s, hh = h * s, oy = by - h / 2 + hh / 2
-            return makePath { p in
-                p.move(to: pt(bx, oy))
-                p.addLine(to: pt(bx + r - 10 * s, oy))
-                p.addQuadCurve(to: pt(bx + r - 3 * s, oy - 10 * s), control: pt(bx + r - 3 * s, oy))
-                p.addLine(to: pt(bx + r - 3 * s, oy - hh * 0.58))
-                p.addCurve(to: pt(bx + r * 0.42, oy - hh), control1: pt(bx + r + 9 * s, oy - hh * 0.66), control2: pt(bx + r + 3 * s, oy - hh))
-                p.addCurve(to: pt(bx, oy - hh * 0.95), control1: pt(bx + r * 0.22, oy - hh), control2: pt(bx + r * 0.1, oy - hh * 0.95))
-                p.addCurve(to: pt(bx - r * 0.42, oy - hh), control1: pt(bx - r * 0.1, oy - hh * 0.95), control2: pt(bx - r * 0.22, oy - hh))
-                p.addCurve(to: pt(bx - r + 3 * s, oy - hh * 0.58), control1: pt(bx - r - 3 * s, oy - hh), control2: pt(bx - r - 9 * s, oy - hh * 0.66))
-                p.addLine(to: pt(bx - r + 3 * s, oy - 10 * s))
-                p.addQuadCurve(to: pt(bx - r + 10 * s, oy), control: pt(bx - r + 3 * s, oy))
-                p.closeSubpath()
+        // A slab with a slightly broken edge: the outline wanders a little all the way round
+        var r = SeededRandom(state: 77)
+        let corners = [pt(72, 70), pt(128, 70), pt(128, 164), pt(72, 164)]
+        let slab = makePath { p in
+            var first = true
+            for i in 0..<4 {
+                let a = corners[i], b = corners[(i + 1) % 4]
+                let steps = Int(max(abs(b.x - a.x), abs(b.y - a.y)) / 4)
+                for k in 0..<steps {
+                    let t = CGFloat(k) / CGFloat(steps)
+                    // Rounded corners, a wobble along the sides
+                    let inset: CGFloat = (k == 0) ? 2.2 : 0
+                    let q = pt(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t)
+                    let nx = (b.y - a.y) == 0 ? 0 : (b.y > a.y ? 1 : -1)
+                    let ny = (b.x - a.x) == 0 ? 0 : (b.x > a.x ? -1 : 1)
+                    let jitter = (r.next() - 0.5) * 1.6
+                    let pq = pt(q.x + CGFloat(nx) * jitter + (b.x - a.x == 0 ? 0 : (b.x > a.x ? inset : -inset)),
+                                q.y + CGFloat(ny) * jitter + (b.y - a.y == 0 ? 0 : (b.y > a.y ? inset : -inset)))
+                    if first { p.move(to: pq); first = false } else { p.addLine(to: pq) }
+                }
             }
+            p.closeSubpath()
         }
-        body = bread(1)
-        crumb = bread(0.82)
-        crust = body.subtracting(crumb)
-        wash = crumb
-        hatches = [Hatch.shadow(of: crust, shift: 6, spacing: 2.3)]
-        var r = SeededRandom(state: 21)
-        var p = Path()
+        body = slab
+        edge = slab.applying(CGAffineTransform(translationX: 3.2, y: 2.6))
+        hatches = [Hatch.shadow(of: slab, shift: 9, spacing: 2.8)]
+        // The surface: craters of every size, most of them small, none on the face
+        let face = oval(100, 111, 34, 24)
+        var small = Path(), outlines = Path(), shadows = Path(), white = Path()
         var placed = 0
-        while placed < 16 {
-            let q = pt(70 + r.next() * 60, 92 + r.next() * 58)
-            if crumb.contains(q) && !(abs(q.y - 126) < 13 && abs(q.x - 100) < 20) && !(q.y < 108 && q.x > 96) {
-                p.addPath(oval(q.x, q.y, 1.6 + r.next() * 1.8, 1.4 + r.next() * 1.2))
-                placed += 1
+        while placed < 170 {
+            let q = pt(75 + r.next() * 50, 73 + r.next() * 88)
+            guard slab.contains(q), !face.contains(q) else { continue }
+            let size = 0.5 + pow(r.next(), 2.2) * 2.4
+            let stretch = 0.8 + r.next() * 0.5
+            let w = size * 2 * stretch, h = size * 2 / stretch
+            if size < 1.1 {
+                small.addEllipse(in: CGRect(x: q.x - w / 2, y: q.y - h / 2, width: w, height: h))
+            } else {
+                let crater = oval(q.x, q.y, w, h)
+                outlines.addPath(crater)
+                shadows.addPath(crater.subtracting(oval(q.x - size * 0.45, q.y - size * 0.4, w, h)))
             }
+            placed += 1
         }
-        pores = p
+        var grainsPlaced = 0
+        while grainsPlaced < 16 {
+            let q = pt(76 + r.next() * 48, 74 + r.next() * 86)
+            guard slab.contains(q), !face.contains(q) else { continue }
+            let g = 0.6 + r.next() * 0.6
+            white.addEllipse(in: CGRect(x: q.x - g, y: q.y - g * 0.8, width: g * 2, height: g * 1.6))
+            grainsPlaced += 1
+        }
+        pits = small
+        rims = outlines
+        hollows = shadows
+        grains = white
+        wash = slab
     }
 
-    var anchor: CGPoint { pt(100, 162) }
+    func feet(_ pen: Pen, _ f: CrewFrame) { ovalFeet(pen, [86, 114], width: 16) }
 
-    func feet(_ pen: Pen, _ f: CrewFrame) {
-        for s: CGFloat in [-1, 1] {
-            pen.stroke(line(pt(100 + s * 14, 158), pt(100 + s * 15, 168)))
-            pen.shape(oval(100 + s * 17, 171, 13, 7), 1.9)
-        }
+    func behind(_ pen: Pen, _ f: CrewFrame) {
+        // The thin side of the slab, paler, showing at the right and the bottom
+        pen.shape(edge, 1.7)
+        pen.tint(edge, detailColor)
     }
 
     func onBody(_ pen: Pen, _ f: CrewFrame) {
-        pen.stroke(crumb, 1.6)
-        pen.fine(pores)
-        let butter = pen.moved { $0.concatenate(butterTransform) }
-        butter.shape(pat, 1.9)
-        butter.fine(line(pt(-7, -3), pt(3, -3)))
-        butter.shape(makePath { p in p.move(to: pt(4, 7)); p.addQuadCurve(to: pt(7, 13), control: pt(4.5, 12)); p.addQuadCurve(to: pt(9.5, 7), control: pt(9.5, 12)) }, 1.6)
+        pen.c.fill(pits, with: .color(Pen.ink.opacity(0.55)))
+        pen.c.fill(hollows, with: .color(Pen.ink.opacity(0.6)))
+        pen.c.stroke(rims, with: .color(Pen.ink.opacity(0.8)), lineWidth: 0.7)
     }
 
     func face(_ pen: Pen, _ f: CrewFrame) {
-        pen.eye(pt(90 + f.fx, 124), f)
-        pen.eye(pt(110 + f.fx, 124), f)
-        pen.mouth(pt(100 + f.fx, 132), f)
+        pen.eye(pt(91 + f.fx, 108), f)
+        pen.eye(pt(109 + f.fx, 108), f)
+        pen.mouth(pt(100 + f.fx, 116), f)
     }
 
-    func detail(_ f: CrewFrame) -> Path { pat.applying(butterTransform) }
+    // White grains of rye, printed over the colour
+    func overlay(_ pen: Pen, _ f: CrewFrame) { pen.paper(grains) }
 
-    func extras(_ f: CrewFrame) -> [(Path, Color)] { [(crust, Color(hex: 0xE2A76B))] }
+    func detail(_ f: CrewFrame) -> Path { Path() }
 }
 
 // MARK: - Onigiri

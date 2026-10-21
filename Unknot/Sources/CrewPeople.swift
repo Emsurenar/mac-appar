@@ -957,3 +957,198 @@ struct DescartesArt: CrewArt {
          (makePath { $0.addPath(oval(87 + f.fx, 104, 9, 5)); $0.addPath(oval(113 + f.fx, 104, 9, 5)) }, Color(hex: 0xE09A88).opacity(0.4))]
     }
 }
+
+// MARK: - Alexander Bard
+
+/// Alexander Bard, from a photograph: a shaven, shiny head with freckles and ears that stand out, pale blue
+/// eyes under nearly invisible brows, a broad nose, and a huge, wiry ginger beard with a moustache over the
+/// mouth; a dark brown shirt, a black tie with orange polka dots and black braces with white ones.
+struct BardArt: CrewArt {
+    let accent = Color(hex: 0x6B463C)            // the brown shirt
+    let detailColor = Color(hex: 0xE3673F)       // the dots on the tie
+    let body: Path
+    let wash: Path
+    let hatches: [Hatch]
+    let tie: Path
+    let tieDots: Path
+    let braces: Path
+    let braceDots: Path
+    let collar: Path
+    let head: Path
+    let headHatch: Hatch
+    let shine: Path
+    let freckles: Path
+    let stubble: Path
+    let beard: Path
+    let curls: Path
+    let moustache: Path
+    let skin: Path
+    let earTint: Path
+    let eyes = ToonEyes(centers: [pt(90.5, 90), pt(109.5, 90)], r: 4.4, lid: 0.3, skin: 0xF0C0AA, bags: 1)
+    let shoulders = [pt(71, 129), pt(129, 129)]
+    let arm = ArmStyle.noodle(length: 26, hand: .loop)
+    let armOffset = -12.0
+    let brow: CGPoint? = pt(112, 84)
+    let reachExtra: CGFloat = 30
+    let groundWidth: CGFloat = 86
+    var headBox: CGRect { head.boundingRect }
+    let headPivot: CGPoint? = pt(100, 117)
+
+    init() {
+        let shirt = jacket(left: 71, right: 129, top: 117)
+        body = shirt
+        collar = makePath { p in
+            p.move(to: pt(90, 117)); p.addLine(to: pt(97, 125)); p.addLine(to: pt(100, 119))
+            p.addLine(to: pt(103, 125)); p.addLine(to: pt(110, 117))
+        }
+        let t = makePath { p in
+            p.move(to: pt(97.6, 121)); p.addLine(to: pt(102.4, 121)); p.addLine(to: pt(101.6, 125))
+            p.addLine(to: pt(103.2, 158)); p.addLine(to: pt(100, 161.5)); p.addLine(to: pt(96.8, 158))
+            p.addLine(to: pt(98.4, 125)); p.closeSubpath()
+        }
+        tie = t
+        tieDots = makePath { p in
+            for (x, y) in [(99.0, 128.0), (101.5, 133.0), (98.8, 138.0), (101.3, 143.0), (99.1, 148.0), (101.0, 153.0), (99.6, 157.5)] {
+                p.addEllipse(in: CGRect(x: x - 1.15, y: y - 1.15, width: 2.3, height: 2.3))
+            }
+        }
+        let straps = makePath { p in
+            p.move(to: pt(80, 118.5)); p.addLine(to: pt(85.5, 118)); p.addLine(to: pt(87.5, 166)); p.addLine(to: pt(82, 166)); p.closeSubpath()
+            p.move(to: pt(120, 118.5)); p.addLine(to: pt(114.5, 118)); p.addLine(to: pt(112.5, 166)); p.addLine(to: pt(118, 166)); p.closeSubpath()
+        }.intersection(shirt)
+        braces = straps
+        braceDots = makePath { p in
+            for y in stride(from: 122.0, through: 162.0, by: 4.0) {
+                let k = CGFloat((y - 118) / 48)
+                p.addEllipse(in: CGRect(x: 82.8 + k * 2 - 0.6, y: y - 0.6, width: 1.2, height: 1.2))
+                p.addEllipse(in: CGRect(x: 117.2 - k * 2 - 0.6, y: y - 0.6, width: 1.2, height: 1.2))
+            }
+        }
+        wash = shirt.subtracting(t).subtracting(straps)
+        hatches = [Hatch.shadow(of: shirt, shift: 12)]
+
+        // A broad, bare dome of a head
+        let face = makePath { p in
+            p.move(to: pt(100, 57))
+            p.addCurve(to: pt(124, 80), control1: pt(115, 57), control2: pt(124, 67))
+            p.addCurve(to: pt(122, 106), control1: pt(124.5, 92), control2: pt(124, 100))
+            p.addCurve(to: pt(100, 121), control1: pt(119, 115), control2: pt(110, 121))
+            p.addCurve(to: pt(78, 106), control1: pt(90, 121), control2: pt(81, 115))
+            p.addCurve(to: pt(76, 80), control1: pt(76, 100), control2: pt(75.5, 92))
+            p.addCurve(to: pt(100, 57), control1: pt(76, 67), control2: pt(85, 57))
+        }
+        head = face
+        headHatch = faceShadow(face)
+        shine = bend(pt(86, 66), pt(92, 61.5), pt(100, 60.5)).strokedPath(StrokeStyle(lineWidth: 2.6, lineCap: .round))
+        var r = SeededRandom(state: 52)
+        freckles = makePath { p in
+            for _ in 0..<26 {
+                let q = pt(82 + r.next() * 36, 66 + r.next() * 34)
+                if face.contains(q) && !oval(100, 90, 34, 12).contains(q) {
+                    p.addEllipse(in: CGRect(x: q.x - 0.45, y: q.y - 0.45, width: 0.9, height: 0.9))
+                }
+            }
+        }
+        stubble = texture(in: face.intersection(Path(CGRect(x: 75, y: 76, width: 7, height: 18)))
+            .union(face.intersection(Path(CGRect(x: 118, y: 76, width: 7, height: 18)))), count: 18, seed: 9, length: 1.6, angle: 100)
+        // The beard: full from ear to ear, wiry, falling well below the chin
+        let full = makePath { p in
+            p.move(to: pt(78.5, 96))
+            p.addCurve(to: pt(80, 124), control1: pt(76, 105), control2: pt(76.5, 116))
+            p.addCurve(to: pt(92, 142), control1: pt(82, 133), control2: pt(86, 139))
+            p.addQuadCurve(to: pt(100, 145.5), control: pt(95.5, 145.5))
+            p.addQuadCurve(to: pt(108, 142), control: pt(104.5, 145.5))
+            p.addCurve(to: pt(120, 124), control1: pt(114, 139), control2: pt(118, 133))
+            p.addCurve(to: pt(121.5, 96), control1: pt(123.5, 116), control2: pt(124, 105))
+            p.addCurve(to: pt(108, 107), control1: pt(118, 102), control2: pt(113, 107))
+            p.addQuadCurve(to: pt(100, 104.5), control: pt(104, 104))
+            p.addQuadCurve(to: pt(92, 107), control: pt(96, 104))
+            p.addCurve(to: pt(78.5, 96), control1: pt(87, 107), control2: pt(82, 102))
+            p.closeSubpath()
+        }
+        beard = full
+        // Wiry curls rather than straight strands
+        curls = makePath { p in
+            var c = SeededRandom(state: 27)
+            var placed = 0
+            while placed < 70 {
+                let q = pt(79 + c.next() * 42, 104 + c.next() * 41)
+                guard full.contains(q) else { continue }
+                let a = c.next() * 2 * .pi
+                p.move(to: q)
+                p.addQuadCurve(to: pt(q.x + 1.2 * CGFloat(cos(a + 1)), q.y + 2.4), control: pt(q.x + 2.2 * CGFloat(cos(a)), q.y + 0.8))
+                placed += 1
+            }
+        }
+        moustache = makePath { p in
+            p.move(to: pt(100, 104))
+            p.addQuadCurve(to: pt(86, 113), control: pt(89, 103.5))
+            p.addQuadCurve(to: pt(100, 110.5), control: pt(93, 110.5))
+            p.addQuadCurve(to: pt(114, 113), control: pt(107, 110.5))
+            p.addQuadCurve(to: pt(100, 104), control: pt(111, 103.5))
+            p.closeSubpath()
+        }
+        skin = face.subtracting(full).subtracting(shine)
+        earTint = oval(74.5, 92, 8.5, 14.5).union(oval(125.5, 92, 8.5, 14.5)).subtracting(face)
+    }
+
+    func feet(_ pen: Pen, _ f: CrewFrame) {
+        for x: CGFloat in [86, 114] { pen.solid(oval(x, 171, 18, 8)) }
+    }
+
+    func onBody(_ pen: Pen, _ f: CrewFrame) {
+        pen.fine(collar)
+        pen.solid(braces)
+        pen.c.fill(braceDots, with: .color(Pen.paper))
+        pen.solid(tie)
+        pen.c.fill(tieDots, with: .color(detailColor))
+        for y: CGFloat in [150, 158] {
+            pen.c.stroke(oval(92, y, 2, 2), with: .color(Pen.paper.opacity(0.8)), lineWidth: 0.8)
+        }
+    }
+
+    func headParts(_ pen: Pen, _ f: CrewFrame) {
+        drawEars(pen, at: [74.5, 125.5], y: 92, w: 8.5, h: 14.5)
+        pen.shape(head)
+        pen.hatch(headHatch)
+        pen.c.fill(freckles, with: .color(Color(hex: 0xB87A5A)))
+        pen.c.stroke(stubble, with: .color(Pen.ink.opacity(0.4)), style: StrokeStyle(lineWidth: 0.7, lineCap: .round))
+    }
+
+    func face(_ pen: Pen, _ f: CrewFrame) {
+        let x = f.fx
+        // Pale brows, barely there
+        pen.c.stroke(bend(pt(84.5 + x, 83), pt(90 + x, 81.5), pt(95.5 + x, 83)), with: .color(Pen.ink.opacity(0.5)), lineWidth: 1.2)
+        pen.c.stroke(bend(pt(104.5 + x, 83), pt(110 + x, 81.5), pt(115.5 + x, 83)), with: .color(Pen.ink.opacity(0.5)), lineWidth: 1.2)
+        pen.stroke(makePath { p in
+            p.move(to: pt(99 + x, 93)); p.addQuadCurve(to: pt(96 + x, 100.5), control: pt(97 + x, 97))
+            p.addQuadCurve(to: pt(100 + x, 103), control: pt(95.5 + x, 103.5))
+            p.addQuadCurve(to: pt(104.5 + x, 100.5), control: pt(104.5 + x, 103.5))
+        }, 1.6)
+        let b = pen.moved { $0.translateBy(x: x * 0.5, y: 0) }
+        b.shape(beard, 1.6)
+        b.c.stroke(curls, with: .color(Pen.ink.opacity(0.55)), style: StrokeStyle(lineWidth: 0.8, lineCap: .round))
+        if f.pose.mouth != .smile {
+            b.solid(oval(100, 115, f.pose.mouth == .o ? 4.5 : 7, f.pose.mouth == .o ? 5 : 4.5))
+        }
+        let m = pen.moved { $0.translateBy(x: x * 0.8, y: 0) }
+        m.shape(moustache, 1.5)
+        m.c.stroke(makePath { p in
+            for k in 0..<8 {
+                let mx = 88 + CGFloat(k) * 3.4
+                p.move(to: pt(mx, 106.5 + abs(mx - 100) * 0.12)); p.addLine(to: pt(mx + (mx < 100 ? -1 : 1), 111))
+            }
+        }, with: .color(Pen.ink.opacity(0.5)), lineWidth: 0.7)
+    }
+
+    func overlay(_ pen: Pen, _ f: CrewFrame) { eyes.draw(pen, f) }
+
+    func detail(_ f: CrewFrame) -> Path { Path() }
+
+    func headTints(_ f: CrewFrame) -> [(Path, Color)] {
+        let ginger = Color(hex: 0xC8743F)
+        return [(skin, Color(hex: 0xF0C0AA)), (earTint, Color(hex: 0xE9AE96)),
+                (beard.applying(CGAffineTransform(translationX: f.fx * 0.5, y: 0)), ginger),
+                (moustache.applying(CGAffineTransform(translationX: f.fx * 0.8, y: 0)), ginger)]
+    }
+}

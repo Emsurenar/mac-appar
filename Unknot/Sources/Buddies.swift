@@ -2,7 +2,7 @@ import SwiftUI
 
 /// The Stretch Crew. Every member can do every move; how each one is drawn lives in Crew.swift.
 enum Buddy: String, CaseIterable, Identifiable {
-    case mochi, cat, panda, bunny, frog, semla, chick, toast, onigiri, stefan, jesus, gandhi, descartes, kaknas
+    case mochi, cat, panda, bunny, frog, semla, chick, crispbread, onigiri, stefan, jesus, gandhi, descartes, bard, kaknas
 
     var id: String { rawValue }
 
@@ -16,12 +16,13 @@ enum Buddy: String, CaseIterable, Identifiable {
         case .frog: return "Otto"
         case .semla: return "Selma"
         case .chick: return "Pip"
-        case .toast: return "Toby"
+        case .crispbread: return "Finn"
         case .onigiri: return "Nori"
         case .stefan: return "Stefan"
         case .jesus: return "Jesus"
         case .gandhi: return "Mahatma"
         case .descartes: return "René"
+        case .bard: return "Alexander"
         case .kaknas: return "Kaknäs"
         }
     }
@@ -36,12 +37,13 @@ enum Buddy: String, CaseIterable, Identifiable {
         case .frog: return L("Frog")
         case .semla: return L("Semla")
         case .chick: return L("Chick")
-        case .toast: return L("Toast")
+        case .crispbread: return L("Crispbread")
         case .onigiri: return L("Onigiri")
         case .stefan: return "Löfven"
         case .jesus: return L("of Nazareth")
         case .gandhi: return "Gandhi"
         case .descartes: return "Descartes"
+        case .bard: return "Bard"
         case .kaknas: return L("TV tower")
         }
     }
@@ -56,12 +58,13 @@ enum Buddy: String, CaseIterable, Identifiable {
         case .frog: return L("Otto the frog")
         case .semla: return L("Selma the semla")
         case .chick: return L("Pip the chick")
-        case .toast: return L("Toby the toast")
+        case .crispbread: return L("Finn the crispbread")
         case .onigiri: return L("Nori the onigiri")
         case .stefan: return "Stefan Löfven"
         case .jesus: return L("Jesus of Nazareth")
         case .gandhi: return "Mahatma Gandhi"
         case .descartes: return "René Descartes"
+        case .bard: return "Alexander Bard"
         case .kaknas: return L("Kaknäs Tower")
         }
     }

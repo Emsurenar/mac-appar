@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.18.0 – 2026-10-21
+
+- **Finn the crispbread takes Toby's place**: a thin slab of rye with a broken edge, a pale side where it's
+  thin, and a surface full of little craters of every size, each with a shadow inside, and a few white grains.
+- **Alexander Bard joins the Stretch Crew**, drawn from a photograph: a shaven, shiny head with freckles,
+  big round eyes, a huge wiry ginger beard with a moustache over the mouth, a brown shirt, a black tie with
+  orange polka dots and black braces with white ones.
+- The README no longer mentions the old name.
+
 ## 1.17.0 – 2026-10-21
 
 - **Kaknästornet joins the Stretch Crew**, drawn from a photograph: the concrete shaft with its groove and

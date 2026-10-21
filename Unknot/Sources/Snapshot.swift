@@ -114,7 +114,7 @@ enum Snapshot {
     /// Ten frames across one cycle of each move, for checking that the motion flows.
     static func filmstrip(to path: String) {
         let rows: [(Buddy, Move, Double)] = [(.stefan, .armsUp, 4.6), (.frog, .sideBend, 6.4), (.jesus, .neckTilt, 6.4), (.mochi, .twist, 5.6),
-                                             (.cat, .lookAway, 6.4), (.semla, .armsWide, 4.8), (.gandhi, .hug, 3.14), (.toast, .calfRaise, 2.6),
+                                             (.cat, .lookAway, 6.4), (.semla, .armsWide, 4.8), (.gandhi, .hug, 3.14), (.crispbread, .calfRaise, 2.6),
                                              (.panda, .breathe, 8), (.bunny, .wiggle, 1.4), (.stefan, .celebrate, 0.84), (.onigiri, .wristCircles, 1.25),
                                              (.descartes, .shoulderRoll, 2.4), (.stefan, .shrug, 3.6), (.cat, .crossArm, 6.4)]
         let sheet = VStack(alignment: .leading, spacing: 0) {
@@ -154,7 +154,7 @@ enum Snapshot {
         let peaks: [(Move, Double)] = [(.armsUp, 2.3), (.sideBend, 1.7), (.neckTilt, 1.8), (.shoulderRoll, 1.2), (.twist, 1.7),
                                        (.breathe, 3.6), (.lookAway, 1.9), (.armsWide, 2.4), (.calfRaise, 1.1), (.wristCircles, 2.0),
                                        (.wiggle, 0.5), (.hug, 1.6), (.shrug, 1.5), (.crossArm, 1.9)]
-        let cast: [Buddy] = [.mochi, .frog, .semla, .chick, .panda, .toast, .stefan, .jesus, .gandhi, .descartes]
+        let cast: [Buddy] = [.mochi, .frog, .semla, .crispbread, .kaknas, .stefan, .jesus, .gandhi, .descartes, .bard]
         let sheet = VStack(alignment: .leading, spacing: 0) {
             ForEach(peaks.indices, id: \.self) { r in
                 HStack(spacing: 0) {
@@ -172,7 +172,7 @@ enum Snapshot {
 
     /// The people in the crew, large, waving and at rest, for checking the likeness.
     static func portraits(to path: String) {
-        let people: [Buddy] = [.stefan, .jesus, .gandhi, .descartes]
+        let people: [Buddy] = [.stefan, .jesus, .gandhi, .descartes, .bard]
         let sheet = VStack(spacing: 0) {
             ForEach([(Move.wave, 0.5), (Move.breathe, 6.5)], id: \.1) { move, t in
                 HStack(spacing: 0) {

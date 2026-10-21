@@ -89,11 +89,12 @@ it: *Breathe in · 3*, *Switch sides*.
 ## The Stretch Crew
 
 <p align="center">
-  <img src="docs/buddies.png" width="640" alt="The Stretch Crew: Mochi, Cat, Panda, Bunny, Frog, Semla, Chick, Toast, Onigiri and Cactus">
+  <img src="docs/buddies.png" width="640" alt="The Stretch Crew: Momo the mochi, Miso the cat, Bao the panda, Juni the bunny, Otto the frog, Selma the semla, Pip the chick, Toby the toast, Nori the onigiri and Sol the cactus">
 </p>
 
 Ten characters drawn like small engravings: one ink line, hatching for shadow and a soft wash of colour.
-A random one leads each break. Under **Settings → Stretch Crew** you can keep only your favourites.
+Otto the frog is on the app icon; Selma is a semla, the Swedish cream bun. A random member leads each break,
+and under **Settings → Stretch Crew** you can keep only your favourites.
 
 ## When breaks happen
 

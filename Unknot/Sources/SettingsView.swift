@@ -30,7 +30,7 @@ enum SettingsTab: Int, CaseIterable {
     var contentSize: NSSize {
         switch self {
         case .general: return NSSize(width: 580, height: 760)
-        case .buddies: return NSSize(width: 580, height: 408)
+        case .buddies: return NSSize(width: 580, height: 440)
         case .exercises: return NSSize(width: 580, height: 640)
         case .schedule: return NSSize(width: 580, height: 500)
         case .activity: return NSSize(width: 580, height: 440)
@@ -251,11 +251,16 @@ struct BuddyCard: View {
                     .paperTone(scheme)
                     .saturation(isOn ? 1 : 0)
                     .opacity(isOn ? 1 : 0.5)
-                Text(buddy.name)
-                    .font(.callout.weight(isOn ? .medium : .regular))
-                    .foregroundStyle(isOn ? .primary : .secondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                VStack(spacing: 0) {
+                    Text(verbatim: buddy.name)
+                        .font(.callout.weight(.medium))
+                        .foregroundStyle(isOn ? .primary : .secondary)
+                    Text(buddy.kind)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
@@ -278,7 +283,7 @@ struct BuddyCard: View {
             hovering = inside
         }
         .help(isLocked ? L("Your crew needs at least one member.") : "")
-        .accessibilityLabel(buddy.name)
+        .accessibilityLabel(buddy.introduction)
         .accessibilityAddTraits(isOn ? .isSelected : [])
     }
 }

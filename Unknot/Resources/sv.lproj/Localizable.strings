@@ -37,6 +37,17 @@
 "Toast" = "Rostbröd";
 "Onigiri" = "Onigiri";
 "Cactus" = "Kaktus";
+"Momo the mochi" = "Mochin Momo";
+"Miso the cat" = "Katten Miso";
+"Bao the panda" = "Pandan Bao";
+"Juni the bunny" = "Kaninen Juni";
+"Otto the frog" = "Grodan Otto";
+"Selma the semla" = "Semlan Selma";
+"Pip the chick" = "Kycklingen Pip";
+"Toby the toast" = "Rostbrödet Toby";
+"Nori the onigiri" = "Onigirin Nori";
+"Sol the cactus" = "Kaktusen Sol";
+"Stretch break with %@" = "Sträckpaus med %@";
 "Stretch Crew" = "Stretch Crew";
 "Choose who's on your Stretch Crew. With more than one, a random member leads each break." = "Välj vilka som är med i ditt Stretch Crew. Väljer du fler än en leder en slumpad medlem varje paus.";
 "Your crew needs at least one member." = "Ditt crew behöver minst en medlem.";
@@ -49,9 +60,7 @@
 "Lighter already" = "Redan lättare";
 
 /* Påminnelsen */
-"STRETCH BREAK" = "STRÄCKPAUS";
 "BREAK COMPLETE" = "STRÄCKPAUS KLAR";
-"Stretch break" = "Sträckpaus";
 "Next break at %@." = "Nästa paus kl. %@.";
 "%ld seconds left" = "%ld sekunder kvar";
 "In %ld min" = "Om %ld min";

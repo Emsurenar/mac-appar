@@ -20,6 +20,11 @@ struct WelcomeView: View {
                 .paperTone(scheme)
                 .padding(.top, 34)
 
+            Text(buddy.introduction)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .padding(.top, 14)
+
             Text(L("Welcome to Unknot"))
                 .font(.system(size: 26, weight: .bold))
                 .tracking(-0.4)

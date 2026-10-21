@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.11.0 – 2026-10-21
+
+- **The crew have names**: Momo the mochi, Miso the cat, Bao the panda, Juni the bunny, Otto the frog, Selma
+  the semla, Pip the chick, Toby the toast, Nori the onigiri and Sol the cactus. A break says who's leading it
+  (*Stretch break with Otto*), the welcome window introduces whoever waves, and the Stretch Crew settings
+  show each name with what they are.
+- **Selma, redrawn.** The semla is now clearly a semla: a low, golden cardamom bun with a glazed shine, a
+  visible layer of almond paste, two rows of soft piped cream and the bun's top resting on it as a lid,
+  dusted with icing sugar where it's thickest on top.
+
 ## 1.10.0 – 2026-10-21
 
 - **Says who's on the call.** When a break waits for a call, the menu names the app using the microphone:

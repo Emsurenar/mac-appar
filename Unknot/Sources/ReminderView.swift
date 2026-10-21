@@ -134,7 +134,7 @@ struct ReminderView: View {
     /// The small label at the top: a live cue while one fits the move, otherwise what this is.
     private var label: String {
         if s.finished { return L("BREAK COMPLETE") }
-        return cue(for: s.current.move, at: s.moveTime)?.uppercased(with: Localizer.locale) ?? L("STRETCH BREAK")
+        return (cue(for: s.current.move, at: s.moveTime) ?? L("Stretch break with %@", s.buddy.name)).uppercased(with: Localizer.locale)
     }
 
     private var countdown: String {

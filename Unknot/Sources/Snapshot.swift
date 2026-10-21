@@ -181,9 +181,12 @@ enum Snapshot {
                         VStack(spacing: 0) {
                             BuddyView(move: .wave, buddy: buddy, fixedTime: 0.4 + Double(r * 5 + i) * 0.41)
                                 .frame(width: 130, height: 130)
-                            Text(buddy.name)
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(Color(hex: 0x4A403A))
+                            Text(verbatim: buddy.name)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(Color(hex: 0x3B332E))
+                            Text(buddy.kind)
+                                .font(.system(size: 12))
+                                .foregroundStyle(Color(hex: 0x8A7F77))
                         }
                     }
                 }

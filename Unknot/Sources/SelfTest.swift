@@ -37,6 +37,7 @@ extension Snapshot {
               "After Friday evening, work resumes Monday 08:00")
 
         check(Set(allExercises.map(\.id)).count == allExercises.count, "Exercise ids are unique")
+        check(Set(Buddy.allCases.map(\.name)).count == Buddy.allCases.count, "Every crew member has their own name")
         check(NSSound(named: "Unknot") != nil, "The app's own sound is bundled")
 
         let notch = CGRect(x: 270, y: 0, width: 185, height: 32)

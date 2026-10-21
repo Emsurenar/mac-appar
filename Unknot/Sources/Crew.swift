@@ -486,101 +486,153 @@ struct BunnyArt: CrewArt {
 
 // MARK: - Semla
 
-/// A Swedish cream bun: a cardamom bun with almond paste, a cloud of whipped cream and a sugared lid.
+/// A Swedish cream bun: the bottom of a cardamom bun, a layer of almond paste, piped whipped cream and the
+/// bun's top put back on as a lid, dusted with icing sugar.
 struct SemlaArt: CrewArt {
-    let accent = Color(hex: 0xE9C08C)
-    let detailColor = Color(hex: 0xC99B63)
-    let body: Path             // the bottom half of the bun
+    let accent = Color(hex: 0xE4AA66)           // golden crust
+    let detailColor = Color(hex: 0xD6AA72)      // almond paste
+    let body: Path                              // the bottom half of the bun
     let wash: Path
     let hatches: [Hatch]
-    let cream: Path
-    let creamHatch: Hatch
+    let paste: Path
+    let pasteGrain: Path
+    let rosettes: [(shape: Path, shadow: Hatch)] // back row first, so the front row overlaps it
+    let ridges: Path
     let lid: Path
+    let lidCut: Path                            // the cut face under the lid, pale crumb
     let lidHatch: Hatch
     let sugar: Path
-    let shoulders = [pt(58, 134), pt(142, 134)]
-    let arm = ArmStyle.noodle(length: 24, hand: .loop)
+    let powder: Path
+    let shine: Path
+    // The arms start just inside the bun's widest point, so a wave still fits in the frame
+    let shoulders = [pt(56, 140), pt(144, 140)]
+    let arm = ArmStyle.noodle(length: 22, hand: .loop)
     let armOffset = -10.0
-    let brow: CGPoint? = pt(115, 132)
-    let reachExtra: CGFloat = 34
-    let groundWidth: CGFloat = 90
-    private let cut = bend(pt(53, 122), pt(100, 128), pt(147, 122))
-    private let almondPaste = bend(pt(53, 122), pt(100, 128), pt(147, 122)).strokedPath(StrokeStyle(lineWidth: 4, lineCap: .round))
-    private let lidCenter = pt(102, 84)
+    let brow: CGPoint? = pt(116, 137)
+    let reachExtra: CGFloat = 26
+    let groundWidth: CGFloat = 96
+    private let lip = bend(pt(52, 123), pt(100, 131), pt(148, 123))
 
     init() {
         let base = makePath { p in
-            p.move(to: pt(53, 122))
-            p.addCurve(to: pt(100, 168), control1: pt(49, 150), control2: pt(71, 168))
-            p.addCurve(to: pt(147, 122), control1: pt(129, 168), control2: pt(151, 150))
-            p.addQuadCurve(to: pt(53, 122), control: pt(100, 128))
+            p.move(to: pt(52, 123))
+            p.addCurve(to: pt(66, 165), control1: pt(45, 136), control2: pt(49, 159))
+            p.addQuadCurve(to: pt(134, 165), control: pt(100, 170))
+            p.addCurve(to: pt(148, 123), control1: pt(151, 159), control2: pt(155, 136))
+            p.addQuadCurve(to: pt(52, 123), control: pt(100, 131))
         }
         body = base
-        wash = base
-        hatches = [Hatch.shadow(of: base, shift: 12)]
-        var c = Path(CGRect(x: 50, y: 106, width: 100, height: 20))
-        for (x, y, r) in [(58.0, 115.0, 13.0), (72.0, 105.0, 15.0), (89.0, 99.0, 16.0), (108.0, 98.0, 16.0), (126.0, 104.0, 15.0), (141.0, 114.0, 13.0)] {
-            c = c.union(oval(x, y, r * 2, r * 2))
+        // A glazed highlight on the shoulder of the bun stays unprinted
+        shine = bend(pt(57, 133), pt(57, 146), pt(65, 155)).strokedPath(StrokeStyle(lineWidth: 2.4, lineCap: .round))
+        wash = base.subtracting(shine)
+        hatches = [Hatch.shadow(of: base, shift: 14)]
+
+        paste = makePath { p in
+            p.move(to: pt(52, 123))
+            p.addQuadCurve(to: pt(148, 123), control: pt(100, 131))
+            p.addLine(to: pt(149, 119))
+            p.addQuadCurve(to: pt(51, 119), control: pt(100, 127))
+            p.closeSubpath()
         }
-        cream = c
-        creamHatch = Hatch(c.subtracting(c.applying(CGAffineTransform(translationX: -10, y: -5))), spacing: 3.6)
-        let l = makePath { p in
-            p.move(to: pt(71, 93))
-            p.addCurve(to: pt(133, 93), control1: pt(73, 62), control2: pt(131, 62))
-            p.addQuadCurve(to: pt(71, 93), control: pt(102, 99))
+        var grain = Path()
+        var r = SeededRandom(state: 91)
+        for _ in 0..<38 {
+            let x = 55 + r.next() * 90
+            let y = 121 + (1 - pow((x - 100) / 48, 2)) * 6 + (r.next() - 0.5) * 2
+            grain.addEllipse(in: CGRect(x: x - 0.45, y: y - 0.45, width: 0.9, height: 0.9))
         }
-        lid = l
-        lidHatch = Hatch.shadow(of: l, shift: 9, spacing: 2.4)
-        // Powdered sugar: fine paper-white dots on the top of the lid
-        var r = SeededRandom(state: 57)
+        pasteGrain = grain
+
+        // Whipped cream piped in soft, round swirls; the back row peeks out between the front ones
+        func swirl(_ x: CGFloat, _ baseY: CGFloat, _ w: CGFloat, _ h: CGFloat) -> Path {
+            makePath { p in
+                p.move(to: pt(x - w / 2, baseY))
+                p.addCurve(to: pt(x + 1, baseY - h), control1: pt(x - w / 2 - 2, baseY - h * 0.8), control2: pt(x - w * 0.32, baseY - h))
+                p.addCurve(to: pt(x + w / 2, baseY), control1: pt(x + w * 0.3, baseY - h), control2: pt(x + w / 2 + 2, baseY - h * 0.75))
+                p.closeSubpath()
+            }
+        }
+        let back: [(CGFloat, CGFloat, CGFloat, CGFloat)] = [(66, 114, 28, 30), (88, 112, 30, 36), (111, 111, 30, 37), (134, 114, 28, 30)]
+        let front: [(CGFloat, CGFloat, CGFloat, CGFloat)] = [(55, 124, 26, 19), (73, 125, 28, 26), (92, 126, 29, 30),
+                                                             (110, 126, 28, 27), (128, 125, 28, 25), (146, 124, 25, 18)]
+        var ridges = Path()
+        rosettes = (back + front).map { x, y, w, h in
+            let shape = swirl(x, y, w, h)
+            // One curl where the nozzle turned
+            ridges.addPath(bend(pt(x - w * 0.28, y - h * 0.5), pt(x - w * 0.1, y - h * 0.9), pt(x + w * 0.16, y - h * 0.78)))
+            return (shape, Hatch.shadow(of: shape, shift: 9, spacing: 4.2))
+        }
+        self.ridges = ridges
+
+        let top = makePath { p in
+            p.move(to: pt(62, 86))
+            p.addCurve(to: pt(140, 86), control1: pt(64, 55), control2: pt(138, 55))
+            p.addQuadCurve(to: pt(62, 86), control: pt(101, 93))
+        }
+        lid = top
+        lidCut = makePath { p in
+            p.move(to: pt(62, 86))
+            p.addQuadCurve(to: pt(140, 86), control: pt(101, 93))
+            p.addQuadCurve(to: pt(62, 86), control: pt(101, 98))
+            p.closeSubpath()
+        }
+        lidHatch = Hatch.shadow(of: top, shift: 11, spacing: 2.5)
+        // Icing sugar: fine dots, thickest on top of the lid, thinning out towards its edge
         var dots = Path()
         var placed = 0
-        while placed < 70 {
-            let q = pt(70 + r.next() * 64, 64 + r.next() * 26)
-            if l.contains(q) && q.y < 86 - abs(q.x - 102) * 0.12 {
-                let radius = 0.45 + r.next() * 0.55
+        var s = SeededRandom(state: 57)
+        while placed < 170 {
+            let q = pt(63 + s.next() * 76, 57 + s.next() * 26)
+            let fromTop = hypot((q.x - 101) / 40, (q.y - 63) / 20)
+            if top.contains(q) && s.next() > fromTop * 0.75 {
+                let radius = 0.35 + s.next() * 0.5
                 dots.addEllipse(in: CGRect(x: q.x - radius, y: q.y - radius, width: radius * 2, height: radius * 2))
                 placed += 1
             }
         }
         sugar = dots
+        powder = oval(100, 66, 46, 13).intersection(top)
     }
 
-    func feet(_ pen: Pen, _ f: CrewFrame) { ovalFeet(pen, [84, 116]) }
+    func feet(_ pen: Pen, _ f: CrewFrame) { ovalFeet(pen, [83, 117]) }
 
     func behind(_ pen: Pen, _ f: CrewFrame) {
-        pen.shape(cream)
-        pen.hatch(creamHatch)
-        // Piped swirls in the cream
-        for (cx, cy, r, from, to) in [(89.0, 99.0, 10.0, 200.0, 320.0), (108.0, 98.0, 10.0, 220.0, 340.0),
-                                      (72.0, 105.0, 9.0, 190.0, 300.0), (126.0, 104.0, 9.0, 240.0, 350.0)] {
-            pen.fine(makePath { $0.addArc(center: pt(cx, cy + 6), radius: r, startAngle: .degrees(from), endAngle: .degrees(to), clockwise: false) })
+        for rosette in rosettes {
+            pen.shape(rosette.shape, 1.7)
+            pen.hatch(rosette.shadow)
         }
+        pen.fine(ridges)
+        // The almond paste lies in front of the cream, on the cut face of the bun
+        pen.paper(paste)
+        pen.fine(paste)
+        pen.solid(pasteGrain, color: Pen.ink.opacity(0.55))
     }
 
     func onBody(_ pen: Pen, _ f: CrewFrame) {
-        pen.stroke(cut, 1.6)
+        pen.stroke(lip, 1.8)
     }
 
     func face(_ pen: Pen, _ f: CrewFrame) {
-        pen.eye(pt(89 + f.fx, 142), f)
-        pen.eye(pt(111 + f.fx, 142), f)
-        pen.mouth(pt(100 + f.fx, 150), f)
+        pen.eye(pt(89 + f.fx, 143), f)
+        pen.eye(pt(111 + f.fx, 143), f)
+        pen.mouth(pt(100 + f.fx, 151), f)
     }
 
     func front(_ pen: Pen, _ f: CrewFrame) {
-        // The lid sits on the cream and wobbles a little as the bun moves
-        let wobble = sin(f.t * 2.4) * 2.5 - f.pose.tilt * 0.4 - 4
-        let p = pen.rotated(wobble, around: pt(lidCenter.x, 94))
+        // The lid rests on the cream and wobbles a little as the bun moves
+        let wobble = sin(f.t * 2.4) * 2.2 - f.pose.tilt * 0.4 - 5
+        let p = pen.rotated(wobble, around: pt(101, 90))
+        p.paper(lidCut)
+        p.fine(lidCut)
         p.shape(lid)
         p.hatch(lidHatch)
-        p.fine(bend(pt(76, 91), pt(102, 96), pt(128, 91)))
-        p.tint(lid, accent.opacity(0.8))
+        p.tint(lid, Color(hex: 0xD9984F).opacity(0.85))
+        p.tint(lidCut, Color(hex: 0xF0D9B0))
+        p.c.fill(powder, with: .color(Pen.paper.opacity(0.45)))
         p.solid(sugar, color: Pen.paper)
     }
 
-    // A thin seam of almond paste where the bun was cut
-    func detail(_ f: CrewFrame) -> Path { almondPaste }
+    func detail(_ f: CrewFrame) -> Path { paste }
 }
 
 // MARK: - Chick

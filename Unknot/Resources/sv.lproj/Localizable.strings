@@ -60,7 +60,7 @@
 
 /* Menyraden */
 "%ld min" = "%ld min";
-"Next break in %ld minutes" = "Nästa sträckpaus om %ld minuter";
+"Next break at %@, in %ld min" = "Nästa sträckpaus kl. %@, om %ld min";
 "Next break in less than a minute" = "Nästa sträckpaus om mindre än en minut";
 "Stretch break in progress" = "Sträckpaus pågår";
 "Paused until %@" = "Pausad till %@";
@@ -201,3 +201,17 @@
 "The download was damaged. Please try again." = "Nedladdningen blev skadad. Försök igen.";
 "The download didn't contain the expected version of Unknot." = "Nedladdningen innehöll inte rätt version av Unknot.";
 "Couldn't unpack the update (%@)." = "Det gick inte att packa upp uppdateringen (%@).";
+
+/* Live cues during a move */
+"Breathe in · %ld" = "Andas in · %ld";
+"Breathe out · %ld" = "Andas ut · %ld";
+"Switch sides" = "Byt sida";
+"Shoulders up" = "Axlarna upp";
+"Hold" = "Håll";
+"And let go" = "Och släpp";
+
+/* Exercises added in 1.8.0 */
+"Shoulder shrugs" = "Axelryckningar";
+"Pull your shoulders up to your ears, hold for a moment, then let them drop." = "Dra upp axlarna mot öronen, håll en stund och släpp sedan ned dem.";
+"Shoulder stretch" = "Axelstretch";
+"Pull one arm across your chest with the other. Switch halfway." = "Dra ena armen över bröstet med den andra. Byt halvvägs.";

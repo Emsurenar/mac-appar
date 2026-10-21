@@ -28,7 +28,8 @@ final class Preferences: ObservableObject {
     static let exerciseCountOptions = [1, 2, 3, 4]
     static let awayOptions = [2, 5, 10, 15]
     static let snoozeOptions = [5, 10, 15]
-    static let soundOptions = ["Purr", "Pop", "Tink", "Glass", "Bottle", "Hero", "Submarine", "Blow", "Ping", "Morse", "Frog", "Funk"]
+    /// "Unknot" is the app's own sound (Resources/Unknot.wav, made by scripts/make_sound.py); the rest come with macOS.
+    static let soundOptions = ["Unknot", "Purr", "Pop", "Tink", "Glass", "Bottle", "Hero", "Submarine", "Blow", "Ping", "Morse", "Frog", "Funk"]
 
     private enum Key {
         static let interval = "intervalMinutes"
@@ -99,7 +100,7 @@ final class Preferences: ObservableObject {
             Key.breakLength: 30,
             Key.exerciseCount: 3,
             Key.soundEnabled: true,
-            Key.soundName: "Purr",
+            Key.soundName: "Unknot",
             Key.position: ReminderPosition.topCenter.rawValue,
             Key.showCountdown: false,
             Key.countAway: true,
@@ -118,7 +119,7 @@ final class Preferences: ObservableObject {
         breakSeconds = d.integer(forKey: Key.breakLength)
         exercisesPerBreak = d.integer(forKey: Key.exerciseCount)
         soundEnabled = d.bool(forKey: Key.soundEnabled)
-        soundName = d.string(forKey: Key.soundName) ?? "Purr"
+        soundName = d.string(forKey: Key.soundName) ?? "Unknot"
         position = ReminderPosition(rawValue: d.string(forKey: Key.position) ?? "") ?? .topCenter
         showCountdownInMenuBar = d.bool(forKey: Key.showCountdown)
         disabledExercises = Set(d.stringArray(forKey: Key.disabledExercises) ?? [])

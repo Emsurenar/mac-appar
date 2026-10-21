@@ -44,6 +44,8 @@ final class ReminderSession: NSObject, ObservableObject {
     /// When the current move began, so every exercise starts from rest.
     var moveStart: Date { finished ? finishDate : startDate.addingTimeInterval(Double(index) * perExercise) }
     var index: Int { min(Int(elapsed / perExercise), exercises.count - 1) }
+    /// How far into the current move the buddy is, in seconds.
+    var moveTime: Double { fixedTime ?? Date().timeIntervalSince(moveStart) }
     var current: Exercise { exercises[index] }
     var remaining: Int { max(0, Int((total - elapsed).rounded(.up))) }
 
@@ -117,6 +119,12 @@ struct ReminderView: View {
     private var dark: Bool { scheme == .dark }
     private var accent: Color { Brand.accent(dark) }
 
+    /// The small label at the top: a live cue while one fits the move, otherwise what this is.
+    private var label: String {
+        if s.finished { return L("BREAK COMPLETE") }
+        return cue(for: s.current.move, at: s.moveTime)?.uppercased(with: Localizer.locale) ?? L("STRETCH BREAK")
+    }
+
     private var countdown: String {
         String(format: "%d:%02d", s.remaining / 60, s.remaining % 60)
     }
@@ -130,13 +138,16 @@ struct ReminderView: View {
                 .overlay(BuddyView(move: s.finished ? .celebrate : s.current.move, buddy: s.buddy,
                                    fixedTime: s.fixedTime, epoch: s.moveStart).padding(4))
                 .frame(width: 116, height: 116)
+                .paperTone(scheme)
 
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(s.finished ? L("BREAK COMPLETE") : L("STRETCH BREAK"))
+                    Text(label)
                         .font(.system(size: 10.5, weight: .semibold))
                         .tracking(0.8)
                         .foregroundStyle(accent)
+                        .contentTransition(.opacity)
+                        .animation(.easeInOut(duration: 0.25), value: label)
                     Spacer()
                     if !s.finished {
                         Text(countdown)

@@ -172,6 +172,7 @@ struct BuddyCard: View {
                 BuddyView(move: .wave, buddy: buddy, fixedTime: hovering ? nil : stillTime)
                     .frame(width: 72, height: 72)
                     .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Pen.paper))
+                    .paperTone(scheme)
                     .saturation(isOn ? 1 : 0)
                     .opacity(isOn ? 1 : 0.5)
                 Text(buddy.name)
@@ -247,12 +248,14 @@ struct ExerciseRow: View {
     @Binding var isOn: Bool
     var isLocked: Bool
     @State private var hovering = false
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         HStack(spacing: 12) {
             BuddyView(move: exercise.move, buddy: buddy, fixedTime: hovering ? nil : 1.2)
                 .frame(width: 48, height: 48)
                 .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Pen.paper))
+                .paperTone(scheme)
             VStack(alignment: .leading, spacing: 2) {
                 Text(exercise.title).fontWeight(.medium)
                 Text(exercise.text)

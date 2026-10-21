@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.8.0 – 2026-10-21
+
+- **Live cues.** The label at the top of a break keeps time with the move: *Breathe in · 3* during deep
+  breaths, *Switch sides* halfway through a side bend, a neck stretch or a twist.
+- **Two new exercises:** shoulder shrugs and a shoulder stretch with one arm across your chest.
+- **Unknot's own sound**: two soft wooden notes instead of a macOS alert. The other sounds are still there.
+- The menu shows the time of the next break, not just how far away it is.
+- In dark mode the paper behind the crew is printed a little dimmer, so it doesn't glare.
+- `install.sh` checks the macOS version, says which version it installed, and can uninstall everything with
+  `--uninstall`.
+- A small website at [emsurenar.github.io/unknot](https://emsurenar.github.io/unknot/).
+
 ## 1.7.0 – 2026-10-21
 
 - **Out of the notch.** A break now starts as a drop of black inside the camera notch, falls out of it and

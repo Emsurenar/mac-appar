@@ -17,6 +17,7 @@
 
 <p align="center">
   <a href="https://github.com/Emsurenar/unknot/releases/latest"><strong>Download for macOS</strong></a>
+  &nbsp;·&nbsp; <a href="https://emsurenar.github.io/unknot/">Website</a>
   &nbsp;·&nbsp; macOS 14 or later &nbsp;·&nbsp; Apple silicon and Intel &nbsp;·&nbsp; Free and open source
 </p>
 
@@ -63,7 +64,8 @@ the frog in the menu bar points the way.
 
 Each break picks a few exercises at random from the ones you've switched on. Every exercise has its own
 animation: the crew reaches up and holds on tiptoe, leans into a side bend and pauses there, shades its eyes
-with one hand while you look into the distance.
+with one hand while you look into the distance. Where timing matters, the label at the top keeps time with
+it: *Breathe in · 3*, *Switch sides*.
 
 | Exercise | What you do |
 | --- | --- |
@@ -79,6 +81,8 @@ with one hand while you look into the distance.
 | Wrist circles | Roll your wrists slowly in both directions |
 | Shake it out | Shake out your arms and hands |
 | Back hug | Hug yourself and breathe into your back |
+| Shoulder shrugs | Shoulders up to your ears, hold, let them drop |
+| Shoulder stretch | Pull one arm across your chest, switch halfway |
 
 **Done** ends the break early and counts it. **In 5 min** puts it off for a while.
 
@@ -144,12 +148,14 @@ displays.
 **How do I update?** Unknot tells you in the menu when a new version is out, and installs it with one click.
 Running the install command again works too.
 
-**How do I uninstall it?** Turn off **Open at login** under Settings if you enabled it, choose **Quit Unknot**
-in the menu and drag the app to the Trash. To remove its settings and statistics as well:
+**How do I uninstall it?** This removes the app, its login item, settings and statistics:
 
 ```bash
-defaults delete io.github.emsurenar.unknot
+curl -fsSL https://raw.githubusercontent.com/Emsurenar/unknot/main/install.sh | bash -s -- --uninstall
 ```
+
+Or by hand: turn off **Open at login** under Settings, choose **Quit Unknot** in the menu, drag the app to the
+Trash and run `defaults delete io.github.emsurenar.unknot`.
 
 **It was called Sträckis.** Same app, new name since 1.2.0. Updating keeps your settings and statistics.
 

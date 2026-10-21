@@ -4,6 +4,7 @@ import Foundation
 enum Move: String, CaseIterable {
     case armsUp, sideBend, neckTilt, shoulderRoll, twist, breathe, lookAway
     case armsWide, calfRaise, wristCircles, wiggle, hug
+    case shrug, crossArm
     case celebrate, wave
 }
 
@@ -36,6 +37,8 @@ let allExercises: [Exercise] = [
     Exercise(.wristCircles, "Wrist circles", "Slowly roll your wrists in both directions."),
     Exercise(.wiggle, "Shake it out", "Shake out your arms and hands for a few seconds."),
     Exercise(.hug, "Back hug", "Give yourself a hug and breathe deeply into your back."),
+    Exercise(.shrug, "Shoulder shrugs", "Pull your shoulders up to your ears, hold for a moment, then let them drop."),
+    Exercise(.crossArm, "Shoulder stretch", "Pull one arm across your chest with the other. Switch halfway."),
 ]
 
 /// Shown when a break is finished.

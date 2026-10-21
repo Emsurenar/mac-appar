@@ -7,6 +7,7 @@ struct WelcomeView: View {
     var onTryBreak: () -> Void
     var onDone: () -> Void
 
+    @Environment(\.colorScheme) private var scheme
     @State private var moveError: String?
     @State private var buddy = Preferences.shared.randomBuddy()
     private let inApplications = AppMover.isInApplicationsFolder
@@ -16,6 +17,7 @@ struct WelcomeView: View {
             BuddyView(move: .wave, buddy: buddy, epoch: Date())
                 .frame(width: 150, height: 150)
                 .background(Circle().fill(Pen.paper).frame(width: 168, height: 168))
+                .paperTone(scheme)
                 .padding(.top, 34)
 
             Text(L("Welcome to Unknot"))

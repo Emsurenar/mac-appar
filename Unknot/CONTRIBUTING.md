@@ -52,7 +52,8 @@ Add `-AppleLanguages '(sv)'` to any of them to see the Swedish version.
 | `Sources/Updater.swift` | Checking GitHub for a new version and installing it |
 | `Sources/Preferences.swift` | All settings and statistics, stored in `UserDefaults` |
 | `Sources/Snapshot.swift` | The command-line helpers above and the self-test |
-| `Resources/*.lproj` | Translations |
+| `Resources/*.lproj`, `Resources/Unknot.wav` | Translations, and the break sound (made by `scripts/make_sound.py`) |
+| `docs/` | The website at emsurenar.github.io/unknot (`index.html`) and the README images |
 
 ## Adding a crew member
 

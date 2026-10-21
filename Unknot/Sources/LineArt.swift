@@ -179,6 +179,13 @@ struct Pen {
     }
 }
 
+extension View {
+    /// The crew always stands on paper. In dark mode the paper is printed a little dimmer, so it doesn't glare.
+    func paperTone(_ scheme: ColorScheme) -> some View {
+        colorMultiply(scheme == .dark ? Color(hex: 0xE3DCCF) : .white)
+    }
+}
+
 // MARK: - Frame
 
 /// What the drawing needs to know about the current moment.

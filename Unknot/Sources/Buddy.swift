@@ -210,6 +210,31 @@ func pose(for move: Move, at t: Double) -> Pose {
         p.tilt = sin(t * 1.1) * 4
         p.eyes = .happy
 
+    case .shrug:
+        // Shoulders up to the ears, a held squeeze, then let everything drop
+        let c = phase(t, 3.6)
+        let up = hold(c, 0.05, 0.30, 0.55, 0.72)
+        let drop = bump(c, at: 0.78, width: 0.08)
+        // The arms ride up with the shoulders and the body squeezes down between them
+        p.shoulderLift = up * 12
+        p.leftArm = 20 + up * 16
+        p.rightArm = 20 + up * 16
+        p.scaleY += -up * 0.035 - drop * 0.02
+        p.scaleX += up * 0.025 + drop * 0.02
+        p.eyes = up > 0.75 ? .closed : .open
+        p.mouth = c > 0.72 && c < 0.86 ? .o : .smile
+
+    case .crossArm:
+        // One arm pulled across the chest by the other, held, then the other side
+        let c = phase(t, 6.4)
+        let right = hold(c, 0.04, 0.2, 0.4, 0.5)
+        let left = hold(c, 0.54, 0.7, 0.9, 1.0)
+        p.rightArm = 25 - right * 88 - left * 30
+        p.leftArm = 25 - left * 88 - right * 30
+        p.tilt = (left - right) * 2.5
+        p.faceShiftX = (left - right) * 2.5
+        p.eyes = max(right, left) > 0.8 ? .happy : .open
+
     case .celebrate:
         // Little jumps with arms up, squash on every landing
         let c = phase(t, 0.84)
@@ -231,4 +256,32 @@ func pose(for move: Move, at t: Double) -> Pose {
         p.mouth = .open
     }
     return p
+}
+
+// MARK: Cues
+
+/// A few words to go with the move at time `t`, when timing matters: when to breathe in, when to switch
+/// sides. They follow the same timings as the poses above.
+func cue(for move: Move, at t: Double) -> String? {
+    switch move {
+    case .breathe:
+        let c = phase(t, 8)
+        let count = min(Int(c.truncatingRemainder(dividingBy: 0.5) / 0.125) + 1, 4)
+        return c < 0.5 ? L("Breathe in · %ld", count) : L("Breathe out · %ld", count)
+    case .sideBend, .neckTilt:
+        let c = phase(t, 6.4)
+        return c > 0.42 && c < 0.62 ? L("Switch sides") : nil
+    case .twist:
+        let c = phase(t, 5.6)
+        return c > 0.42 && c < 0.62 ? L("Switch sides") : nil
+    case .crossArm:
+        let c = phase(t, 6.4)
+        return c > 0.42 && c < 0.62 ? L("Switch sides") : nil
+    case .shrug:
+        let c = phase(t, 3.6)
+        if c < 0.05 || c > 0.82 { return nil }
+        return c < 0.30 ? L("Shoulders up") : (c < 0.55 ? L("Hold") : L("And let go"))
+    default:
+        return nil
+    }
 }

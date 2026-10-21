@@ -86,11 +86,12 @@ enum Snapshot {
         save(framed(ReminderView(s: done), dark: false), to: "\(dir)/card-done.png")
     }
 
-    /// Every buddy in a few poses: a contact sheet for checking the drawings.
+    /// Every buddy in a dozen poses: a contact sheet for checking the drawings.
     static func cast(to path: String) {
         // Each move at a telling moment: the top of a reach, the middle of a hold, the peak of a jump
         let moves: [(Move, Double)] = [(.wave, 0.5), (.armsUp, 2.3), (.sideBend, 1.7), (.twist, 1.7),
-                                       (.armsWide, 2.4), (.hug, 1.6), (.lookAway, 1.9), (.calfRaise, 1.0), (.celebrate, 0.28)]
+                                       (.armsWide, 2.4), (.hug, 1.6), (.lookAway, 1.9), (.calfRaise, 1.0), (.celebrate, 0.28),
+                                       (.shrug, 1.5), (.crossArm, 1.9), (.crossArm, 5.1)]
         let sheet = VStack(spacing: 0) {
             ForEach(Buddy.allCases) { buddy in
                 HStack(spacing: 0) {
@@ -110,7 +111,8 @@ enum Snapshot {
     static func filmstrip(to path: String) {
         let rows: [(Buddy, Move, Double)] = [(.frog, .armsUp, 4.6), (.frog, .sideBend, 6.4), (.mochi, .twist, 5.6), (.cat, .lookAway, 6.4),
                                              (.semla, .armsWide, 4.8), (.chick, .hug, 3.14), (.toast, .calfRaise, 2.4), (.panda, .breathe, 8),
-                                             (.bunny, .wiggle, 1.4), (.cactus, .celebrate, 0.84), (.onigiri, .wristCircles, 1.05), (.frog, .shoulderRoll, 2.2)]
+                                             (.bunny, .wiggle, 1.4), (.cactus, .celebrate, 0.84), (.onigiri, .wristCircles, 1.05), (.frog, .shoulderRoll, 2.2),
+                                             (.frog, .shrug, 3.6), (.cat, .crossArm, 6.4)]
         let sheet = VStack(alignment: .leading, spacing: 0) {
             ForEach(rows.indices, id: \.self) { r in
                 HStack(spacing: 0) {
@@ -346,6 +348,7 @@ enum Snapshot {
               "After Friday evening, work resumes Monday 08:00")
 
         check(Set(allExercises.map(\.id)).count == allExercises.count, "Exercise ids are unique")
+        check(NSSound(named: "Unknot") != nil, "The app's own sound is bundled")
 
         let notch = CGRect(x: 270, y: 0, width: 185, height: 32)
         let card = CGRect(x: 36, y: 42, width: 404, height: 144)

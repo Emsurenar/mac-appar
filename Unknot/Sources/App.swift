@@ -9,6 +9,10 @@ struct UnknotMain {
     @MainActor static func main() {
         let app = NSApplication.shared
         if Snapshot.run(CommandLine.arguments) { return }
+        if CommandLine.arguments.contains("--remove-login-item") {
+            try? LoginItem.setEnabled(false)  // used by `install.sh --uninstall`
+            return
+        }
         LegacyMigration.run()  // before anything reads the settings
         let delegate = AppDelegate()
         app.delegate = delegate
@@ -173,7 +177,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusText: String {
         switch scheduler.status {
         case .upcoming(let minutes):
-            return minutes <= 1 ? L("Next break in less than a minute") : L("Next break in %ld minutes", minutes)
+            if minutes <= 1 { return L("Next break in less than a minute") }
+            return L("Next break at %@, in %ld min", Self.format(scheduler.nextBreak), minutes)
         case .waiting(.call):
             return L("Break waiting until your call ends")
         case .waiting(.fullScreen):

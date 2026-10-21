@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.19.1 – 2026-10-21
+
+- **Alexander Bard's eyes look like his own**: pale grey-blue with big irises, open wide under heavy lids,
+  the outer corners sloping down a little, with slightly puffy lower lids. They replace the round cartoon eyes.
+
 ## 1.19.0 – 2026-10-21
 
 - **Fixed: clothes coloured over faces.** The colour of Stefan Löfven's jacket, Jesus's tunic and mantle,

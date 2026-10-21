@@ -1011,7 +1011,9 @@ struct BardArt: CrewArt {
     let moustache: Path
     let skin: Path
     let earTint: Path
-    let eyes = ToonEyes(centers: [pt(90.5, 90), pt(109.5, 90)], r: 4.4, lid: 0.3, skin: 0xF0C0AA, bags: 1)
+    // Pale grey-blue eyes with big irises under heavy lids, the outer corners sloping down a little
+    let eyes = PersonEyes(centers: [pt(90, 90.5), pt(110, 90.5)], w: 5.6, h: 2.6, iris: 2.7, tilt: -0.6,
+                          irisColor: Color(hex: 0x8AA6C2), lid: 1.9, fold: 1)
     let shoulders = [pt(71, 129), pt(129, 129)]
     let arm = ArmStyle.noodle(length: 26, hand: .loop)
     let armOffset = -12.0
@@ -1148,6 +1150,11 @@ struct BardArt: CrewArt {
 
     func face(_ pen: Pen, _ f: CrewFrame) {
         let x = f.fx
+        // Slightly puffy lower lids with a line under each eye
+        for s: CGFloat in [-1, 1] {
+            pen.c.stroke(bend(pt(100 + s * 6 + x, 94.5), pt(100 + s * 10 + x, 96.2), pt(100 + s * 14.5 + x, 94.3)),
+                         with: .color(Pen.ink.opacity(0.45)), lineWidth: 0.9)
+        }
         // Pale brows, barely there
         pen.c.stroke(bend(pt(84.5 + x, 83), pt(90 + x, 81.5), pt(95.5 + x, 83)), with: .color(Pen.ink.opacity(0.5)), lineWidth: 1.2)
         pen.c.stroke(bend(pt(104.5 + x, 83), pt(110 + x, 81.5), pt(115.5 + x, 83)), with: .color(Pen.ink.opacity(0.5)), lineWidth: 1.2)

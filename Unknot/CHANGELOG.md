@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.21.2 – 2026-10-21
+
+- **Kaknästornet, closer to the real tower.** The platforms for the radio links sit on sloping undersides in
+  shade, like on the tower, with white drum antennas on their ends instead of round dishes on sticks. The
+  restaurant floors step back to the shaft on a deep soffit, a slab runs between the two bands of bronze glass,
+  and the glass is a warmer bronze.
+- The README and the website show the welcome window, and the website's link to the questions works again.
+- For contributors: `--only kaknas,semla` narrows `--portraits`, `--moves` and `--benchmark` to a few members
+  of the crew.
+
 ## 1.21.1 – 2026-10-21
 
 - **René Descartes, closer to Frans Hals's portrait.** His hair is parted a little off centre with the middle

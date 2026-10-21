@@ -36,7 +36,9 @@ $U --verify-latest-release              # downloads and checks the latest releas
 $U --benchmark                          # how long one frame of each crew member takes to draw
 ```
 
-Add `-AppleLanguages '(sv)'` to any of them to see the Swedish version.
+Add `--only kaknas,semla` to `--portraits`, `--moves` or `--benchmark` to look at just a few members of the
+crew, and `-AppleLanguages '(sv)'` to any of them to see the Swedish version. Benchmark on mains power: in Low
+Power Mode every figure takes about 70 % longer, which is why the app draws at 30 frames a second then.
 
 ## How the code is laid out
 

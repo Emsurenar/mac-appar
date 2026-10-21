@@ -924,7 +924,7 @@ struct OnigiriArt: CrewArt {
 /// brackets, a box above it and a lattice mast.
 struct KaknasArt: CrewArt {
     let accent = Color(hex: 0xBEBAB3)            // concrete
-    let detailColor = Color(hex: 0x8C6B50)       // the windows of the restaurant floors
+    let detailColor = Color(hex: 0x9A7650)       // the bronze glass of the restaurant floors
     let body: Path
     let wash: Path
     let hatches: [Hatch]
@@ -932,9 +932,13 @@ struct KaknasArt: CrewArt {
     let topHatch: Hatch
     let windows: Path
     let mullions: Path
-    let brackets: Path
-    let platforms: Path
-    let platformBrackets: Path
+    let ledge: Path
+    let soffit: Path                             // the sloping concrete under the restaurant floors
+    let soffitHatch: Hatch
+    let slabs: Path
+    let undersides: Path                         // the platforms' sloping undersides, always in shade
+    let undersideHatch: Hatch
+    let drums: [(CGPoint, CGFloat)]              // the white drum antennas: where, and which way they face
     let box: Path
     let mast: Path
     let marks: Path
@@ -947,6 +951,9 @@ struct KaknasArt: CrewArt {
     let groundWidth: CGFloat = 72
     var headBox: CGRect { CGRect(x: 75, y: 58, width: 50, height: 28) }
 
+    /// The platform levels for the radio links (the real tower has four; three read better this small).
+    static let levels: [CGFloat] = [121, 131.5, 142]
+
     init() {
         let shaft = makePath { p in
             p.move(to: pt(86, 86)); p.addLine(to: pt(114, 86)); p.addLine(to: pt(116, 164))
@@ -955,34 +962,40 @@ struct KaknasArt: CrewArt {
         }
         body = shaft
         hatches = [Hatch.shadow(of: shaft, shift: 9)]
-        // The top: floors with chamfered corners, two bands of windows
+        // The top: floors with chamfered corners, two bands of bronze windows and a slab between them
         let t = makePath { p in
             p.move(to: pt(79, 60)); p.addLine(to: pt(121, 60)); p.addLine(to: pt(125, 64)); p.addLine(to: pt(125, 81))
-            p.addLine(to: pt(121, 85)); p.addLine(to: pt(79, 85)); p.addLine(to: pt(75, 81)); p.addLine(to: pt(75, 64)); p.closeSubpath()
+            p.addLine(to: pt(121, 84)); p.addLine(to: pt(79, 84)); p.addLine(to: pt(75, 81)); p.addLine(to: pt(75, 64)); p.closeSubpath()
         }
         top = t
         topHatch = Hatch.shadow(of: t, shift: 8, spacing: 2.6)
-        windows = Path(CGRect(x: 77, y: 64, width: 46, height: 6.5)).union(Path(CGRect(x: 77, y: 73.5, width: 46, height: 6.5)))
+        windows = Path(CGRect(x: 77, y: 63.5, width: 46, height: 6.5)).union(Path(CGRect(x: 77, y: 74, width: 46, height: 6.5)))
         mullions = makePath { p in
             for x in stride(from: 80.0, through: 120.0, by: 4.0) {
-                p.move(to: pt(x, 64)); p.addLine(to: pt(x, 70.5))
-                p.move(to: pt(x, 73.5)); p.addLine(to: pt(x, 80))
+                p.move(to: pt(x, 63.5)); p.addLine(to: pt(x, 70))
+                p.move(to: pt(x, 74)); p.addLine(to: pt(x, 80.5))
             }
         }
-        brackets = makePath { p in
-            p.move(to: pt(76, 85)); p.addLine(to: pt(86, 94)); p.addLine(to: pt(86, 85))
-            p.move(to: pt(124, 85)); p.addLine(to: pt(114, 94)); p.addLine(to: pt(114, 85))
+        ledge = Path(roundedRect: CGRect(x: 73, y: 70.6, width: 54, height: 2.8), cornerRadius: 0.8)
+        // Under the top the floors step back to the shaft on a deep, sloping soffit
+        let under = makePath { p in
+            p.move(to: pt(77, 84)); p.addLine(to: pt(123, 84)); p.addLine(to: pt(114, 93)); p.addLine(to: pt(86, 93)); p.closeSubpath()
         }
-        // Platforms for the dishes, each on two brackets
-        var slabs = Path()
-        var under = Path()
-        for y: CGFloat in [126, 135, 144] {
-            slabs.addRoundedRect(in: CGRect(x: 75, y: y, width: 50, height: 3.2), cornerSize: CGSize(width: 1, height: 1))
-            under.move(to: pt(77, y + 3.2)); under.addLine(to: pt(85, y + 8)); under.addLine(to: pt(85, y + 3.2))
-            under.move(to: pt(123, y + 3.2)); under.addLine(to: pt(115, y + 8)); under.addLine(to: pt(115, y + 3.2))
+        soffit = under
+        soffitHatch = Hatch(under, spacing: 2.7, angle: -35)
+        // Platforms that run round the shaft, each slab on a sloping underside
+        var slab = Path(), below = Path()
+        for y in Self.levels {
+            slab.addRoundedRect(in: CGRect(x: 74, y: y, width: 52, height: 2.5), cornerSize: CGSize(width: 0.8, height: 0.8))
+            below.move(to: pt(75, y + 2.5)); below.addLine(to: pt(125, y + 2.5))
+            below.addLine(to: pt(115.1, y + 6.3)); below.addLine(to: pt(84.9, y + 6.3)); below.closeSubpath()
         }
-        platforms = slabs
-        platformBrackets = under
+        slabs = slab
+        undersides = below
+        undersideHatch = Hatch(below, spacing: 2.7, angle: -35)
+        // Where the drums stand, like on the photographs: mostly on one side, a few on the other
+        let L = Self.levels
+        drums = [(pt(122.5, L[0] - 2.6), 1), (pt(123, L[1] - 2.6), 1), (pt(77.5, L[1] - 2.6), -1), (pt(122.5, L[2] - 2.6), 1)]
         box = Path(CGRect(x: 90, y: 50, width: 20, height: 10))
         // The lattice mast, tapering, braced in a zigzag, with a few short antennas
         mast = makePath { p in
@@ -999,14 +1012,14 @@ struct KaknasArt: CrewArt {
             }
             for (y, w) in [(44.0, 7.0), (38.0, 5.5)] { p.move(to: pt(100 - w, y)); p.addLine(to: pt(100 + w, y)) }
         }
-        // The shuttering marks in the concrete, a groove and a column of small windows
+        // The shuttering marks in the concrete: a groove, a column of small windows and the white panel
         marks = makePath { p in
-            p.move(to: pt(100, 120)); p.addLine(to: pt(100, 162))
-            for y in stride(from: 152.0, through: 162.0, by: 10.0) { p.addRect(CGRect(x: 102.5, y: y - 1.6, width: 3, height: 3.2)) }
-            p.addRect(CGRect(x: 94.5, y: 116, width: 3, height: 3)); p.addRect(CGRect(x: 102.5, y: 116, width: 3, height: 3))
+            p.move(to: pt(100, 152)); p.addLine(to: pt(100, 162))
+            for y in stride(from: 155.0, through: 162.0, by: 7.0) { p.addRect(CGRect(x: 103, y: y - 1.5, width: 2.6, height: 3)) }
+            p.addRect(CGRect(x: 94.5, y: 113.5, width: 3, height: 3)); p.addRect(CGRect(x: 102.5, y: 113.5, width: 3, height: 3))
         }
         wash = shaft
-        concrete = t.subtracting(windows).union(slabs).union(box)
+        concrete = t.subtracting(windows).union(slab).union(box).union(ledge)
     }
 
     func feet(_ pen: Pen, _ f: CrewFrame) { ovalFeet(pen, [91, 109], width: 15) }
@@ -1020,17 +1033,20 @@ struct KaknasArt: CrewArt {
 
     func onBody(_ pen: Pen, _ f: CrewFrame) {
         pen.fine(marks)
-        for y in stride(from: 100.0, through: 160.0, by: 6.0) {
+        for y in stride(from: 98.0, through: 160.0, by: 6.0) where y < 119 || y > 149 {
             pen.c.stroke(line(pt(85.5, y), pt(87.5, y)), with: .color(Pen.ink.opacity(0.35)), lineWidth: 0.7)
             pen.c.stroke(line(pt(112.5, y), pt(114.5, y)), with: .color(Pen.ink.opacity(0.35)), lineWidth: 0.7)
         }
-        pen.shape(platforms, 1.5)
-        pen.fine(platformBrackets)
-        pen.shape(brackets, 1.5)
+        pen.shape(undersides, 1.3)
+        pen.hatch(undersideHatch)
+        pen.shape(slabs, 1.5)
+        pen.shape(soffit, 1.5)
+        pen.hatch(soffitHatch)
         pen.shape(top)
         pen.hatch(topHatch)
         pen.shape(windows, 1.2)
         pen.fine(mullions)
+        pen.shape(ledge, 1.4)
     }
 
     func face(_ pen: Pen, _ f: CrewFrame) {
@@ -1040,20 +1056,26 @@ struct KaknasArt: CrewArt {
     }
 
     func overlay(_ pen: Pen, _ f: CrewFrame) {
-        // White dishes at the ends of the platforms, turned to the sides
-        for y: CGFloat in [126, 135, 144] {
-            for x: CGFloat in [79, 121] {
-                let dish = oval(x, y - 2.6, 4.6, 5.2)
-                pen.paper(dish)
-                pen.c.stroke(dish, with: .color(Pen.ink), lineWidth: 1)
-                pen.fine(line(pt(x, y - 2.6), pt(x + (x < 100 ? -2.2 : 2.2), y - 3.4)))
+        // White drum antennas on the platforms, turned out to the sides: a short cylinder with a round face
+        for (c, side) in drums {
+            let back = c.x - side * 2.4, face = c.x + side * 2.4
+            let tube = makePath { p in
+                p.move(to: pt(back, c.y - 2.9)); p.addLine(to: pt(face, c.y - 2.9))
+                p.addLine(to: pt(face, c.y + 2.9)); p.addLine(to: pt(back, c.y + 2.9))
+                p.addQuadCurve(to: pt(back, c.y - 2.9), control: pt(back - side * 1.8, c.y))
             }
+            let end = oval(face, c.y, 3, 5.8)
+            pen.paper(tube.union(end))
+            pen.c.stroke(tube, with: .color(Pen.ink), lineWidth: 1)
+            pen.c.stroke(end, with: .color(Pen.ink), lineWidth: 1)
+            pen.c.stroke(line(pt(back + side * 0.6, c.y + 2), pt(face - side * 0.4, c.y + 2)),
+                         with: .color(Pen.ink.opacity(0.4)), lineWidth: 0.6)
         }
     }
 
     func detail(_ f: CrewFrame) -> Path { windows }
 
     func extras(_ f: CrewFrame) -> [(Path, Color)] {
-        [(concrete, Color(hex: 0xC9C5BE))]
+        [(concrete, Color(hex: 0xC9C5BE)), (soffit.union(undersides), Color(hex: 0xB6B1A9))]
     }
 }

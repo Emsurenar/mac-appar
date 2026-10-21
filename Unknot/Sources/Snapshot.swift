@@ -22,10 +22,12 @@ enum Snapshot {
         if let path = value("--menubar-icons") { menuBarIcons(to: path); return true }
         if let dir = value("--capture-drop") { captureDrop(in: dir); return true }
         if args.contains("--verify-latest-release") { verifyLatestRelease(); return true }
-        if args.contains("--benchmark") { benchmark(); return true }
+        // `--only kaknas,semla` narrows the benchmark, portraits and moves to a few members of the crew
+        let only = value("--only").map { $0.split(separator: ",").compactMap { Buddy(rawValue: String($0)) } }
+        if args.contains("--benchmark") { benchmark(only ?? Buddy.allCases); return true }
         if let path = value("--transitions") { transitions(to: path); return true }
-        if let path = value("--portraits") { portraits(to: path); return true }
-        if let path = value("--moves") { moves(to: path); return true }
+        if let path = value("--portraits") { portraits(to: path, people: only); return true }
+        if let path = value("--moves") { moves(to: path, cast: only); return true }
         if args.contains("--selftest") { exit(selfTest() ? 0 : 1) }
         return false
     }
@@ -152,11 +154,11 @@ enum Snapshot {
 
     /// Every exercise at the moment that shows it best, done by a spread of the crew: a sheet for checking
     /// that each one really looks like the exercise.
-    static func moves(to path: String) {
+    static func moves(to path: String, cast only: [Buddy]? = nil) {
         let peaks: [(Move, Double)] = [(.armsUp, 2.3), (.sideBend, 1.7), (.neckTilt, 1.8), (.shoulderRoll, 1.2), (.twist, 1.7),
                                        (.breathe, 3.6), (.lookAway, 1.9), (.armsWide, 2.4), (.calfRaise, 1.1), (.wristCircles, 2.0),
                                        (.wiggle, 0.5), (.hug, 1.6), (.shrug, 1.5), (.crossArm, 1.9)]
-        let cast: [Buddy] = [.mochi, .frog, .semla, .crispbread, .kaknas, .stefan, .jesus, .gandhi, .descartes, .bard]
+        let cast: [Buddy] = only ?? [.mochi, .frog, .semla, .crispbread, .kaknas, .stefan, .jesus, .gandhi, .descartes, .bard]
         let sheet = VStack(alignment: .leading, spacing: 0) {
             ForEach(peaks.indices, id: \.self) { r in
                 HStack(spacing: 0) {
@@ -173,8 +175,8 @@ enum Snapshot {
     }
 
     /// The people in the crew, large, waving and at rest, for checking the likeness.
-    static func portraits(to path: String) {
-        let people: [Buddy] = [.stefan, .jesus, .gandhi, .descartes, .bard]
+    static func portraits(to path: String, people only: [Buddy]? = nil) {
+        let people: [Buddy] = only ?? [.stefan, .jesus, .gandhi, .descartes, .bard]
         let sheet = VStack(spacing: 0) {
             ForEach([(Move.wave, 0.5), (Move.breathe, 6.5)], id: \.1) { move, t in
                 HStack(spacing: 0) {
@@ -386,11 +388,11 @@ enum Snapshot {
     }
 
     /// How long one frame of each crew member takes to draw, at the size of the break panel.
-    static func benchmark() {
+    static func benchmark(_ crew: [Buddy]) {
         let context = CGContext(data: nil, width: 232, height: 232, bitsPerComponent: 8, bytesPerRow: 0,
                                 space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
-        for buddy in Buddy.allCases {
-            let frames = 240
+        for buddy in crew {
+            let frames = crew.count == 1 ? 2400 : 240
             let start = Date()
             for i in 0..<frames {
                 let t = Double(i) / 120

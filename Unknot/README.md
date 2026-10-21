@@ -82,8 +82,13 @@ unzip it and move **Unknot** to **Applications**.
 
 ## Using Unknot
 
-On first launch a welcome window sets the break interval and whether Unknot opens at login. From then on the
-app lives in the menu bar as a small frog.
+On first launch a welcome window sets the break interval and whether Unknot opens at login, and **Show me a
+break** plays one straight away so you know what to expect. From then on the app lives in the menu bar as a
+small frog.
+
+<p align="center">
+  <img src="docs/welcome.png" width="360" alt="The welcome window: an introduction from a member of the Stretch Crew, the break interval, open at login and a button to try a break">
+</p>
 
 <p align="center">
   <img src="docs/break-light.png" width="420" alt="A stretch break in light mode">

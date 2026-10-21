@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.7.0 – 2026-10-21
+
+- **Out of the notch.** A break now starts as a drop of black inside the camera notch, falls out of it and
+  opens into the glass panel, then shrinks back into the notch when it's done. On screens without a notch it
+  unfolds from under the menu bar.
+- **Waits for your calls.** A break that's due holds off while another app uses the microphone or camera,
+  and sitting still through a call no longer counts as time away. Unknot only checks whether they're on.
+  Turn it off under Settings → Schedule.
+- **One-click updates.** When a new version is out, choose it in the menu and Unknot downloads it from
+  GitHub, checks its SHA-256 checksum, replaces itself and restarts.
+- **A frog in the menu bar** instead of a generic symbol. It closes its eyes while reminders are paused and
+  smiles during a break.
+- A clearer first launch: the welcome window explains what happens, and afterwards a small note points at
+  the menu bar icon.
+- When a break is done it shows the time of the next one, with new lines to finish on.
+- Drawing the crew is cheaper: shapes that never change are no longer rebuilt for every frame.
+- A rewritten README with a FAQ, and a CONTRIBUTING guide with the code map and the command-line helpers.
+
 ## 1.6.0 – 2026-10-21
 
 - **Breaks drop down from the camera.** The panel now slides out from under the menu bar at the top center of

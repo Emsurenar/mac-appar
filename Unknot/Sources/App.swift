@@ -2,6 +2,7 @@
 
 import AppKit
 import Combine
+import SwiftUI
 
 @main
 struct UnknotMain {
@@ -25,7 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let scheduler = BreakScheduler()
     private let prefs = Preferences.shared
     private var cancellables = Set<AnyCancellable>()
-    private var shownIcon = ""
+    private var shownMood: MenuBarIcon.Mood?
     private var shownTitle: String?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -43,6 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem.menu = menu
 
         WindowManager.shared.onTestBreak = { [weak self] in self?.scheduler.showBreakNow() }
+        WindowManager.shared.onWelcomeFinished = { [weak self] in self?.showMenuBarHint() }
         scheduler.onChange = { [weak self] in self?.updateStatusItem() }
         scheduler.start()
         // Switch language straight away: menus and the settings window are rebuilt with the new strings.
@@ -98,21 +100,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func updateStatusItem() {
         guard let button = statusItem?.button else { return }
-        var icon = "figure.cooldown"
+        var mood = MenuBarIcon.Mood.awake
         var title = ""
         switch scheduler.status {
         case .paused, .outsideWorkHours:
-            icon = "moon.zzz"
+            mood = .asleep
         case .inBreak:
+            mood = .happy
+        case .waiting:
             break
         case .upcoming(let minutes):
             if prefs.showCountdownInMenuBar { title = " " + L("%ld min", minutes) }
         }
-        if icon != shownIcon {
-            let image = NSImage(systemSymbolName: icon, accessibilityDescription: "Unknot")
-            image?.isTemplate = true
-            button.image = image
-            shownIcon = icon
+        if mood != shownMood {
+            button.image = MenuBarIcon.image(mood)
+            shownMood = mood
         }
         if title != shownTitle {
             button.title = title
@@ -120,6 +122,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         let tip = statusText
         if button.toolTip != tip { button.toolTip = tip }
+    }
+
+    /// After the welcome window, point at the icon once, so people know where the app went.
+    private func showMenuBarHint() {
+        guard let button = statusItem?.button, let window = button.window,
+              window.occlusionState.contains(.visible),
+              NSScreen.screens.contains(where: { $0.frame.intersects(window.frame) }) else { return }
+        let popover = NSPopover()
+        popover.behavior = .transient
+        popover.animates = true
+        popover.contentViewController = NSHostingController(rootView: MenuBarHint(next: statusText)
+            .environment(\.locale, Localizer.locale))
+        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 9) { [weak popover] in popover?.performClose(nil) }
     }
 
     // MARK: Menu
@@ -158,6 +174,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         switch scheduler.status {
         case .upcoming(let minutes):
             return minutes <= 1 ? L("Next break in less than a minute") : L("Next break in %ld minutes", minutes)
+        case .waiting(.call):
+            return L("Break waiting until your call ends")
+        case .waiting(.fullScreen):
+            return L("Break waiting until you leave full screen")
         case .inBreak:
             return L("Stretch break in progress")
         case .paused(let until):
@@ -208,8 +228,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func pauseFor(_ sender: NSMenuItem) { scheduler.pause(minutes: sender.tag) }
     @objc private func pauseToday() { scheduler.pauseForRestOfDay() }
     @objc private func resume() { scheduler.resume() }
-    @objc private func openUpdate() { Updater.shared.openReleasePage() }
+    @objc private func openUpdate() { Updater.shared.offerUpdate() }
     @objc func showSettings() { WindowManager.shared.showSettings() }
     @objc func showAbout() { WindowManager.shared.showSettings(.about) }
     @objc private func quit() { NSApp.terminate(nil) }
+}
+
+/// The one-time pointer to the menu bar icon after the welcome window.
+private struct MenuBarHint: View {
+    let next: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(L("Unknot lives up here"))
+                .font(.system(size: 13, weight: .semibold))
+            Text(L("%@. Click the frog to stretch now, pause reminders or change the settings.", next))
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(width: 250, alignment: .leading)
+        .padding(14)
+    }
 }

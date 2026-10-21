@@ -34,6 +34,13 @@ final class ReminderSession: NSObject, ObservableObject {
     }
 
     var perExercise: Double { total / Double(exercises.count) }
+    /// The clock time of the next break, counted from when this one ended.
+    var nextBreakTime: String {
+        let f = DateFormatter()
+        f.locale = Localizer.locale
+        f.timeStyle = .short
+        return f.string(from: finishDate.addingTimeInterval(Double(nextMinutes) * 60))
+    }
     /// When the current move began, so every exercise starts from rest.
     var moveStart: Date { finished ? finishDate : startDate.addingTimeInterval(Double(index) * perExercise) }
     var index: Int { min(Int(elapsed / perExercise), exercises.count - 1) }
@@ -71,7 +78,10 @@ final class ReminderSession: NSObject, ObservableObject {
     }
 
     /// Shows the finished state immediately (used for screenshots).
-    func markFinishedForPreview() { finished = true }
+    func markFinishedForPreview() {
+        finished = true
+        finishDate = Date()
+    }
 
     @objc private func closeAfterCheer() { onClose?(.completed) }
 }
@@ -145,7 +155,7 @@ struct ReminderView: View {
                                 .tracking(-0.2)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
-                            Text(L("Next break in %ld minutes.", s.nextMinutes))
+                            Text(L("Next break at %@.", s.nextBreakTime))
                                 .font(.system(size: 12.5))
                                 .foregroundStyle(.secondary)
                         }
@@ -203,7 +213,8 @@ struct ReminderView: View {
         .padding(14)
         .frame(width: Self.size.width, height: Self.size.height)
         .overlay(
-            RoundedRectangle(cornerRadius: Self.cornerRadius)
+            // Circular corners, to match the window's own mask
+            RoundedRectangle(cornerRadius: Self.cornerRadius, style: .circular)
                 .strokeBorder(dark ? Color.white.opacity(0.12) : Color.black.opacity(0.07), lineWidth: 0.5)
         )
         .animation(.easeInOut(duration: 0.3), value: s.index)

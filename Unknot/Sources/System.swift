@@ -1,4 +1,6 @@
 import AppKit
+import CoreAudio
+import CoreMediaIO
 import ServiceManagement
 
 /// "Open at login", backed by the system's login items.
@@ -53,8 +55,9 @@ enum AppMover {
         relaunch(from: destination)
     }
 
+    /// Opens the app at `destination` and quits this copy.
     @MainActor
-    private static func relaunch(from destination: URL) {
+    static func relaunch(from destination: URL) {
         let config = NSWorkspace.OpenConfiguration()
         config.createsNewApplicationInstance = true
         config.arguments = ["--relaunched"]
@@ -109,6 +112,70 @@ enum Activity {
             }
         }
         return false
+    }
+}
+
+/// Whether you're on a call. Reads only whether a microphone or camera is running, never what it records,
+/// so it needs no permissions.
+enum Calls {
+    static var inProgress: Bool { microphoneInUse || cameraInUse }
+
+    /// True while another app records from a microphone.
+    static var microphoneInUse: Bool {
+        let system = AudioObjectID(kAudioObjectSystemObject)
+        // macOS 14.2 and later list every process that uses audio, and whether it's recording
+        let processes = audioObjects(system, kAudioHardwarePropertyProcessObjectList)
+        if !processes.isEmpty {
+            let me = getpid()
+            return processes.contains { process in
+                audioValue(process, kAudioProcessPropertyIsRunningInput, UInt32(0)) != 0
+                    && audioValue(process, kAudioProcessPropertyPID, pid_t(0)) != me
+            }
+        }
+        // Earlier: the default microphone, unless it also plays sound, like headphones playing music
+        let device = audioValue(system, kAudioHardwarePropertyDefaultInputDevice, AudioDeviceID(0))
+        guard device != 0, audioObjects(device, kAudioDevicePropertyStreams, scope: kAudioObjectPropertyScopeOutput).isEmpty
+        else { return false }
+        return audioValue(device, kAudioDevicePropertyDeviceIsRunningSomewhere, UInt32(0)) != 0
+    }
+
+    /// True while any app uses a camera.
+    static var cameraInUse: Bool {
+        let system = CMIOObjectID(kCMIOObjectSystemObject)
+        var address = CMIOObjectPropertyAddress(mSelector: CMIOObjectPropertySelector(kCMIOHardwarePropertyDevices),
+                                                mScope: CMIOObjectPropertyScope(kCMIOObjectPropertyScopeGlobal),
+                                                mElement: CMIOObjectPropertyElement(kCMIOObjectPropertyElementMain))
+        var size: UInt32 = 0
+        guard CMIOObjectGetPropertyDataSize(system, &address, 0, nil, &size) == noErr, size > 0 else { return false }
+        var devices = [CMIOObjectID](repeating: 0, count: Int(size) / MemoryLayout<CMIOObjectID>.size)
+        var used: UInt32 = 0
+        guard CMIOObjectGetPropertyData(system, &address, 0, nil, size, &used, &devices) == noErr else { return false }
+        address.mSelector = CMIOObjectPropertySelector(kCMIODevicePropertyDeviceIsRunningSomewhere)
+        return devices.contains { device in
+            var running: UInt32 = 0
+            var read: UInt32 = 0
+            let status = CMIOObjectGetPropertyData(device, &address, 0, nil, UInt32(MemoryLayout<UInt32>.size), &read, &running)
+            return status == noErr && running != 0
+        }
+    }
+
+    private static func audioValue<T>(_ object: AudioObjectID, _ selector: AudioObjectPropertySelector, _ fallback: T) -> T {
+        var address = AudioObjectPropertyAddress(mSelector: selector, mScope: kAudioObjectPropertyScopeGlobal,
+                                                 mElement: kAudioObjectPropertyElementMain)
+        var value = fallback
+        var size = UInt32(MemoryLayout<T>.size)
+        let status = withUnsafeMutablePointer(to: &value) { AudioObjectGetPropertyData(object, &address, 0, nil, &size, $0) }
+        return status == noErr ? value : fallback
+    }
+
+    private static func audioObjects(_ object: AudioObjectID, _ selector: AudioObjectPropertySelector,
+                                     scope: AudioObjectPropertyScope = kAudioObjectPropertyScopeGlobal) -> [AudioObjectID] {
+        var address = AudioObjectPropertyAddress(mSelector: selector, mScope: scope, mElement: kAudioObjectPropertyElementMain)
+        var size: UInt32 = 0
+        guard AudioObjectGetPropertyDataSize(object, &address, 0, nil, &size) == noErr, size > 0 else { return [] }
+        var ids = [AudioObjectID](repeating: 0, count: Int(size) / MemoryLayout<AudioObjectID>.size)
+        guard AudioObjectGetPropertyData(object, &address, 0, nil, &size, &ids) == noErr else { return [] }
+        return Array(ids.prefix(Int(size) / MemoryLayout<AudioObjectID>.size))
     }
 }
 

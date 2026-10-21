@@ -242,6 +242,7 @@ struct CatArt: CrewArt {
     let hatches: [Hatch]
     let ears: [Path]
     let innerEars: [Path]
+    let innerEarTint: Path
     let shoulders = [pt(62, 136), pt(138, 136)]
     let brow: CGPoint? = pt(118, 112)
     let arm = ArmStyle.noodle(length: 24.7, hand: .loop)
@@ -258,6 +259,7 @@ struct CatArt: CrewArt {
         }
         wash = ears.reduce(body) { $0.union($1) }
         hatches = [Hatch.shadow(of: body)]
+        innerEarTint = innerEars.reduce(Path()) { $0.union($1.strokedPath(StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))) }
     }
 
     func behind(_ pen: Pen, _ f: CrewFrame) {
@@ -270,7 +272,7 @@ struct CatArt: CrewArt {
             p.addCurve(to: pt(150, 104), control1: pt(156, 116), control2: pt(148, 112))
         }
         tail.tube(path, width: 6)
-        tail.tint(path.strokedPath(StrokeStyle(lineWidth: 6, lineCap: .round)), accent.opacity(0.6))
+        tail.tintLine(path, width: 6, accent.opacity(0.6))
         tail.fine(line(pt(161, 134), pt(166, 136)))
         tail.fine(line(pt(158, 119), pt(163, 117)))
         for (ear, inner) in zip(ears, innerEars) {
@@ -318,12 +320,11 @@ struct CatArt: CrewArt {
         }
     }
 
-    func detail(_ f: CrewFrame) -> Path {
-        innerEars.reduce(Path()) { $0.union($1.strokedPath(StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))) }
-    }
+    func detail(_ f: CrewFrame) -> Path { innerEarTint }
 
+    // One fill paints overlapping shapes once, so there's no need for a boolean union every frame
     func extras(_ f: CrewFrame) -> [(Path, Color)] {
-        [(nose(f).union(oval(100 + f.fx, 129.5, 9, 5)), Color(hex: 0xE09C90))]
+        [(makePath { $0.addPath(nose(f)); $0.addPath(oval(100 + f.fx, 129.5, 9, 5)) }, Color(hex: 0xE09C90))]
     }
 }
 
@@ -349,7 +350,7 @@ struct PandaArt: CrewArt {
         // A bamboo sprig leaning beside the panda, on the ground
         let stem = line(pt(150, 174), pt(160, 98))
         pen.stroke(stem, 2)
-        pen.tint(stem.strokedPath(StrokeStyle(lineWidth: 5, lineCap: .round)), Color(hex: 0xCADB9C))
+        pen.tintLine(stem, width: 5, Color(hex: 0xCADB9C))
         func x(at y: CGFloat) -> CGFloat { 150 + (174 - y) / 76 * 10 }
         for y: CGFloat in [150, 124] { pen.fine(line(pt(x(at: y) - 2.5, y), pt(x(at: y) + 2.5, y))) }
         let sway = sin(f.t * 1.6) * 4
@@ -432,7 +433,7 @@ struct BunnyArt: CrewArt {
         leftPen.shape(left)
         leftPen.tint(left, accent.opacity(0.6))
         let leftInner = bend(pt(86, 92), pt(82, 70), pt(85, 58))
-        leftPen.tint(leftInner.strokedPath(StrokeStyle(lineWidth: 5, lineCap: .round)), pink)
+        leftPen.tintLine(leftInner, width: 5, pink)
         leftPen.fine(leftInner)
 
         let rightPen = pen.rotated(sin(f.t * 1.9 - 0.7) * 6 - f.pose.tilt * 0.4, around: pt(110, 99))
@@ -446,7 +447,7 @@ struct BunnyArt: CrewArt {
         rightPen.shape(right)
         rightPen.tint(right, accent.opacity(0.6))
         let rightInner = bend(pt(109, 92), pt(110, 76), pt(118, 71))
-        rightPen.tint(rightInner.strokedPath(StrokeStyle(lineWidth: 5, lineCap: .round)), pink)
+        rightPen.tintLine(rightInner, width: 5, pink)
         rightPen.fine(rightInner)
     }
 
@@ -480,7 +481,7 @@ struct BunnyArt: CrewArt {
         }
     }
 
-    func detail(_ f: CrewFrame) -> Path { nose(f).union(oval(100 + f.fx, 134.5, 9, 6)) }
+    func detail(_ f: CrewFrame) -> Path { makePath { $0.addPath(nose(f)); $0.addPath(oval(100 + f.fx, 134.5, 9, 6)) } }
 }
 
 // MARK: - Semla
@@ -504,6 +505,7 @@ struct SemlaArt: CrewArt {
     let reachExtra: CGFloat = 34
     let groundWidth: CGFloat = 90
     private let cut = bend(pt(53, 122), pt(100, 128), pt(147, 122))
+    private let almondPaste = bend(pt(53, 122), pt(100, 128), pt(147, 122)).strokedPath(StrokeStyle(lineWidth: 4, lineCap: .round))
     private let lidCenter = pt(102, 84)
 
     init() {
@@ -577,10 +579,8 @@ struct SemlaArt: CrewArt {
         p.solid(sugar, color: Pen.paper)
     }
 
-    func detail(_ f: CrewFrame) -> Path {
-        // A thin seam of almond paste where the bun was cut
-        cut.strokedPath(StrokeStyle(lineWidth: 4, lineCap: .round))
-    }
+    // A thin seam of almond paste where the bun was cut
+    func detail(_ f: CrewFrame) -> Path { almondPaste }
 }
 
 // MARK: - Chick
@@ -614,7 +614,7 @@ struct ChickArt: CrewArt {
             let base = pt(100 + s * 15, 168)
             for k: CGFloat in [-1, 0, 1] {
                 let toe = line(base, pt(base.x + k * 6, 175))
-                pen.tint(toe.strokedPath(StrokeStyle(lineWidth: 4, lineCap: .round)), detailColor)
+                pen.tintLine(toe, width: 4, detailColor)
                 pen.stroke(toe, 2)
             }
         }
@@ -649,6 +649,7 @@ struct ToastArt: CrewArt {
     let detailColor = Color(hex: 0xF4D77E)
     let body: Path
     let crumb: Path
+    let crust: Path
     let wash: Path
     let hatches: [Hatch]
     let pores: Path
@@ -679,8 +680,9 @@ struct ToastArt: CrewArt {
         }
         body = bread(1)
         crumb = bread(0.82)
+        crust = body.subtracting(crumb)
         wash = crumb
-        hatches = [Hatch.shadow(of: body.subtracting(crumb), shift: 6, spacing: 2.3)]
+        hatches = [Hatch.shadow(of: crust, shift: 6, spacing: 2.3)]
         var r = SeededRandom(state: 21)
         var p = Path()
         var placed = 0
@@ -720,7 +722,7 @@ struct ToastArt: CrewArt {
 
     func detail(_ f: CrewFrame) -> Path { pat.applying(butterTransform) }
 
-    func extras(_ f: CrewFrame) -> [(Path, Color)] { [(body.subtracting(crumb), Color(hex: 0xE2A76B))] }
+    func extras(_ f: CrewFrame) -> [(Path, Color)] { [(crust, Color(hex: 0xE2A76B))] }
 }
 
 // MARK: - Onigiri
@@ -815,6 +817,9 @@ struct CactusArt: CrewArt {
     let pot = makePath { p in p.move(to: pt(70, 150)); p.addLine(to: pt(130, 150)); p.addLine(to: pt(124, 174)); p.addLine(to: pt(76, 174)); p.closeSubpath() }
     let rim = Path(roundedRect: CGRect(x: 66, y: 142, width: 68, height: 11), cornerRadius: 2.5)
     let potHatch: Hatch
+    let potTint: Path
+    let petals: Path
+    let flowerOutline: Path
     let shoulders = [pt(80, 120), pt(120, 106)]
     let arm = ArmStyle.branch
     let groundWidth: CGFloat = 70
@@ -824,6 +829,14 @@ struct CactusArt: CrewArt {
         wash = body.subtracting(pot).subtracting(rim)
         hatches = [Hatch.shadow(of: body, shift: 10)]
         potHatch = Hatch.shadow(of: pot, shift: 9, spacing: 2.3)
+        potTint = pot.union(rim)
+        var petals = Path()
+        for k in 0..<5 {
+            let a = Double(k) / 5 * 2 * .pi - .pi / 2
+            petals.addPath(oval(104 + CGFloat(cos(a)) * 5.6, 64 + CGFloat(sin(a)) * 5.6, 8.6, 8.6))
+        }
+        self.petals = petals
+        flowerOutline = petals.union(oval(104, 64, 8, 8))
     }
 
     func onBody(_ pen: Pen, _ f: CrewFrame) {
@@ -844,15 +857,9 @@ struct CactusArt: CrewArt {
     func front(_ pen: Pen, _ f: CrewFrame) {
         // Flower, nodding a little
         let flower = pen.rotated(f.sway * 1.4, around: pt(104, 68))
-        var petals = Path()
-        for k in 0..<5 {
-            let a = Double(k) / 5 * 2 * .pi - .pi / 2
-            petals.addPath(oval(104 + CGFloat(cos(a)) * 5.6, 64 + CGFloat(sin(a)) * 5.6, 8.6, 8.6))
-        }
-        let outline = petals.union(oval(104, 64, 8, 8))
-        flower.shape(outline, 1.6)
+        flower.shape(flowerOutline, 1.6)
         flower.c.stroke(petals, with: .color(Pen.ink), lineWidth: 1.2)
-        flower.tint(outline, detailColor)
+        flower.tint(flowerOutline, detailColor)
         flower.shape(oval(104, 64, 5, 5), 1.2)
         // Pot with a zigzag band
         pen.shape(pot)
@@ -863,7 +870,7 @@ struct CactusArt: CrewArt {
             var up = true
             for x in stride(from: 80.0, through: 126.0, by: 6.0) { p.addLine(to: pt(x, up ? 158 : 162)); up.toggle() }
         })
-        pen.tint(pot.union(rim), Color(hex: 0xEDC0A6))
+        pen.tint(potTint, Color(hex: 0xEDC0A6))
     }
 
     func detail(_ f: CrewFrame) -> Path { Path() }

@@ -49,6 +49,7 @@ final class Preferences: ObservableObject {
         static let workEnd = "workEndMinutes"
         static let weekdaysOnly = "weekdaysOnly"
         static let waitForFullscreen = "waitForFullscreen"
+        static let waitDuringCalls = "waitDuringCalls"
         static let checkForUpdates = "checkForUpdates"
         static let onboarded = "hasCompletedOnboarding"
         static let history = "breakHistory"
@@ -83,6 +84,7 @@ final class Preferences: ObservableObject {
     @Published var workEndMinutes: Int { didSet { d.set(workEndMinutes, forKey: Key.workEnd) } }
     @Published var weekdaysOnly: Bool { didSet { d.set(weekdaysOnly, forKey: Key.weekdaysOnly) } }
     @Published var waitForFullscreen: Bool { didSet { d.set(waitForFullscreen, forKey: Key.waitForFullscreen) } }
+    @Published var waitDuringCalls: Bool { didSet { d.set(waitDuringCalls, forKey: Key.waitDuringCalls) } }
     @Published var checkForUpdates: Bool { didSet { d.set(checkForUpdates, forKey: Key.checkForUpdates) } }
     @Published var hasCompletedOnboarding: Bool { didSet { d.set(hasCompletedOnboarding, forKey: Key.onboarded) } }
     /// Completed breaks per day, keyed "yyyy-MM-dd". Kept for 90 days.
@@ -107,6 +109,7 @@ final class Preferences: ObservableObject {
             Key.workEnd: 17 * 60,
             Key.weekdaysOnly: true,
             Key.waitForFullscreen: false,
+            Key.waitDuringCalls: true,
             Key.checkForUpdates: true,
         ])
         language = AppLanguage(rawValue: d.string(forKey: Key.language) ?? "") ?? .system
@@ -127,6 +130,7 @@ final class Preferences: ObservableObject {
         workEndMinutes = d.integer(forKey: Key.workEnd)
         weekdaysOnly = d.bool(forKey: Key.weekdaysOnly)
         waitForFullscreen = d.bool(forKey: Key.waitForFullscreen)
+        waitDuringCalls = d.bool(forKey: Key.waitDuringCalls)
         checkForUpdates = d.bool(forKey: Key.checkForUpdates)
         hasCompletedOnboarding = d.bool(forKey: Key.onboarded)
         history = d.dictionary(forKey: Key.history) as? [String: Int] ?? [:]

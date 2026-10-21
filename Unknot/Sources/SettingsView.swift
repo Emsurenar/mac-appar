@@ -32,7 +32,7 @@ enum SettingsTab: Int, CaseIterable {
         case .general: return NSSize(width: 580, height: 695)
         case .buddies: return NSSize(width: 580, height: 408)
         case .exercises: return NSSize(width: 580, height: 640)
-        case .schedule: return NSSize(width: 580, height: 450)
+        case .schedule: return NSSize(width: 580, height: 500)
         case .activity: return NSSize(width: 580, height: 440)
         case .about: return NSSize(width: 580, height: 440)
         }
@@ -300,13 +300,15 @@ struct ScheduleSettingsView: View {
                     ForEach(Preferences.awayOptions, id: \.self) { Text(L("%ld minutes", $0)).tag($0) }
                 }
                 .disabled(!prefs.countAwayAsBreak)
+                Toggle(L("Wait until calls end"), isOn: $prefs.waitDuringCalls)
                 Toggle(L("Wait while an app is in full screen"), isOn: $prefs.waitForFullscreen)
             } header: {
                 Text(L("Smart pauses"))
             } footer: {
-                Text(L("Full screen usually means a presentation, a video call or a movie. Unknot waits until you're done."))
+                Text(L("A call is when another app uses the microphone or camera. Unknot only checks whether they're on, never what they hear or see. Full screen usually means a presentation or a movie."))
                     .foregroundStyle(.secondary)
                     .font(.callout)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .formStyle(.grouped)
@@ -438,8 +440,18 @@ struct AboutSettingsView: View {
                 switch updater.status {
                 case .available(let version):
                     Text(L("Version %@ is available.", version))
-                    Button(L("Download")) { updater.openReleasePage() }
+                    Button(L("Install and Restart")) { updater.install() }
                         .buttonStyle(.borderedProminent)
+                case .installing(let version):
+                    ProgressView().controlSize(.small)
+                    Text(L("Installing version %@…", version))
+                        .foregroundStyle(.secondary)
+                case .installFailed(let message):
+                    Text(message)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                    Button(L("Try Again")) { updater.install() }
+                    Button(L("Download")) { updater.openReleasePage() }
                 default:
                     Button(L("Check for updates")) { updater.check() }
                         .disabled(updater.status == .checking)
@@ -454,7 +466,7 @@ struct AboutSettingsView: View {
                     }
                 }
             }
-            .frame(height: 28)
+            .frame(minHeight: 28)
             .padding(.top, 20)
 
             Spacer()

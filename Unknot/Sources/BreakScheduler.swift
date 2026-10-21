@@ -5,20 +5,34 @@ import AppKit
 final class BreakScheduler: NSObject {
     enum Status {
         case upcoming(minutes: Int)
+        case waiting(WaitReason)
         case inBreak
         case paused(until: Date)
         case outsideWorkHours(resumes: Date?)
     }
 
+    /// Why a break that's due is held back for now.
+    enum WaitReason { case call, fullScreen }
+
     private(set) var nextBreak = Date()
     private(set) var pausedUntil: Date?
     private(set) var session: ReminderSession?
+    private(set) var waitingFor: WaitReason?
     /// Called once a second and whenever the state changes, to refresh the menu bar.
     var onChange: (() -> Void)?
 
     private let prefs = Preferences.shared
     private let panel = ReminderPanel()
     private var lastBuddy: Buddy?
+    private var lastCallCheck: (date: Date, onCall: Bool)?
+
+    /// Asking the system about microphones and cameras takes a few milliseconds, so the answer is kept a while.
+    private var onCall: Bool {
+        if let last = lastCallCheck, Date().timeIntervalSince(last.date) < 10 { return last.onCall }
+        let onCall = Calls.inProgress
+        lastCallCheck = (Date(), onCall)
+        return onCall
+    }
 
     func start() {
         reschedule()
@@ -37,6 +51,7 @@ final class BreakScheduler: NSObject {
     var status: Status {
         if session != nil { return .inBreak }
         if let until = pausedUntil { return .paused(until: until) }
+        if let reason = waitingFor { return .waiting(reason) }
         if prefs.workHoursEnabled && !isWithinWorkHours(Date()) {
             return .outsideWorkHours(resumes: WorkHours.nextStart(after: Date(), start: prefs.workStartMinutes,
                                                                   weekdaysOnly: prefs.weekdaysOnly))
@@ -46,6 +61,7 @@ final class BreakScheduler: NSObject {
 
     func reschedule(afterMinutes minutes: Int? = nil) {
         nextBreak = Date().addingTimeInterval(Double(minutes ?? prefs.intervalMinutes) * 60)
+        waitingFor = nil
         onChange?()
     }
 
@@ -67,6 +83,7 @@ final class BreakScheduler: NSObject {
 
     func showBreakNow() {
         guard session == nil else { return }
+        waitingFor = nil
         let picks = Array(prefs.enabledExercises.shuffled().prefix(prefs.exercisesPerBreak))
         let buddy = prefs.randomBuddy(avoiding: lastBuddy)
         lastBuddy = buddy
@@ -109,16 +126,22 @@ final class BreakScheduler: NSObject {
             reschedule()
             return
         }
-        if prefs.countAwayAsBreak && Activity.secondsSinceLastInput >= Double(prefs.awayMinutes * 60) {
+        // Sitting still through a call isn't a break, so idle time only counts when nobody's talking
+        if prefs.countAwayAsBreak && Activity.secondsSinceLastInput >= Double(prefs.awayMinutes * 60) && !onCall {
             reschedule()
             return
         }
 
         guard Date() >= nextBreak else { return }
-        if prefs.waitForFullscreen && Activity.frontmostAppIsFullscreen {
-            nextBreak = Date().addingTimeInterval(30)
+        // A break is due. Hold it back during a call or a presentation, and look again in a little while.
+        if prefs.waitDuringCalls && onCall {
+            waitingFor = .call
+        } else if prefs.waitForFullscreen && Activity.frontmostAppIsFullscreen {
+            waitingFor = .fullScreen
+        } else {
+            showBreakNow()
             return
         }
-        showBreakNow()
+        nextBreak = Date().addingTimeInterval(20)
     }
 }

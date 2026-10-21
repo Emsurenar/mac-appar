@@ -7,6 +7,8 @@ import SwiftUI
 final class WindowManager: NSObject, NSWindowDelegate {
     static let shared = WindowManager()
     var onTestBreak: (() -> Void)?
+    /// Called when the welcome window closes for the first time.
+    var onWelcomeFinished: (() -> Void)?
 
     private var settingsWindow: NSWindow?
     private var settingsTabs: NSTabViewController?
@@ -105,8 +107,9 @@ final class WindowManager: NSObject, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         guard let closing = notification.object as? NSWindow else { return }
-        if closing === welcomeWindow {
+        if closing === welcomeWindow && !Preferences.shared.hasCompletedOnboarding {
             Preferences.shared.hasCompletedOnboarding = true
+            DispatchQueue.main.async { self.onWelcomeFinished?() }
         }
         let othersOpen = [settingsWindow, welcomeWindow].contains { window in
             guard let window, window !== closing else { return false }

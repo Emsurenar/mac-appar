@@ -19,6 +19,9 @@ enum Snapshot {
         if let path = value("--cast") { cast(to: path); return true }
         if let path = value("--filmstrip") { filmstrip(to: path); return true }
         if let path = value("--buddies-image") { buddiesImage(to: path); return true }
+        if let path = value("--menubar-icons") { menuBarIcons(to: path); return true }
+        if let dir = value("--capture-drop") { captureDrop(in: dir); return true }
+        if args.contains("--verify-latest-release") { verifyLatestRelease(); return true }
         if args.contains("--selftest") { exit(selfTest() ? 0 : 1) }
         return false
     }
@@ -123,6 +126,22 @@ enum Snapshot {
         save(sheet, to: path, scale: 1.5)
     }
 
+    /// The menu bar icon in each mood, large, on light and dark menu bars.
+    static func menuBarIcons(to path: String) {
+        let moods: [MenuBarIcon.Mood] = [.awake, .asleep, .happy]
+        let row = { (dark: Bool) in
+            HStack(spacing: 24) {
+                ForEach(moods.indices, id: \.self) { i in
+                    Image(nsImage: MenuBarIcon.image(moods[i])).renderingMode(.template)
+                        .foregroundStyle(dark ? Color.white : Color.black.opacity(0.85))
+                }
+            }
+            .padding(10)
+            .background(dark ? Color(hex: 0x2A2A2C) : Color(hex: 0xECEBEA))
+        }
+        save(VStack(spacing: 0) { row(false); row(true) }, to: path, scale: 8)
+    }
+
     /// The whole Stretch Crew waving, with their names, for the README.
     static func buddiesImage(to path: String) {
         let rows = [Array(Buddy.allCases.prefix(5)), Array(Buddy.allCases.dropFirst(5))]
@@ -149,33 +168,50 @@ enum Snapshot {
         save(image, to: path)
     }
 
-    /// An animated GIF of one break, sped up, for the README.
+    /// An animated GIF of one break for the README: it drops out of the notch, shows three exercises
+    /// (sped up), cheers, and goes back. The morph uses the same `NotchDrop` as the real window.
     static func gif(to path: String) {
         let picks = [Move.armsUp, .sideBend, .breathe].compactMap { m in allExercises.first { $0.move == m } }
         let s = ReminderSession(exercises: picks, buddy: .frog, nextMinutes: 20, total: 30)
-        let fps = 12.0
-        let secondsPerMove = 3.0
-        let framesPerMove = Int(secondsPerMove * fps)
-        let activeFrames = framesPerMove * picks.count
-        let doneFrames = Int(2.2 * fps)
-        guard let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: path) as CFURL,
-                                                         UTType.gif.identifier as CFString,
-                                                         activeFrames + doneFrames, nil) else { return }
-        CGImageDestinationSetProperties(dest, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
-        let frameProperties = [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 1 / fps]] as CFDictionary
-        for frame in 0..<(activeFrames + doneFrames) {
-            // Each move plays in real time from its start; the progress bar runs faster than the clock
-            if frame < activeFrames {
-                s.elapsed = Double(frame) / Double(activeFrames) * s.total
-                s.fixedTime = Double(frame % framesPerMove) / fps
-            } else {
-                s.markFinishedForPreview()
-                s.fixedTime = Double(frame - activeFrames) / fps
-            }
-            let renderer = ImageRenderer(content: framed(ReminderView(s: s), dark: false))
-            renderer.scale = 1.5
-            if let cg = renderer.cgImage { CGImageDestinationAddImage(dest, cg, frameProperties) }
+        s.fixedTime = 0
+        var frames: [(t: CGFloat, mood: MenuBarIcon.Mood, delay: Double)] = []
+        frames.append((0, .awake, 0.9))                                    // the desktop, before
+        let morphFPS = 30.0
+        for i in 0...Int(NotchDrop.openDuration * morphFPS) {             // out of the notch
+            frames.append((CGFloat(Double(i) / (NotchDrop.openDuration * morphFPS)), .happy, 1 / morphFPS))
         }
+        let fps = 12.0
+        let secondsPerMove = 2.6
+        let activeFrames = Int(secondsPerMove * fps) * picks.count
+        let doneFrames = Int(2.0 * fps)
+        let closeFrames = Int(NotchDrop.closeDuration * morphFPS)
+        guard let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: path) as CFURL, UTType.gif.identifier as CFString,
+                                                         frames.count + activeFrames + doneFrames + closeFrames + 2, nil) else { return }
+        CGImageDestinationSetProperties(dest, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
+        func add(_ t: CGFloat, _ mood: MenuBarIcon.Mood, _ delay: Double) {
+            let renderer = ImageRenderer(content: DropScene(session: s, t: t, mood: mood))
+            renderer.scale = 1.5
+            guard let cg = renderer.cgImage else { return }
+            CGImageDestinationAddImage(dest, cg, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: delay]] as CFDictionary)
+        }
+        for f in frames { add(f.t, f.mood, f.delay) }
+        let framesPerMove = Int(secondsPerMove * fps)
+        for frame in 0..<activeFrames {
+            // Each move plays in real time from its start; the progress bar runs faster than the clock
+            s.elapsed = Double(frame) / Double(activeFrames) * s.total
+            s.fixedTime = Double(frame % framesPerMove) / fps
+            add(1, .happy, 1 / fps)
+        }
+        s.markFinishedForPreview()
+        for frame in 0..<doneFrames {
+            s.fixedTime = Double(frame) / fps
+            add(1, .happy, 1 / fps)
+        }
+        for i in 0...closeFrames {                                          // and back in
+            let k = Double(i) / Double(closeFrames)
+            add(CGFloat(1 - k * k * (3 - 2 * k)), .happy, 1 / morphFPS)
+        }
+        add(0, .awake, 1.2)
         CGImageDestinationFinalize(dest)
     }
 
@@ -212,6 +248,66 @@ enum Snapshot {
         guard let rep = frameView.bitmapImageRepForCachingDisplay(in: frameView.bounds) else { return }
         frameView.cacheDisplay(in: frameView.bounds, to: rep)
         if let cg = rep.cgImage { write(cg, to: path) }
+    }
+
+    /// Shows a real break at the top center and photographs its window while it opens and closes.
+    /// An app may always capture its own windows, so this needs no permissions.
+    static func captureDrop(in dir: String) {
+        try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+        let s = ReminderSession(exercises: Array(allExercises.prefix(3)), buddy: .frog, nextMinutes: 20, total: 30)
+        let panel = ReminderPanel()
+        func shoot(_ name: String) {
+            for w in NSApp.windows where w.isVisible {
+                if let image = CGWindowListCreateImage(.null, .optionIncludingWindow, CGWindowID(w.windowNumber), [.boundsIgnoreFraming, .bestResolution]) {
+                    write(image, to: "\(dir)/\(name).png")
+                }
+            }
+        }
+        RunLoop.current.run(until: Date().addingTimeInterval(0.3))
+        let opened = Date()
+        panel.show(s, at: .topCenter)
+        s.start()
+        for t in [0.05, 0.12, 0.2, 0.28, 0.36, 0.45, 0.55, 0.7, 1.5] {
+            RunLoop.current.run(until: opened.addingTimeInterval(t))
+            shoot(String(format: "open-%.2f", t))
+        }
+        let closed = Date()
+        panel.close()
+        for t in [0.1, 0.2, 0.3, 0.4] {
+            RunLoop.current.run(until: closed.addingTimeInterval(t))
+            shoot(String(format: "close-%.2f", t))
+        }
+    }
+
+    /// Downloads the latest release the way the updater would, checks it and throws it away again.
+    static func verifyLatestRelease() {
+        var done = false
+        Task {
+            do {
+                let api = URL(string: "https://api.github.com/repos/\(Updater.repository)/releases/latest")!
+                let (data, _) = try await URLSession.shared.data(from: api)
+                struct Asset: Decodable { let name: String; let browser_download_url: URL; let digest: String? }
+                struct Release: Decodable { let tag_name: String; let assets: [Asset] }
+                let release = try JSONDecoder().decode(Release.self, from: data)
+                guard let zip = release.assets.first(where: { $0.name == "Unknot.zip" }) else { print("✗ no Unknot.zip"); exit(1) }
+                let version = String(release.tag_name.dropFirst())
+                let sha = zip.digest.map { String($0.dropFirst(7)) }
+                print("→ \(release.tag_name), sha256 \(sha ?? "none")")
+                let app = try await Updater.fetch(zip.browser_download_url, sha256: sha, expecting: version)
+                print("✓ verified \(app.path)")
+                try? FileManager.default.removeItem(at: app.deletingLastPathComponent())
+                do {
+                    _ = try await Updater.fetch(zip.browser_download_url, sha256: String(repeating: "0", count: 64), expecting: version)
+                    print("✗ a wrong checksum was accepted")
+                } catch {
+                    print("✓ a wrong checksum is refused: \(error.localizedDescription)")
+                }
+            } catch {
+                print("✗ \(error.localizedDescription)")
+            }
+            done = true
+        }
+        while !done { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
     }
 
     // MARK: Self-test
@@ -251,6 +347,21 @@ enum Snapshot {
 
         check(Set(allExercises.map(\.id)).count == allExercises.count, "Exercise ids are unique")
 
+        let notch = CGRect(x: 270, y: 0, width: 185, height: 32)
+        let card = CGRect(x: 36, y: 42, width: 404, height: 144)
+        let drop = NotchDrop(start: notch, panel: card, fromNotch: true)
+        func near(_ a: CGRect, _ b: CGRect) -> Bool {
+            abs(a.minX - b.minX) < 0.5 && abs(a.minY - b.minY) < 0.5 && abs(a.width - b.width) < 0.5 && abs(a.height - b.height) < 0.5
+        }
+        check(near(drop.frame(at: 0).outline.boundingBoxOfPath, notch), "A break starts inside the notch")
+        check(near(drop.frame(at: 1).outline.boundingBoxOfPath, card), "A break ends as the panel")
+        check(drop.frame(at: 0).ink == 1 && drop.frame(at: 1).ink == 0, "The drop starts black and ends as glass")
+        check(drop.frame(at: 0.3).content == 0 && drop.frame(at: 1).content == 1, "The contents appear once it has opened")
+        check(stride(from: 0.0, through: 1.0, by: 0.05).allSatisfy { k in
+            let stops = NotchDrop.inkStops(CGFloat(k))
+            return stops.solid <= stops.clear
+        }, "The black drains in order")
+
         Localizer.apply(.swedish)
         check(L("Stretch now") == "Sträck på dig nu", "Swedish can be chosen in the app")
         Localizer.apply(.english)
@@ -287,5 +398,75 @@ enum Snapshot {
             check(false, "The Swedish strings file is bundled")
         }
         return ok
+    }
+}
+
+/// The top of a Mac screen, drawn: wallpaper, menu bar, the camera notch, and a break coming out of it.
+struct DropScene: View {
+    @ObservedObject var session: ReminderSession
+    var t: CGFloat
+    var mood: MenuBarIcon.Mood = .awake
+    var dark = false
+
+    static let size = CGSize(width: 720, height: 236)
+    private let menuBar: CGFloat = 30
+
+    var body: some View {
+        let notch = CGRect(x: (Self.size.width - 186) / 2, y: 0, width: 186, height: menuBar)
+        let panel = CGRect(x: (Self.size.width - ReminderView.size.width) / 2, y: menuBar + 10,
+                           width: ReminderView.size.width, height: ReminderView.size.height)
+        let f = NotchDrop(start: notch, panel: panel, fromNotch: true, cornerRadius: ReminderView.cornerRadius).frame(at: t)
+        let outline = Path(f.outline)
+
+        ZStack(alignment: .topLeading) {
+            LinearGradient(colors: dark ? [Color(hex: 0x2B3036), Color(hex: 0x1B1D21)] : [Color(hex: 0xE6DCD0), Color(hex: 0xC9CDD2)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            // Soft hills, so the glass has something to sit on
+            Path { p in
+                p.move(to: CGPoint(x: 0, y: 170))
+                p.addCurve(to: CGPoint(x: 720, y: 150), control1: CGPoint(x: 220, y: 110), control2: CGPoint(x: 480, y: 210))
+                p.addLine(to: CGPoint(x: 720, y: 236)); p.addLine(to: CGPoint(x: 0, y: 236)); p.closeSubpath()
+            }
+            .fill(dark ? Color(hex: 0x3A4048).opacity(0.7) : Color(hex: 0xB9AFA5).opacity(0.45))
+
+            menuBarView
+            // The notch, with the small flares where it meets the top of the screen
+            Path(NotchDrop.outline(notch, top: 0, bottom: 10)).fill(Color.black)
+
+            Group {
+                outline.fill(dark ? Color(hex: 0x2C2B2B) : Color(hex: 0xF6F5F3))
+                    .shadow(color: .black.opacity((dark ? 0.5 : 0.22) * f.shadow), radius: 14, y: 6)
+                let stops = NotchDrop.inkStops(f.ink)
+                outline.fill(LinearGradient(stops: [.init(color: .black, location: 0), .init(color: .black, location: stops.solid),
+                                                    .init(color: .black.opacity(0), location: stops.clear)],
+                                            startPoint: UnitPoint(x: 0.5, y: f.outline.boundingBoxOfPath.minY / Self.size.height),
+                                            endPoint: UnitPoint(x: 0.5, y: f.outline.boundingBoxOfPath.maxY / Self.size.height)))
+                ReminderView(s: session)
+                    .frame(width: panel.width, height: panel.height)
+                    .opacity(f.content)
+                    .offset(x: panel.minX, y: panel.minY + f.contentOffset)
+            }
+        }
+        .frame(width: Self.size.width, height: Self.size.height)
+        .clipped()
+        .environment(\.colorScheme, dark ? .dark : .light)
+    }
+
+    private var menuBarView: some View {
+        let text = dark ? Color.white.opacity(0.9) : Color.black.opacity(0.82)
+        return HStack(spacing: 18) {
+            Image(systemName: "apple.logo").font(.system(size: 13, weight: .medium))
+            Text(verbatim: "Finder").font(.system(size: 13, weight: .bold))
+            ForEach(["File", "Edit", "View", "Go"], id: \.self) { Text(verbatim: $0).font(.system(size: 13)) }
+            Spacer()
+            Image(nsImage: MenuBarIcon.image(mood)).renderingMode(.template)
+            Image(systemName: "wifi").font(.system(size: 13))
+            Image(systemName: "battery.75percent").font(.system(size: 15))
+            Text(verbatim: "Wed 10:40").font(.system(size: 13))
+        }
+        .foregroundStyle(text)
+        .padding(.horizontal, 16)
+        .frame(width: Self.size.width, height: menuBar)
+        .background(dark ? Color.black.opacity(0.25) : Color.white.opacity(0.35))
     }
 }

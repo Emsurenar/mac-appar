@@ -39,4 +39,4 @@ let allExercises: [Exercise] = [
 ]
 
 /// Shown when a break is finished.
-let cheers = ["Nice work", "Well done", "Your body thanks you", "That's the spirit", "Feels good, right?"]
+let cheers = ["Knots undone", "That's better", "Loose again", "Nicely stretched", "Lighter already"]

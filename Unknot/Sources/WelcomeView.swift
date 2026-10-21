@@ -18,18 +18,18 @@ struct WelcomeView: View {
                 .background(Circle().fill(Pen.paper).frame(width: 168, height: 168))
                 .padding(.top, 34)
 
-            Text(L("Hi, I'm Unknot!"))
+            Text(L("Welcome to Unknot"))
                 .font(.system(size: 26, weight: .bold))
                 .tracking(-0.4)
                 .padding(.top, 6)
 
-            Text(L("I live in your menu bar and remind you to get up and stretch. Each break takes about %ld seconds.", prefs.breakSeconds))
+            Text(L("Every %ld minutes, a member of the Stretch Crew drops down from the top of your screen with a few quick stretches. Each break takes about %ld seconds.", prefs.intervalMinutes, prefs.breakSeconds))
                 .font(.system(size: 13.5))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: 350)
+                .frame(maxWidth: 390)
                 .padding(.top, 8)
 
             VStack(spacing: 0) {
@@ -83,14 +83,18 @@ struct WelcomeView: View {
                     .padding(.top, 8)
             }
 
-            Label(L("You'll find me in the menu bar. If the icon is hidden, just open Unknot again to get to the settings."), systemImage: "menubar.arrow.up.rectangle")
+            Label {
+                Text(L("Unknot lives in the menu bar, as a small frog. If you can't see it, open Unknot again to get to the settings."))
+            } icon: {
+                Image(nsImage: MenuBarIcon.image(.awake)).renderingMode(.template)
+            }
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 28)
                 .padding(.top, 16)
 
             HStack {
-                Button(L("Try a break"), action: onTryBreak)
+                Button(L("Show me a break"), action: onTryBreak)
                 Spacer()
                 Button(L("Get started"), action: onDone)
                     .keyboardShortcut(.defaultAction)

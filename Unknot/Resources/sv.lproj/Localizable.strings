@@ -42,17 +42,17 @@
 "Your crew needs at least one member." = "Ditt crew behöver minst en medlem.";
 
 /* Beröm efter en paus */
-"Nice work" = "Bra jobbat";
-"Well done" = "Snyggt";
-"Your body thanks you" = "Kroppen tackar";
-"That's the spirit" = "Så ska det se ut";
-"Feels good, right?" = "Skönt, va?";
+"Knots undone" = "Knutarna lösta";
+"That's better" = "Så där, bättre";
+"Loose again" = "Mjuk igen";
+"Nicely stretched" = "Snyggt sträckt";
+"Lighter already" = "Redan lättare";
 
 /* Påminnelsen */
 "STRETCH BREAK" = "STRÄCKPAUS";
 "BREAK COMPLETE" = "STRÄCKPAUS KLAR";
 "Stretch break" = "Sträckpaus";
-"Next break in %ld minutes." = "Nästa paus om %ld minuter.";
+"Next break at %@." = "Nästa paus kl. %@.";
 "%ld seconds left" = "%ld sekunder kvar";
 "In %ld min" = "Om %ld min";
 "Snoozes the break" = "Skjuter upp pausen";
@@ -138,7 +138,8 @@
 "Count time away from the computer as a break" = "Räkna tid borta från datorn som paus";
 "Away for at least" = "Borta i minst";
 "Wait while an app is in full screen" = "Vänta när en app visas i helskärm";
-"Full screen usually means a presentation, a video call or a movie. Unknot waits until you're done." = "Helskärm betyder oftast en presentation, ett videosamtal eller en film. Unknot väntar tills du är klar.";
+"Wait until calls end" = "Vänta tills samtal är slut";
+"A call is when another app uses the microphone or camera. Unknot only checks whether they're on, never what they hear or see. Full screen usually means a presentation or a movie." = "Ett samtal är när en annan app använder mikrofonen eller kameran. Unknot kollar bara om de är på, aldrig vad de hör eller ser. Helskärm betyder oftast en presentation eller en film.";
 "Today" = "Idag";
 "All time" = "Totalt";
 
@@ -172,11 +173,31 @@
 
 /* Välkomstfönstret */
 "Welcome to Unknot" = "Välkommen till Unknot";
-"Hi, I'm Unknot!" = "Hej, jag heter Unknot!";
-"I live in your menu bar and remind you to get up and stretch. Each break takes about %ld seconds." = "Jag bor i menyraden och påminner dig om att sträcka på dig. Varje paus tar ungefär %ld sekunder.";
+"Welcome to Unknot" = "Välkommen till Unknot";
+"Every %ld minutes, a member of the Stretch Crew drops down from the top of your screen with a few quick stretches. Each break takes about %ld seconds." = "Var %ld:e minut kommer någon från Stretch Crew ned från toppen av skärmen och visar några snabba övningar. Varje paus tar ungefär %ld sekunder.";
 "Move to the Applications folder" = "Flytta till Program-mappen";
 "Recommended, so Unknot can open at login." = "Rekommenderas, så att Unknot kan öppnas vid inloggning.";
 "Move" = "Flytta";
-"You'll find me in the menu bar. If the icon is hidden, just open Unknot again to get to the settings." = "Du hittar mig i menyraden. Syns inte ikonen kan du bara öppna Unknot igen för att komma till inställningarna.";
-"Try a break" = "Testa en paus";
+"Unknot lives in the menu bar, as a small frog. If you can't see it, open Unknot again to get to the settings." = "Unknot bor i menyraden, som en liten groda. Syns den inte kan du öppna Unknot igen för att komma till inställningarna.";
+"Show me a break" = "Visa en paus";
 "Get started" = "Kom igång";
+
+/* Waiting */
+"Break waiting until your call ends" = "Pausen väntar tills samtalet är slut";
+"Break waiting until you leave full screen" = "Pausen väntar tills du lämnar helskärm";
+
+/* Menu bar hint after the welcome window */
+"Unknot lives up here" = "Här uppe bor Unknot";
+"%@. Click the frog to stretch now, pause reminders or change the settings." = "%@. Klicka på grodan för att sträcka på dig nu, pausa påminnelserna eller ändra inställningarna.";
+
+/* Updates */
+"Unknot %@ is available" = "Unknot %@ finns";
+"You have %@. The update is downloaded from GitHub and Unknot restarts. Your settings stay as they are." = "Du har %@. Uppdateringen hämtas från GitHub och Unknot startar om. Dina inställningar finns kvar.";
+"Install and Restart" = "Installera och starta om";
+"Release Notes" = "Versionsinformation";
+"Later" = "Senare";
+"Installing version %@…" = "Installerar version %@…";
+"Try Again" = "Försök igen";
+"The download was damaged. Please try again." = "Nedladdningen blev skadad. Försök igen.";
+"The download didn't contain the expected version of Unknot." = "Nedladdningen innehöll inte rätt version av Unknot.";
+"Couldn't unpack the update (%@)." = "Det gick inte att packa upp uppdateringen (%@).";

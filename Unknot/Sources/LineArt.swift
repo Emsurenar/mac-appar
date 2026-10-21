@@ -102,6 +102,12 @@ struct Pen {
         m.blendMode = .multiply
         m.fill(p, with: .color(color))
     }
+    /// Colour printed along a line, as wide as `width`: tails, toes, inner ears.
+    func tintLine(_ p: Path, width: CGFloat, _ color: Color) {
+        var m = c
+        m.blendMode = .multiply
+        m.stroke(p, with: .color(color), style: StrokeStyle(lineWidth: width, lineCap: .round, lineJoin: .round))
+    }
     /// An outlined tube along a path: tails, cactus branches.
     func tube(_ p: Path, width: CGFloat) {
         c.stroke(p, with: .color(Pen.ink), style: StrokeStyle(lineWidth: width + Pen.weight * 2, lineCap: .round, lineJoin: .round))
@@ -267,7 +273,7 @@ func drawArm(_ pen: Pen, side: CGFloat, shoulder: CGPoint, angle: Double, art: C
         let tip = handPoint(from: elbow, side: side, angle: segment, length: 18)
         let branch = makePath { $0.move(to: shoulder); $0.addLine(to: elbow); $0.addLine(to: tip) }
         pen.tube(branch, width: 11)
-        pen.tint(branch.strokedPath(StrokeStyle(lineWidth: 11, lineCap: .round, lineJoin: .round)), art.accent.opacity(0.6))
+        pen.tintLine(branch, width: 11, art.accent.opacity(0.6))
         let areole = pt((elbow.x + tip.x) / 2, (elbow.y + tip.y) / 2)
         pen.c.stroke(oval(areole.x, areole.y, 2.2, 2.2), with: .color(Pen.ink), lineWidth: 1)
     }

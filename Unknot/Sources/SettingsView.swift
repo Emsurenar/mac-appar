@@ -1,13 +1,15 @@
+import Charts
 import SwiftUI
 
 enum SettingsTab: Int, CaseIterable {
-    case general, exercises, schedule, about
+    case general, exercises, schedule, activity, about
 
     var title: String {
         switch self {
         case .general: return L("General")
         case .exercises: return L("Exercises")
         case .schedule: return L("Schedule")
+        case .activity: return L("Activity")
         case .about: return L("About")
         }
     }
@@ -17,7 +19,19 @@ enum SettingsTab: Int, CaseIterable {
         case .general: return "gearshape"
         case .exercises: return "figure.cooldown"
         case .schedule: return "calendar.badge.clock"
+        case .activity: return "chart.bar.xaxis"
         case .about: return "info.circle"
+        }
+    }
+
+    /// Each tab gets a window height that fits its content.
+    var contentSize: NSSize {
+        switch self {
+        case .general: return NSSize(width: 580, height: 655)
+        case .exercises: return NSSize(width: 580, height: 640)
+        case .schedule: return NSSize(width: 580, height: 450)
+        case .activity: return NSSize(width: 580, height: 440)
+        case .about: return NSSize(width: 580, height: 440)
         }
     }
 
@@ -27,6 +41,7 @@ enum SettingsTab: Int, CaseIterable {
         case .general: return AnyView(GeneralSettingsView(onTestBreak: onTestBreak))
         case .exercises: return AnyView(ExercisesSettingsView())
         case .schedule: return AnyView(ScheduleSettingsView())
+        case .activity: return AnyView(ActivitySettingsView())
         case .about: return AnyView(AboutSettingsView())
         }
     }
@@ -49,6 +64,9 @@ struct GeneralSettingsView: View {
                 }
                 Picker(L("Exercises per break"), selection: $prefs.exercisesPerBreak) {
                     ForEach(Preferences.exerciseCountOptions, id: \.self) { Text(verbatim: "\($0)").tag($0) }
+                }
+                Picker(L("Snooze for"), selection: $prefs.snoozeMinutes) {
+                    ForEach(Preferences.snoozeOptions, id: \.self) { Text(L("%ld minutes", $0)).tag($0) }
                 }
                 LabeledContent(L("Try it out")) {
                     Button(L("Show a break now"), action: onTestBreak)
@@ -184,13 +202,6 @@ struct ScheduleSettingsView: View {
                     .foregroundStyle(.secondary)
                     .font(.callout)
             }
-
-            Section {
-                LabeledContent(L("Today"), value: "\(prefs.breaksToday)")
-                LabeledContent(L("All time"), value: "\(prefs.breaksTotal)")
-            } header: {
-                Text(L("Your stretch breaks"))
-            }
         }
         .formStyle(.grouped)
         .toggleStyle(.switch)
@@ -207,6 +218,92 @@ struct ScheduleSettingsView: View {
                 prefs[keyPath: keyPath] = (c.hour ?? 0) * 60 + (c.minute ?? 0)
             }
         )
+    }
+}
+
+// MARK: - Activity
+
+struct ActivitySettingsView: View {
+    @ObservedObject private var prefs = Preferences.shared
+    @Environment(\.colorScheme) private var scheme
+    @State private var confirmingReset = false
+
+    var body: some View {
+        let week = prefs.recentDays(7)
+        let streak = prefs.streak()
+        Form {
+            Section {
+                HStack(spacing: 0) {
+                    stat(L("Today"), "\(prefs.breaksToday)")
+                    Divider().frame(height: 36)
+                    stat(L("This week"), "\(week.reduce(0) { $0 + $1.count })")
+                    Divider().frame(height: 36)
+                    stat(L("Streak"), streak == 1 ? L("1 day") : L("%ld days", streak))
+                    Divider().frame(height: 36)
+                    stat(L("All time"), "\(prefs.breaksTotal)")
+                }
+                .padding(.vertical, 6)
+            }
+
+            Section(L("Last 7 days")) {
+                Chart(week) { day in
+                    BarMark(x: .value(L("Day"), day.date, unit: .day),
+                            y: .value(L("Breaks"), day.count))
+                        .foregroundStyle(Brand.accent(scheme == .dark).gradient)
+                        .cornerRadius(5)
+                }
+                .chartXAxis {
+                    AxisMarks(values: .stride(by: .day)) { _ in
+                        AxisValueLabel(format: .dateTime.weekday(.abbreviated), centered: true)
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading, values: .automatic(desiredCount: 3))
+                }
+                .chartYScale(domain: 0...max(4, week.map(\.count).max() ?? 0))
+                .frame(height: 170)
+                .padding(.vertical, 8)
+                .overlay {
+                    if week.allSatisfy({ $0.count == 0 }) {
+                        Text(L("Your stretch breaks will show up here."))
+                            .foregroundStyle(.secondary)
+                            .padding(8)
+                            .background(.background, in: RoundedRectangle(cornerRadius: 8))
+                    }
+                }
+            }
+
+            Section {
+                HStack {
+                    Text(L("Statistics stay on this Mac."))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button(L("Reset…")) { confirmingReset = true }
+                        .disabled(prefs.breaksTotal == 0)
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .confirmationDialog(L("Reset your statistics?"), isPresented: $confirmingReset) {
+            Button(L("Reset"), role: .destructive) { prefs.resetStatistics() }
+        } message: {
+            Text(L("This removes your history and streak. It can't be undone."))
+        }
+    }
+
+    private func stat(_ title: String, _ value: String) -> some View {
+        VStack(spacing: 3) {
+            Text(value)
+                .font(.system(size: 24, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(title)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
     }
 }
 

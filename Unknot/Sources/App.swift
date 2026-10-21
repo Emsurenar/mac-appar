@@ -15,6 +15,9 @@ struct StrackisMain {
     }
 }
 
+/// Posted by a second copy of the app before it quits, so the running one can show its settings.
+private let showSettingsNotification = Notification.Name("io.github.emsurenar.strackis.showSettings")
+
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem!
@@ -27,6 +30,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         if quitIfAlreadyRunning() { return }
         MainMenu.install()
+        DistributedNotificationCenter.default().addObserver(self, selector: #selector(anotherCopyWasOpened(_:)),
+                                                            name: showSettingsNotification, object: nil)
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.imagePosition = .imageLeading
@@ -66,8 +71,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
               let id = Bundle.main.bundleIdentifier else { return false }
         let others = NSRunningApplication.runningApplications(withBundleIdentifier: id).filter { $0 != .current }
         guard !others.isEmpty else { return false }
+        DistributedNotificationCenter.default().postNotificationName(showSettingsNotification, object: nil,
+                                                                     userInfo: nil, deliverImmediately: true)
         NSApp.terminate(nil)
         return true
+    }
+
+    @objc private func anotherCopyWasOpened(_ notification: Notification) {
+        WindowManager.shared.showSettings()
     }
 
     // MARK: Menu bar icon

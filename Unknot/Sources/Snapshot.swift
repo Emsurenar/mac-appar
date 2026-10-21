@@ -109,7 +109,7 @@ enum Snapshot {
         try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
         for dark in [false, true] {
             let appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
-            let (window, tabs) = WindowManager.shared.makeSettingsWindow()
+            let (window, tabs) = WindowManager.shared.makeSettingsWindow(animatesResize: false)
             window.appearance = appearance
             window.setFrameOrigin(NSPoint(x: -10_000, y: -10_000))
             window.orderFrontRegardless()
@@ -175,6 +175,18 @@ enum Snapshot {
               "After Friday evening, work resumes Monday 08:00")
 
         check(Set(allExercises.map(\.id)).count == allExercises.count, "Exercise ids are unique")
+
+        let stats = Preferences(defaults: UserDefaults(suiteName: "strackis.selftest.\(UUID().uuidString)")!)
+        stats.recordCompletedBreak(at: date(19, 10))
+        stats.recordCompletedBreak(at: date(20, 10))
+        stats.recordCompletedBreak(at: date(20, 14))
+        stats.recordCompletedBreak(at: date(21, 9))
+        check(stats.streak(until: date(21, 12), calendar: cal) == 3, "Three days in a row is a streak of 3")
+        check(stats.streak(until: date(22, 8), calendar: cal) == 3, "The streak survives the morning before a break")
+        check(stats.streak(until: date(23, 8), calendar: cal) == 0, "A day without breaks ends the streak")
+        check(stats.recentDays(7, until: date(21, 12), calendar: cal).map(\.count) == [0, 0, 0, 0, 1, 2, 1],
+              "The last 7 days are counted per day")
+        check(stats.breaksTotal == 4, "All breaks are counted in the total")
 
         if let path = Bundle.main.path(forResource: "Localizable", ofType: "strings", inDirectory: nil, forLocalization: "sv"),
            let table = NSDictionary(contentsOfFile: path) as? [String: String] {

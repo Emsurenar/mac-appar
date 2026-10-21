@@ -9,11 +9,10 @@ enum BreakOutcome { case completed, snoozed }
 /// One stretch break: a few exercises shown one after another, then a short cheer.
 @MainActor
 final class ReminderSession: NSObject, ObservableObject {
-    static let snoozeMinutes = 5
-
     let exercises: [Exercise]
     let cheer = L(cheers.randomElement()!)
     let nextMinutes: Int
+    let snoozeMinutes: Int
     let total: Double
     @Published var elapsed = 0.0
     @Published private(set) var finished = false
@@ -24,9 +23,10 @@ final class ReminderSession: NSObject, ObservableObject {
     private var timer: Timer?
     private var startDate = Date()
 
-    init(exercises: [Exercise], nextMinutes: Int, total: Double) {
+    init(exercises: [Exercise], nextMinutes: Int, snoozeMinutes: Int = 5, total: Double) {
         self.exercises = exercises.isEmpty ? [allExercises[0]] : exercises
         self.nextMinutes = nextMinutes
+        self.snoozeMinutes = snoozeMinutes
         self.total = total
     }
 
@@ -179,7 +179,7 @@ struct ReminderView: View {
 
                     if !s.finished {
                         HStack(spacing: 6) {
-                            Button(L("In %ld min", ReminderSession.snoozeMinutes)) { s.snooze() }
+                            Button(L("In %ld min", s.snoozeMinutes)) { s.snooze() }
                                 .buttonStyle(ActionButtonStyle(prominent: false, accent: accent))
                                 .accessibilityHint(L("Snoozes the break"))
                             Button(L("Done")) { s.complete() }

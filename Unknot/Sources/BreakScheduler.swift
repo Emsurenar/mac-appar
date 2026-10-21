@@ -67,13 +67,14 @@ final class BreakScheduler: NSObject {
     func showBreakNow() {
         guard session == nil else { return }
         let picks = Array(prefs.enabledExercises.shuffled().prefix(prefs.exercisesPerBreak))
-        let s = ReminderSession(exercises: picks, nextMinutes: prefs.intervalMinutes, total: Double(prefs.breakSeconds))
+        let s = ReminderSession(exercises: picks, nextMinutes: prefs.intervalMinutes,
+                                snoozeMinutes: prefs.snoozeMinutes, total: Double(prefs.breakSeconds))
         s.onClose = { [weak self] outcome in
             guard let self else { return }
             if outcome == .completed { self.prefs.recordCompletedBreak() }
             self.panel.close()
             self.session = nil
-            self.reschedule(afterMinutes: outcome == .snoozed ? ReminderSession.snoozeMinutes : nil)
+            self.reschedule(afterMinutes: outcome == .snoozed ? s.snoozeMinutes : nil)
         }
         session = s
         panel.show(s, at: prefs.position)
@@ -92,7 +93,6 @@ final class BreakScheduler: NSObject {
 
     @objc private func tick() {
         defer { onChange?() }
-        prefs.refreshDay()
 
         if let until = pausedUntil {
             guard Date() >= until else { return }

@@ -85,7 +85,7 @@ final class BreakScheduler: NSObject {
         guard session == nil else { return }
         waitingFor = nil
         let picks = Array(prefs.enabledExercises.shuffled().prefix(prefs.exercisesPerBreak))
-        let buddy = prefs.randomBuddy(avoiding: lastBuddy)
+        let buddy = prefs.buddyForBreak(avoiding: lastBuddy)
         lastBuddy = buddy
         let s = ReminderSession(exercises: picks, buddy: buddy, nextMinutes: prefs.intervalMinutes,
                                 snoozeMinutes: prefs.snoozeMinutes, total: Double(prefs.breakSeconds))

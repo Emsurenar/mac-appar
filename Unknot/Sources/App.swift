@@ -69,7 +69,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         if !prefs.hasCompletedOnboarding {
             WindowManager.shared.showWelcome()
+        } else if let previous = UserDefaults.standard.string(forKey: "lastRunVersion"),
+                  Updater.isVersion(Updater.currentVersion, newerThan: previous) {
+            // Once the menu bar has settled, say what's new
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.showUpdatedNote() }
         }
+        UserDefaults.standard.set(Updater.currentVersion, forKey: "lastRunVersion")
         Updater.shared.checkIfDue()
         if CommandLine.arguments.contains("--show-now") {
             // Window animations started while the app is still launching are dropped.
@@ -130,16 +135,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// After the welcome window, point at the icon once, so people know where the app went.
     private func showMenuBarHint() {
+        showNote(MenuBarHint(title: L("Unknot lives up here"),
+                             text: L("%@. Click the frog to stretch now, pause reminders or change the settings.", statusText)))
+    }
+
+    /// After an update, say so once, with a way to read what changed.
+    private func showUpdatedNote() {
+        showNote(MenuBarHint(title: L("Updated to Unknot %@", Updater.currentVersion),
+                             text: L("New crew members, new moves or fixes: the release notes have the details."),
+                             link: (L("What's new"), Updater.releasesURL)), seconds: 12)
+    }
+
+    private func showNote(_ note: MenuBarHint, seconds: Double = 9) {
         guard let button = statusItem?.button, let window = button.window,
               window.occlusionState.contains(.visible),
               NSScreen.screens.contains(where: { $0.frame.intersects(window.frame) }) else { return }
         let popover = NSPopover()
         popover.behavior = .transient
         popover.animates = true
-        popover.contentViewController = NSHostingController(rootView: MenuBarHint(next: statusText)
-            .environment(\.locale, Localizer.locale))
+        popover.contentViewController = NSHostingController(rootView: note.environment(\.locale, Localizer.locale))
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 9) { [weak popover] in popover?.performClose(nil) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { [weak popover] in popover?.performClose(nil) }
     }
 
     // MARK: Menu
@@ -248,18 +264,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func quit() { NSApp.terminate(nil) }
 }
 
-/// The one-time pointer to the menu bar icon after the welcome window.
+/// A short note from the menu bar icon: where the app lives, or that it was updated.
 private struct MenuBarHint: View {
-    let next: String
+    let title: String
+    let text: String
+    var link: (String, URL)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(L("Unknot lives up here"))
+            Text(title)
                 .font(.system(size: 13, weight: .semibold))
-            Text(L("%@. Click the frog to stretch now, pause reminders or change the settings.", next))
+            Text(text)
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            if let link {
+                Link(link.0, destination: link.1)
+                    .font(.system(size: 12, weight: .medium))
+                    .padding(.top, 4)
+            }
         }
         .frame(width: 250, alignment: .leading)
         .padding(14)

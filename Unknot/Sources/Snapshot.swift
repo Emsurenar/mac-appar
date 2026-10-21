@@ -78,7 +78,9 @@ enum Snapshot {
         try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
         for (i, exercise) in allExercises.enumerated() {
             let others = allExercises.filter { $0.id != exercise.id }.prefix(2)
-            let s = ReminderSession(exercises: [exercise] + others, nextMinutes: 20, total: 30)
+            // A different member of the crew on each card, so long names get checked too
+            let s = ReminderSession(exercises: [exercise] + others, buddy: Buddy.allCases[i % Buddy.allCases.count],
+                                    nextMinutes: 20, total: 30)
             s.elapsed = 3.4
             s.fixedTime = 1.1 + Double(i) * 0.37
             save(framed(ReminderView(s: s), dark: false), to: "\(dir)/card-\(exercise.id).png")

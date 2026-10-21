@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.20.0 – 2026-10-21
+
+- **Selma leads every break on Shrove Tuesday**, fettisdagen, and the break ends with *Happy Semla Day*.
+- **A note after each update.** The first time a new version opens, the menu bar frog says which version it
+  is, with a link to what's new.
+- A break names its leader the way people know them: *Stretch break with Gandhi*, *with Löfven*, *with
+  Kaknäs Tower*, not with *Mahatma*.
+
 ## 1.19.2 – 2026-10-21
 
 - **Alexander Bard's beard no longer looks cut off.** It had a straight edge across the face and a flat bottom;

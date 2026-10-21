@@ -38,6 +38,12 @@ extension Snapshot {
 
         check(Set(allExercises.map(\.id)).count == allExercises.count, "Exercise ids are unique")
         check(Set(Buddy.allCases.map(\.name)).count == Buddy.allCases.count, "Every crew member has their own name")
+        func day(_ y: Int, _ m: Int, _ d: Int) -> Date { cal.date(from: DateComponents(year: y, month: m, day: d, hour: 12))! }
+        check(Holidays.isShroveTuesday(day(2026, 2, 17), calendar: cal) && Holidays.isShroveTuesday(day(2027, 2, 9), calendar: cal)
+              && !Holidays.isShroveTuesday(day(2027, 2, 10), calendar: cal), "Shrove Tuesday falls on the right day")
+        let semlaDay = Preferences(defaults: UserDefaults(suiteName: "unknot.selftest.semla.\(UUID().uuidString)")!)
+        check((0..<5).allSatisfy { _ in semlaDay.buddyForBreak(avoiding: .semla, on: day(2026, 2, 17)) == .semla },
+              "Selma leads every break on Shrove Tuesday")
         check(allExercises.allSatisfy { pose(for: $0.move, at: 0).leftReach == 0 && pose(for: $0.move, at: 0).rightReach == 0 },
               "Every exercise starts with the hands at rest")
         let fromChest = pose(for: .wristCircles, at: 3), toBend = pose(for: .sideBend, at: 1.2)

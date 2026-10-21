@@ -11,7 +11,7 @@ enum BreakOutcome { case completed, snoozed }
 final class ReminderSession: NSObject, ObservableObject {
     let exercises: [Exercise]
     let buddy: Buddy
-    let cheer = L(cheers.randomElement()!)
+    let cheer = Holidays.isShroveTuesday(Date()) ? L("Happy Semla Day") : L(cheers.randomElement()!)
     let nextMinutes: Int
     let snoozeMinutes: Int
     let total: Double
@@ -134,7 +134,7 @@ struct ReminderView: View {
     /// The small label at the top: a live cue while one fits the move, otherwise what this is.
     private var label: String {
         if s.finished { return L("BREAK COMPLETE") }
-        return (cue(for: s.current.move, at: s.moveTime) ?? L("Stretch break with %@", s.buddy.name)).uppercased(with: Localizer.locale)
+        return (cue(for: s.current.move, at: s.moveTime) ?? L("Stretch break with %@", s.buddy.callName)).uppercased(with: Localizer.locale)
     }
 
     private var countdown: String {

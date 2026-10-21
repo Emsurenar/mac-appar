@@ -190,6 +190,12 @@ final class Preferences: ObservableObject {
         }
     }
 
+    /// Who leads the next break. On Shrove Tuesday it's always Selma the semla, if she's on the crew.
+    func buddyForBreak(avoiding previous: Buddy?, on date: Date = Date()) -> Buddy {
+        if Holidays.isShroveTuesday(date) && isEnabled(Buddy.semla) { return .semla }
+        return randomBuddy(avoiding: previous)
+    }
+
     /// A random buddy from the enabled ones, avoiding `previous` when there's a choice.
     func randomBuddy(avoiding previous: Buddy? = nil) -> Buddy {
         let choices = enabledBuddies.filter { $0 != previous }
@@ -284,5 +290,25 @@ enum WorkHours {
             if candidate > date && !(weekdaysOnly && calendar.isDateInWeekend(candidate)) { return candidate }
         }
         return nil
+    }
+}
+
+/// Days when the crew does something special.
+enum Holidays {
+    /// Easter Sunday in the Gregorian calendar (the anonymous Gregorian algorithm).
+    static func easter(_ year: Int, calendar: Calendar = .current) -> Date? {
+        let a = year % 19, b = year / 100, c = year % 100, d = b / 4, e = b % 4
+        let f = (b + 8) / 25, g = (b - f + 1) / 3, h = (19 * a + b - d - g + 15) % 30
+        let i = c / 4, k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7
+        let m = (a + 11 * h + 22 * l) / 451
+        let month = (h + l - 7 * m + 114) / 31, day = (h + l - 7 * m + 114) % 31 + 1
+        return calendar.date(from: DateComponents(year: year, month: month, day: day))
+    }
+
+    /// Fettisdagen: the Tuesday 47 days before Easter, when Swedes eat semlor.
+    static func isShroveTuesday(_ date: Date, calendar: Calendar = .current) -> Bool {
+        guard let easter = easter(calendar.component(.year, from: date), calendar: calendar),
+              let tuesday = calendar.date(byAdding: .day, value: -47, to: easter) else { return false }
+        return calendar.isDate(date, inSameDayAs: tuesday)
     }
 }

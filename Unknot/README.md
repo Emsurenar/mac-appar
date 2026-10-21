@@ -29,8 +29,8 @@ Every 20 minutes a small panel drops out of the notch at the top of your screen.
 shows you three quick stretches, a bar fills up, and after 30 seconds the panel goes back where it came from.
 It never takes focus, so you can finish your sentence first.
 
-Unknot lives in the menu bar as a small frog. It's about 1 MB, written in Swift, and has no account, no
-tracking and no ads.
+Unknot lives in the menu bar as a small frog. It's a 2 MB download, written in Swift, and has no account,
+no tracking and no ads.
 
 ## Install
 
@@ -99,7 +99,8 @@ fine pores and Kaknäs is Stockholm's TV tower, dishes and all. Stefan Löfven, 
 Alexander Bard are drawn from photographs and portraits, in a slightly more cartoonish style: Jesus after the
 Sinai icon, Gandhi in his round glasses, Descartes as Frans Hals painted him and Bard with his beard and
 polka-dot braces. A random member leads each break,
-and under **Settings → Stretch Crew** you can keep only your favourites.
+except on Shrove Tuesday, when Selma leads them all. Under **Settings → Stretch Crew** you can keep only
+your favourites.
 
 ## When breaks happen
 

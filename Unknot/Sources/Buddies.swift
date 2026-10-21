@@ -48,6 +48,18 @@ enum Buddy: String, CaseIterable, Identifiable {
         }
     }
 
+    /// What a break calls them: the people go by the name people know them by, the rest by their own.
+    var callName: String {
+        switch self {
+        case .stefan: return "Löfven"
+        case .gandhi: return "Gandhi"
+        case .descartes: return "Descartes"
+        case .bard: return "Bard"
+        case .kaknas: return L("Kaknäs Tower")
+        default: return name
+        }
+    }
+
     /// Name and kind together, the way the language puts them: "Otto the frog", "Grodan Otto".
     var introduction: String {
         switch self {

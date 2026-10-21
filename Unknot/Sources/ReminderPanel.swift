@@ -53,7 +53,7 @@ final class ReminderPanel: NSObject {
             showInCorner(content, position: position, on: screen)
         }
         NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested, userInfo: [
-            .announcement: "\(L("Stretch break with %@", session.buddy.name)): \(session.current.title). \(session.current.text)",
+            .announcement: "\(L("Stretch break with %@", session.buddy.callName)): \(session.current.title). \(session.current.text)",
             .priority: NSAccessibilityPriorityLevel.high.rawValue,
         ])
     }

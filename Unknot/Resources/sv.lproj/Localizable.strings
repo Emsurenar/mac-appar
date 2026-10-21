@@ -234,3 +234,11 @@
 "Back and chest" = "Rygg och bröst";
 "Arms, hands and legs" = "Armar, händer och ben";
 "Eyes and breathing" = "Ögon och andning";
+
+/* Shrove Tuesday */
+"Happy Semla Day" = "Glad fettisdag";
+
+/* After an update */
+"Updated to Unknot %@" = "Uppdaterad till Unknot %@";
+"New crew members, new moves or fixes: the release notes have the details." = "Nya i crewet, nya rörelser eller rättningar: versionsinformationen berättar mer.";
+"What's new" = "Nyheter";

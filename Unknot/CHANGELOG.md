@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.21.6 – 2026-10-21
+
+- **Bao looks more like a giant panda.** The black of the forelegs now runs up the sides into the arms, as on
+  a real panda, the eye patches are teardrops, narrow at the top and slanting out, and the nose is broad and
+  flat on top instead of a small dot.
+
 ## 1.21.5 – 2026-10-21
 
 - **Stefan Löfven in his usual dark suit.** The jacket gets a second layer of colour, so it reads as the dark

@@ -42,7 +42,8 @@ panel slides back. It never takes focus, so it doesn't interrupt your typing.
 - **Context-aware timing.** Time away counts as a break, sleep resets the countdown, and breaks wait while
   you're on a call or presenting.
 - **The Stretch Crew.** Fifteen hand-engraved characters lead the breaks; keep the ones you like.
-- **Native and lightweight.** Written in Swift and SwiftUI, a 2 MB download, under 1.5 ms per animation frame.
+- **Native and lightweight.** Written in Swift and SwiftUI: a 2 MB download that uses about 12 MB of memory
+  and next to no CPU while it waits, and draws each animation frame in under 1.5 ms.
 - **Private by design.** No account, no analytics, no ads. Settings and statistics never leave your Mac.
 
 ## Contents

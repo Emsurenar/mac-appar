@@ -354,6 +354,8 @@ struct PandaArt: CrewArt {
     let body = superellipse(cx: 100, cy: 128, a: 44, b: 42)
     let wash: Path
     let hatches: [Hatch]
+    let shoulderBand: Path                       // the black that runs over the shoulders into the forelegs
+    let patch: Path                              // an eye patch: a teardrop, narrow at the top
     let shoulders = [pt(60, 134), pt(140, 134)]
     let brow: CGPoint? = pt(119, 109)
     let arm = ArmStyle.bold(length: 26)
@@ -362,6 +364,14 @@ struct PandaArt: CrewArt {
     init() {
         wash = body
         hatches = [Hatch.shadow(of: body)]
+        shoulderBand = body.intersection(oval(55, 152, 30, 54).union(oval(145, 152, 30, 54)))
+        patch = makePath { p in
+            p.move(to: pt(0, -10.5))
+            p.addCurve(to: pt(7.6, 2.5), control1: pt(3.8, -10.5), control2: pt(7.6, -4))
+            p.addCurve(to: pt(0, 10.5), control1: pt(7.6, 7.6), control2: pt(4.2, 10.5))
+            p.addCurve(to: pt(-7.6, 2.5), control1: pt(-4.2, 10.5), control2: pt(-7.6, 7.6))
+            p.addCurve(to: pt(0, -10.5), control1: pt(-7.6, -4), control2: pt(-3.8, -10.5))
+        }
     }
 
     func feet(_ pen: Pen, _ f: CrewFrame) {
@@ -390,10 +400,14 @@ struct PandaArt: CrewArt {
         for s: CGFloat in [-1, 1] { pen.solid(oval(100 + s * 31, 92, 24, 24)) }
     }
 
+    func onBody(_ pen: Pen, _ f: CrewFrame) {
+        pen.solid(shoulderBand)
+    }
+
     func face(_ pen: Pen, _ f: CrewFrame) {
         for s: CGFloat in [-1, 1] {
             let cx = 100 + s * 15 + f.fx
-            pen.moved { $0.translateBy(x: cx, y: 121); $0.rotate(by: .degrees(Double(s) * -26)) }.solid(oval(0, 0, 15, 20))
+            pen.moved { $0.translateBy(x: cx, y: 121); $0.rotate(by: .degrees(Double(s) * -28)) }.solid(patch)
             let ex = 100 + s * 14.5 + f.fx + f.look * 0.4
             switch f.eyes {
             case .open:
@@ -406,8 +420,14 @@ struct PandaArt: CrewArt {
             }
         }
         let x = 100 + f.fx
-        pen.solid(oval(x, 131, 7, 4.6))
-        pen.fine(line(pt(x, 133), pt(x, 136)))
+        // A broad nose, rounded at the corners, flat on top
+        pen.solid(makePath { p in
+            p.move(to: pt(x - 4.6, 129)); p.addLine(to: pt(x + 4.6, 129))
+            p.addQuadCurve(to: pt(x + 1.2, 133.6), control: pt(x + 5.4, 131.6))
+            p.addQuadCurve(to: pt(x - 1.2, 133.6), control: pt(x, 134.4))
+            p.addQuadCurve(to: pt(x - 4.6, 129), control: pt(x - 5.4, 131.6))
+        })
+        pen.fine(line(pt(x, 133.5), pt(x, 136)))
         if f.pose.mouth == .smile {
             pen.fine(bend(pt(x, 136), pt(x - 3, 139), pt(x - 6, 137)))
             pen.fine(bend(pt(x, 136), pt(x + 3, 139), pt(x + 6, 137)))

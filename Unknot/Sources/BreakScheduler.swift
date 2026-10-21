@@ -26,6 +26,8 @@ final class BreakScheduler: NSObject {
     private var lastBuddy: Buddy?
     private var lastExercises: [Exercise] = []
     private var lastCallCheck: (date: Date, onCall: Bool)?
+    /// When the break now held back for typing first fell due.
+    private var dueWhileTyping: Date?
 
     /// Asking the system about microphones and cameras takes a few milliseconds, so the answer is kept a while.
     private var onCall: Bool {
@@ -63,6 +65,7 @@ final class BreakScheduler: NSObject {
     func reschedule(afterMinutes minutes: Int? = nil) {
         nextBreak = Date().addingTimeInterval(Double(minutes ?? prefs.intervalMinutes) * 60)
         waitingFor = nil
+        dueWhileTyping = nil
         onChange?()
     }
 
@@ -85,6 +88,7 @@ final class BreakScheduler: NSObject {
     func showBreakNow() {
         guard session == nil else { return }
         waitingFor = nil
+        dueWhileTyping = nil
         let picks = prefs.exercisesForBreak(count: prefs.exercisesPerBreak, avoiding: lastExercises)
         lastExercises = picks
         let buddy = prefs.buddyForBreak(avoiding: lastBuddy)
@@ -141,9 +145,17 @@ final class BreakScheduler: NSObject {
         } else if prefs.waitForFullscreen && Activity.frontmostAppIsFullscreen {
             waitingFor = .fullScreen
         } else {
+            // Mid-sentence, let the sentence finish: wait for a short pause in the typing, at most a minute
+            let due = dueWhileTyping ?? Date()
+            if Activity.shouldWaitForTyping(secondsSinceKeyPress: Activity.secondsSinceLastKeyPress,
+                                            waitedFor: Date().timeIntervalSince(due)) {
+                dueWhileTyping = due
+                return
+            }
             showBreakNow()
             return
         }
+        dueWhileTyping = nil
         nextBreak = Date().addingTimeInterval(20)
     }
 }

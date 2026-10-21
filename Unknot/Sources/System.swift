@@ -73,6 +73,19 @@ enum Activity {
         CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: CGEventType(rawValue: ~0)!)
     }
 
+    /// Seconds since the last key press, to tell whether someone is in the middle of typing.
+    static var secondsSinceLastKeyPress: TimeInterval {
+        CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: .keyDown)
+    }
+
+    /// A break that falls due mid-sentence waits for a pause in the typing, but never for long.
+    static let typingPause: TimeInterval = 2
+    static let longestTypingWait: TimeInterval = 60
+
+    static func shouldWaitForTyping(secondsSinceKeyPress: TimeInterval, waitedFor: TimeInterval) -> Bool {
+        secondsSinceKeyPress < typingPause && waitedFor < longestTypingWait
+    }
+
     /// True while the main display is off. Nobody would see a break then.
     static var displayIsAsleep: Bool {
         CGDisplayIsAsleep(CGMainDisplayID()) != 0

@@ -843,14 +843,15 @@ struct DescartesArt: CrewArt {
         let doublet = jacket(left: 72, right: 128)
         body = doublet
         // A falling band, as in the portrait: two broad flaps of plain linen that lie flat over the cloak,
-        // spreading out and down from the neck and meeting in front
+        // spreading out and down from the neck and meeting in front. They overlap a little at the middle, so
+        // the band is one shape with a faint seam, not two outlines side by side that read as a tie
         let flaps = [CGFloat(-1), 1].map { s in
             makePath { p in
-                p.move(to: pt(100 + s * 0.2, 122.5))
+                p.move(to: pt(100 - s * 0.8, 122.5))
                 p.addQuadCurve(to: pt(100 + s * 20, 120.5), control: pt(100 + s * 11, 124))
                 p.addQuadCurve(to: pt(100 + s * 25, 133.5), control: pt(100 + s * 24, 126))
-                p.addQuadCurve(to: pt(100 + s * 1, 141), control: pt(100 + s * 15, 140.5))
-                p.addLine(to: pt(100 + s * 0.2, 122.5))
+                p.addQuadCurve(to: pt(100 - s * 0.8, 141.2), control: pt(100 + s * 15, 140.5))
+                p.addLine(to: pt(100 - s * 0.8, 122.5))
                 p.closeSubpath()
             }
         }
@@ -975,6 +976,7 @@ struct DescartesArt: CrewArt {
     func front(_ pen: Pen, _ f: CrewFrame) {
         pen.shape(collar, 1.4)
         pen.fine(collarLines)
+        pen.c.stroke(line(pt(100, 125.5), pt(100, 140)), with: .color(Pen.ink.opacity(0.45)), lineWidth: 0.8)
     }
 
     func overlay(_ pen: Pen, _ f: CrewFrame) { eyes.draw(pen, f) }

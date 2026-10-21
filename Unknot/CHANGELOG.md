@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.22.0 – 2026-10-21
+
+- **Breaks wait for a pause in your typing.** When a break falls due mid-sentence, it holds back until you've
+  stopped typing for two seconds, and never for more than a minute, so it doesn't drop in between two words.
+  Unknot only reads how long ago the last key was pressed, never which key, and needs no permission for it.
+- **Descartes's collar is one band of linen.** Its two halves overlapped by a hair too little, so their
+  outlines ran side by side down the middle and read as a black tie. They now meet with a faint seam.
+
 ## 1.21.6 – 2026-10-21
 
 - **Bao looks more like a giant panda.** The black of the forelegs now runs up the sides into the arms, as on

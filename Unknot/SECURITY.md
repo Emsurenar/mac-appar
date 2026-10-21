@@ -4,7 +4,8 @@
 
 Unknot asks for no permissions, and it only reads what it needs to time a break:
 
-- **How long since you last touched the keyboard or mouse**, as a number of seconds. Never what you typed.
+- **How long since you last touched the keyboard or mouse, and since the last key press**, as a number of
+  seconds. Never which keys or what you typed.
 - **Whether a microphone or camera is on**, and which app is using the microphone, so a break can wait for
   your call to end. Never what they hear or see.
 - **The size of the front app's windows**, to tell whether it's in full screen. Never their contents.

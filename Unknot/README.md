@@ -31,7 +31,8 @@
 
 Unknot is a small menu bar app that reminds you to move. Every 20 minutes a panel drops out of the notch at the
 top of your screen, a member of the Stretch Crew demonstrates three short exercises, and after 30 seconds the
-panel slides back. It never takes focus, so it doesn't interrupt your typing.
+panel slides back. It waits for a pause in your typing and never takes focus, so it doesn't break your train
+of thought.
 
 ## Highlights
 
@@ -40,7 +41,7 @@ panel slides back. It never takes focus, so it doesn't interrupt your typing.
 - **Fourteen animated exercises** for the neck, shoulders, back, wrists, legs and eyes, each choreographed to
   match the real movement, with live cues such as *Breathe in · 3* and *Switch sides*.
 - **Context-aware timing.** Time away counts as a break, sleep resets the countdown, and breaks wait while
-  you're on a call or presenting.
+  you're on a call or presenting, and for a pause in your typing.
 - **The Stretch Crew.** Fifteen hand-engraved characters lead the breaks; keep the ones you like.
 - **Native and lightweight.** Written in Swift and SwiftUI: a 2 MB download that uses about 12 MB of memory
   and next to no CPU while it waits, and draws each animation frame in under 1.5 ms.
@@ -103,11 +104,13 @@ what you're doing:
 | --- | --- |
 | You've been away from the computer for 5 minutes | Counts it as a break and restarts the countdown |
 | The Mac slept or the screen was locked | Restarts the countdown |
+| You're in the middle of typing | Waits for a two-second pause, at most a minute |
 | Another app is using the microphone or camera | Holds the break until the call ends |
 | An app is in full screen (optional) | Holds the break until you leave full screen |
 | Outside your working hours (optional) | Stays quiet until they begin |
 
-Unknot only checks whether the microphone or camera is in use, never what it records.
+Unknot only checks how long ago the last key was pressed and whether the microphone or camera is in use,
+never what you type or what they record.
 
 The menu bar frog shows the state at a glance: awake, asleep while reminders are paused, smiling during a
 break. Its menu shows the next break and your streak, starts a break immediately, and pauses reminders for

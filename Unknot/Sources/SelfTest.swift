@@ -10,6 +10,9 @@ extension Snapshot {
             if !condition { ok = false }
         }
 
+        check(Activity.shouldWaitForTyping(secondsSinceKeyPress: 0.4, waitedFor: 5), "A break waits while you're typing")
+        check(!Activity.shouldWaitForTyping(secondsSinceKeyPress: 3, waitedFor: 5), "A break comes in a pause in the typing")
+        check(!Activity.shouldWaitForTyping(secondsSinceKeyPress: 0.4, waitedFor: 61), "A break waits for typing a minute at most")
         check(Updater.isVersion("1.0.1", newerThan: "1.0.0"), "1.0.1 is newer than 1.0.0")
         check(!Updater.isVersion("1.0.0", newerThan: "1.0.0"), "1.0.0 is not newer than itself")
         check(Updater.isVersion("1.10", newerThan: "1.9.9"), "1.10 is newer than 1.9.9")

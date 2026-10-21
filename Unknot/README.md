@@ -24,7 +24,7 @@
   <img src="docs/demo.gif" width="460" alt="A stretch break: the buddy shows three exercises, then cheers">
 </p>
 
-Every 20 minutes a small glass panel slides into the corner of your screen. A member of the Stretch Crew, drawn
+Every 20 minutes a small glass panel drops down from the top of your screen, right where the camera sits. A member of the Stretch Crew, drawn
 like a little engraving, demonstrates a few quick exercises, a progress bar counts down, and after 30 seconds it's gone again.
 It never steals focus, so you can keep typing if you really have to.
 
@@ -34,7 +34,7 @@ before version 1.2.0; updating keeps your settings and statistics.
 ## Features
 
 - **Gentle breaks.** A non-activating panel in the corner of your screen, light and dark mode, sound optional.
-- **The Stretch Crew.** Ten engraved characters: Mochi, a cat, a panda, a bunny, a frog, a penguin, a chick, a
+- **The Stretch Crew.** Ten engraved characters: Mochi, a cat, a panda, a bunny, a frog, a semla, a chick, a
   slice of toast, an onigiri and a cactus. A random one leads each break, or pick your favourites.
 - **Animations made for each exercise.** Reach, hold, release. Leans that pause at the stretch, a soft landing
   after calf raises, a hand over the brow while you rest your eyes.
@@ -48,7 +48,7 @@ before version 1.2.0; updating keeps your settings and statistics.
 - **English and Swedish.** It follows your Mac's language, or pick one in Settings.
 
 <p align="center">
-  <img src="docs/buddies.png" width="640" alt="The Stretch Crew: Mochi, Cat, Panda, Bunny, Frog, Penguin, Chick, Toast, Onigiri and Cactus">
+  <img src="docs/buddies.png" width="640" alt="The Stretch Crew: Mochi, Cat, Panda, Bunny, Frog, Semla, Chick, Toast, Onigiri and Cactus">
 </p>
 
 <p align="center">

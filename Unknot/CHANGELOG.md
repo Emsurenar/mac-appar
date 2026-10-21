@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.0 – 2026-10-21
+
+- **Breaks drop down from the camera.** The panel now slides out from under the menu bar at the top center of
+  the screen, where the camera sits, and goes back the same way. This is the new default; the corners are still
+  there under Settings → General → Position on screen.
+- **A semla joins the crew** in place of the penguin: a cardamom bun with almond paste, a cloud of whipped
+  cream and a sugared lid that wobbles as it moves.
+
 ## 1.5.0 – 2026-10-21
 
 - **The Stretch Crew, redrawn.** Every member is now an engraved line drawing: one ink line, finer lines for

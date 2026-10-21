@@ -1,14 +1,15 @@
 import AppKit
 
 enum ReminderPosition: String, CaseIterable, Identifiable {
-    case bottomRight, topRight, bottomLeft, topLeft
+    case topCenter, bottomRight, topRight, bottomLeft, topLeft
 
     var id: String { rawValue }
-    var isTop: Bool { self == .topRight || self == .topLeft }
+    var isTop: Bool { self == .topCenter || self == .topRight || self == .topLeft }
     var isLeft: Bool { self == .bottomLeft || self == .topLeft }
 
     var title: String {
         switch self {
+        case .topCenter: return L("Top center, from the camera")
         case .bottomRight: return L("Bottom right")
         case .topRight: return L("Top right")
         case .bottomLeft: return L("Bottom left")
@@ -97,7 +98,7 @@ final class Preferences: ObservableObject {
             Key.exerciseCount: 3,
             Key.soundEnabled: true,
             Key.soundName: "Purr",
-            Key.position: ReminderPosition.bottomRight.rawValue,
+            Key.position: ReminderPosition.topCenter.rawValue,
             Key.showCountdown: false,
             Key.countAway: true,
             Key.awayMinutes: 5,
@@ -115,7 +116,7 @@ final class Preferences: ObservableObject {
         exercisesPerBreak = d.integer(forKey: Key.exerciseCount)
         soundEnabled = d.bool(forKey: Key.soundEnabled)
         soundName = d.string(forKey: Key.soundName) ?? "Purr"
-        position = ReminderPosition(rawValue: d.string(forKey: Key.position) ?? "") ?? .bottomRight
+        position = ReminderPosition(rawValue: d.string(forKey: Key.position) ?? "") ?? .topCenter
         showCountdownInMenuBar = d.bool(forKey: Key.showCountdown)
         disabledExercises = Set(d.stringArray(forKey: Key.disabledExercises) ?? [])
         disabledBuddies = Set(d.stringArray(forKey: Key.disabledBuddies) ?? [])

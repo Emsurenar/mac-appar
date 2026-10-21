@@ -61,20 +61,29 @@ final class ReminderPanel {
         let screen = NSScreen.screens.first { NSMouseInRect(mouse, $0.frame, false) } ?? NSScreen.main ?? NSScreen.screens[0]
         let vf = screen.visibleFrame
         let inset: CGFloat = 16
-        let x = position.isLeft ? vf.minX + inset : vf.maxX - size.width - inset
-        let y = position.isTop ? vf.maxY - size.height - inset : vf.minY + inset
-        let target = NSRect(x: x, y: y, width: size.width, height: size.height)
-
-        // Slide in from the nearest horizontal edge and leave the same way
+        let target: NSRect
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        slideOffset = reduceMotion ? 0 : (position.isTop ? 20 : -20)
+        if position == .topCenter {
+            // Drops down out of the camera notch: the panel sits just below the menu bar while it slides,
+            // so it seems to come out from behind it
+            target = NSRect(x: vf.midX - size.width / 2, y: vf.maxY - size.height - 10, width: size.width, height: size.height)
+            p.level = NSWindow.Level(rawValue: NSWindow.Level.mainMenu.rawValue - 1)
+            slideOffset = reduceMotion ? 0 : 46
+        } else {
+            let x = position.isLeft ? vf.minX + inset : vf.maxX - size.width - inset
+            let y = position.isTop ? vf.maxY - size.height - inset : vf.minY + inset
+            target = NSRect(x: x, y: y, width: size.width, height: size.height)
+            // Slide in from the nearest horizontal edge and leave the same way
+            slideOffset = reduceMotion ? 0 : (position.isTop ? 20 : -20)
+        }
+
         p.setFrame(target.offsetBy(dx: 0, dy: slideOffset), display: false)
         p.alphaValue = 0
         p.orderFrontRegardless()
         p.invalidateShadow()
         NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = reduceMotion ? 0.25 : 0.45
-            ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.2, 0.8, 0.2, 1)
+            ctx.duration = reduceMotion ? 0.25 : (position == .topCenter ? 0.55 : 0.45)
+            ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.16, 0.84, 0.24, 1)
             p.animator().setFrame(target, display: true)
             p.animator().alphaValue = 1
         }

@@ -32,7 +32,7 @@
 "Panda" = "Panda";
 "Bunny" = "Kanin";
 "Frog" = "Groda";
-"Penguin" = "Pingvin";
+"Semla" = "Semla";
 "Chick" = "Kyckling";
 "Toast" = "Rostbröd";
 "Onigiri" = "Onigiri";
@@ -112,6 +112,7 @@
 "Language" = "Språk";
 "System default" = "Systemets språk";
 "Position on screen" = "Placering på skärmen";
+"Top center, from the camera" = "Uppe i mitten, från kameran";
 "Bottom right" = "Nere till höger";
 "Top right" = "Uppe till höger";
 "Bottom left" = "Nere till vänster";

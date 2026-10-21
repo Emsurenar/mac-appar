@@ -259,10 +259,11 @@ struct BuddyCard: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
+            // The checkmark says who's on; the card itself stays calm, even with the whole crew selected
             .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(isOn ? accent.opacity(0.06) : Color.primary.opacity(0.03)))
+                .fill(Color.primary.opacity(hovering ? 0.06 : 0.03)))
             .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(isOn ? accent.opacity(0.55) : Color.primary.opacity(0.08), lineWidth: isOn ? 1.5 : 1))
+                .strokeBorder(Color.primary.opacity(isOn ? 0.12 : 0.06), lineWidth: 1))
             .overlay(alignment: .topTrailing) {
                 Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 13))
@@ -453,7 +454,8 @@ struct ActivitySettingsView: View {
                 Chart(week) { day in
                     BarMark(x: .value(L("Day"), day.date, unit: .day),
                             y: .value(L("Breaks"), day.count))
-                        .foregroundStyle(Brand.accent(scheme == .dark).gradient)
+                        // Today in full colour, the days before a little quieter
+                        .foregroundStyle(Brand.accent(scheme == .dark).opacity(Calendar.current.isDateInToday(day.date) ? 1 : 0.45).gradient)
                         .cornerRadius(5)
                 }
                 .chartXAxis {

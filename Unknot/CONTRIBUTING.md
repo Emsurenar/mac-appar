@@ -53,7 +53,8 @@ Add `-AppleLanguages '(sv)'` to any of them to see the Swedish version.
 | `Sources/System.swift` | Login item, moving to Applications, idle, full-screen and call detection |
 | `Sources/Updater.swift` | Checking GitHub for a new version and installing it |
 | `Sources/Preferences.swift` | All settings and statistics, stored in `UserDefaults` |
-| `Sources/Snapshot.swift` | The command-line helpers above and the self-test |
+| `Sources/Snapshot.swift`, `DropScene.swift` | The command-line helpers above, and the drawn screen in the README animation |
+| `Sources/SelfTest.swift` | `--selftest`, run by every build |
 | `Resources/*.lproj`, `Resources/Unknot.wav` | Translations, and the break sound (made by `scripts/make_sound.py`) |
 | `docs/` | The website at emsurenar.github.io/unknot (`index.html`) and the README images |
 

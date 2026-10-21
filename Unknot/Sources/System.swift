@@ -120,18 +120,37 @@ enum Activity {
 enum Calls {
     static var inProgress: Bool { microphoneInUse || cameraInUse }
 
+    /// The processes recording from a microphone right now, other than this one. Needs macOS 14.2;
+    /// nil when the system can't tell.
+    private static var recordingProcesses: [pid_t]? {
+        let system = AudioObjectID(kAudioObjectSystemObject)
+        let processes = audioObjects(system, kAudioHardwarePropertyProcessObjectList)
+        guard !processes.isEmpty else { return nil }
+        let me = getpid()
+        return processes.compactMap { process in
+            guard audioValue(process, kAudioProcessPropertyIsRunningInput, UInt32(0)) != 0 else { return nil }
+            let pid = audioValue(process, kAudioProcessPropertyPID, pid_t(0))
+            return pid == me ? nil : pid
+        }
+    }
+
+    /// The name of the app on the call, when it can be told: "zoom.us", "Google Chrome", "FaceTime".
+    /// A helper process is named after the app it lives in; system services have no name.
+    static var appUsingMicrophone: String? {
+        guard let pid = recordingProcesses?.first else { return nil }
+        var path = [CChar](repeating: 0, count: 4096)
+        guard proc_pidpath(pid, &path, UInt32(path.count)) > 0 else { return nil }
+        let parts = String(cString: path).split(separator: "/")
+        guard let outermost = parts.firstIndex(where: { $0.hasSuffix(".app") }) else { return nil }
+        let name = FileManager.default.displayName(atPath: "/" + parts[...outermost].joined(separator: "/"))
+        return name.hasSuffix(".app") ? String(name.dropLast(4)) : name
+    }
+
     /// True while another app records from a microphone.
     static var microphoneInUse: Bool {
-        let system = AudioObjectID(kAudioObjectSystemObject)
         // macOS 14.2 and later list every process that uses audio, and whether it's recording
-        let processes = audioObjects(system, kAudioHardwarePropertyProcessObjectList)
-        if !processes.isEmpty {
-            let me = getpid()
-            return processes.contains { process in
-                audioValue(process, kAudioProcessPropertyIsRunningInput, UInt32(0)) != 0
-                    && audioValue(process, kAudioProcessPropertyPID, pid_t(0)) != me
-            }
-        }
+        if let recording = recordingProcesses { return !recording.isEmpty }
+        let system = AudioObjectID(kAudioObjectSystemObject)
         // Earlier: the default microphone, unless it also plays sound, like headphones playing music
         let device = audioValue(system, kAudioHardwarePropertyDefaultInputDevice, AudioDeviceID(0))
         guard device != 0, audioObjects(device, kAudioDevicePropertyStreams, scope: kAudioObjectPropertyScopeOutput).isEmpty

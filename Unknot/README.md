@@ -134,7 +134,8 @@ seven days.
 Unknot doesn't collect anything. Settings and statistics stay on your Mac. The only network request is an
 optional check of GitHub's releases API, at most once a day, to see if there's a new version. If there is and
 you click **Install and Restart**, Unknot downloads it from this repository's releases, checks its SHA-256
-checksum and replaces itself. You can turn the check off under **Settings → General**.
+checksum and replaces itself. You can turn the check off under **Settings → General**. [SECURITY.md](SECURITY.md)
+has the details, and how to report a security issue.
 
 ## Questions
 

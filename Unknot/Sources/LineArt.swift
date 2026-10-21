@@ -372,9 +372,9 @@ struct BuddyView: View {
             if let t = fixedTime {
                 canvas(t)
             } else {
-                // Every frame the display shows, up to 120 a second on ProMotion screens. A frame takes well
-                // under a millisecond to draw (`Unknot --benchmark`).
-                TimelineView(.animation) { timeline in
+                // Every frame the display shows, up to 120 a second on ProMotion screens; a frame takes well
+                // under a millisecond to draw (`Unknot --benchmark`). In Low Power Mode, 30 is plenty.
+                TimelineView(.animation(minimumInterval: ProcessInfo.processInfo.isLowPowerModeEnabled ? 1.0 / 30 : nil)) { timeline in
                     canvas(epoch.map { startAt + timeline.date.timeIntervalSince($0) } ?? timeline.date.timeIntervalSinceReferenceDate)
                 }
             }

@@ -185,8 +185,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         case .upcoming(let minutes):
             if minutes <= 1 { return L("Next break in less than a minute") }
             return L("Next break at %@, in %ld min", Self.format(scheduler.nextBreak), minutes)
-        case .waiting(.call):
-            return L("Break waiting until your call ends")
+        case .waiting(.call(let app)):
+            guard let app else { return L("Break waiting until your call ends") }
+            return L("Break waiting until your call in %@ ends", app)
         case .waiting(.fullScreen):
             return L("Break waiting until you leave full screen")
         case .inBreak:

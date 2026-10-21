@@ -17,6 +17,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check the install script
+        run: bash -n install.sh
+
       - name: Build universal app
         run: ./build.sh --release
 

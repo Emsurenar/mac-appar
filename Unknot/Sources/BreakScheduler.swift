@@ -12,7 +12,7 @@ final class BreakScheduler: NSObject {
     }
 
     /// Why a break that's due is held back for now.
-    enum WaitReason { case call, fullScreen }
+    enum WaitReason { case call(app: String?), fullScreen }
 
     private(set) var nextBreak = Date()
     private(set) var pausedUntil: Date?
@@ -135,7 +135,7 @@ final class BreakScheduler: NSObject {
         guard Date() >= nextBreak else { return }
         // A break is due. Hold it back during a call or a presentation, and look again in a little while.
         if prefs.waitDuringCalls && onCall {
-            waitingFor = .call
+            waitingFor = .call(app: Calls.appUsingMicrophone)
         } else if prefs.waitForFullscreen && Activity.frontmostAppIsFullscreen {
             waitingFor = .fullScreen
         } else {

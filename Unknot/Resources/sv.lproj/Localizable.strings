@@ -185,6 +185,7 @@
 
 /* Waiting */
 "Break waiting until your call ends" = "Pausen väntar tills samtalet är slut";
+"Break waiting until your call in %@ ends" = "Pausen väntar tills samtalet i %@ är slut";
 "Break waiting until you leave full screen" = "Pausen väntar tills du lämnar helskärm";
 
 /* Menu bar hint after the welcome window */

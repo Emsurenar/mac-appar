@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.10.0 – 2026-10-21
+
+- **Says who's on the call.** When a break waits for a call, the menu names the app using the microphone:
+  *Break waiting until your call in zoom.us ends*.
+- In Low Power Mode the crew animates at 30 frames a second instead of the display's full rate.
+- Calmer Stretch Crew settings: the checkmark shows who's on, without a coloured frame around every card.
+- The Activity chart shows today in full colour and the days before a little quieter.
+- [SECURITY.md](SECURITY.md) explains what Unknot can see and how updates are checked, and security issues
+  can be reported privately on GitHub.
+- For contributors: the self-test and the README scene have their own files, and CI checks `install.sh`.
+
 ## 1.9.1 – 2026-10-21
 
 - **No more jumps between exercises.** When a break moves on to the next exercise, the crew used to snap

@@ -668,16 +668,41 @@ struct SemlaArt: CrewArt {
 struct ChickArt: CrewArt {
     let accent = Color(hex: 0xF2D27C)
     let detailColor = Color(hex: 0xE58E4A)
-    let body = superellipse(cx: 100, cy: 130, a: 42, b: 40)
+    let body: Path
     let wash: Path
+    let belly: Path                              // the paler down on the breast
     let hatches: [Hatch]
     let shoulders = [pt(66, 116), pt(134, 116)]
     let arm: ArmStyle
     let armOffset = -5.0
 
     init() {
-        wash = body
-        hatches = [Hatch.shadow(of: body)]
+        // A ball of down: the outline is a row of small soft bumps rather than one smooth curve
+        let round = superellipse(cx: 100, cy: 130, a: 42, b: 40)
+        let count = 60
+        let points = (0..<count).map { i -> CGPoint in
+            let t = Double(i) / Double(count) * 2 * .pi
+            let c = cos(t), s = sin(t)
+            return pt(100 + 42 * CGFloat(copysign(pow(abs(c), 2 / 2.6), c)), 130 + 40 * CGFloat(copysign(pow(abs(s), 2 / 2.6), s)))
+        }
+        var r = SeededRandom(state: 8)
+        body = makePath { p in
+            p.move(to: points[0])
+            for i in 0..<count {
+                let a = points[i], b = points[(i + 1) % count]
+                let mid = pt((a.x + b.x) / 2, (a.y + b.y) / 2)
+                let out = pt(mid.x - 100, mid.y - 130)
+                let len = sqrt(out.x * out.x + out.y * out.y)
+                // Flatter along the bottom, where the chick sits on its feet
+                let push = (mid.y > 160 ? 0.5 : 1.3) * (0.7 + r.next() * 0.6)
+                p.addQuadCurve(to: b, control: pt(mid.x + out.x / len * push, mid.y + out.y / len * push))
+            }
+            p.closeSubpath()
+        }
+        belly = round.intersection(oval(100, 150, 50, 36))
+        wash = body.subtracting(belly)
+        // Shaded from the smooth form inside the down, which is the same to the eye and quicker to clip
+        hatches = [Hatch.shadow(of: round)]
         let wing = makePath { p in
             p.move(to: pt(0, 0))
             p.addCurve(to: pt(-12, 34), control1: pt(-14, 4), control2: pt(-18, 22))
@@ -686,7 +711,9 @@ struct ChickArt: CrewArt {
             p.addQuadCurve(to: pt(4, 18), control: pt(5, 23))
             p.addQuadCurve(to: pt(0, 0), control: pt(6, 8))
         }
-        arm = .flap(wing, hatch: nil, rest: 25, inFront: true)
+        // The stubby wing is shaded along its back edge, where the little feathers overlap
+        arm = .flap(wing, hatch: Hatch(wing.subtracting(wing.applying(CGAffineTransform(translationX: -4, y: -3))), spacing: 2.4, angle: 70),
+                    rest: 25, inFront: true)
     }
 
     func feet(_ pen: Pen, _ f: CrewFrame) {
@@ -707,19 +734,20 @@ struct ChickArt: CrewArt {
         }
     }
 
-    func onBody(_ pen: Pen, _ f: CrewFrame) {
-        for (x, y) in [(92.0, 147.0), (100.0, 151.0), (108.0, 147.0), (96.0, 156.0), (104.0, 156.0)] {
-            pen.fine(bend(pt(x - 3.5, y), pt(x, y + 3), pt(x + 3.5, y)))
-        }
-    }
-
     func face(_ pen: Pen, _ f: CrewFrame) {
-        pen.eye(pt(89 + f.fx, 123), f)
-        pen.eye(pt(111 + f.fx, 123), f)
+        for x: CGFloat in [89, 111] {
+            pen.eye(pt(x + f.fx, 123), f)
+            // Bright little eyes: a speck of light in each
+            if f.eyes == .open {
+                pen.paper(oval(x + f.fx + f.look * 0.5 - 1, 123 + f.lookUp * 0.5 - 1.2, 1.5, 1.5))
+            }
+        }
         pen.beak(pt(100 + f.fx, 129.5), f, colour: detailColor)
     }
 
     func detail(_ f: CrewFrame) -> Path { Path() }
+
+    func extras(_ f: CrewFrame) -> [(Path, Color)] { [(belly, Color(hex: 0xFBF0CC))] }
 }
 
 // MARK: - Crispbread

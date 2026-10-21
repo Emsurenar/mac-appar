@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.21.4 – 2026-10-21
+
+- **Pip looks like a chick, not a lemon.** The outline is a row of small soft bumps, like down, the breast is
+  paler, the stubby wings are shaded where their little feathers overlap, and each eye has a speck of light.
+  The arcs on the breast that read as a second mouth are gone.
+
 ## 1.21.3 – 2026-10-21
 
 - **Alexander Bard, closer to his photographs.** Heavy, pale strawberry-blond brows on a strong brow ridge,

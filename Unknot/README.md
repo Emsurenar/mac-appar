@@ -62,8 +62,8 @@ the frog in the menu bar points the way.
   <img src="docs/break-dark.png" width="420" alt="The same break in dark mode">
 </p>
 
-Each break picks a few exercises at random from the ones you've switched on, and the crew does each one the
-way you should: fingers laced above the head and up on the toes, a bend at the waist with one arm over the
+Each break picks a few exercises from the ones you've switched on, each for a different part of the body and
+none from the break before, and the crew does each one the way you should: fingers laced above the head and up on the toes, a bend at the waist with one arm over the
 top, a hand resting on the far ear while the head leans, hands on the opposite shoulders for the back hug,
 heels rising while the feet stay put. Small motion lines show where the shoulders roll and the wrists turn.
 Where timing matters, the label at the top keeps time with it: *Breathe in · 3*, *Switch sides*.

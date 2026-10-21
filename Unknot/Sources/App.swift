@@ -217,11 +217,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private var todayText: String {
+        let today: String
         switch prefs.breaksToday {
-        case 0: return L("No stretch breaks yet today")
-        case 1: return L("1 stretch break today")
-        default: return L("%ld stretch breaks today", prefs.breaksToday)
+        case 0: today = L("No stretch breaks yet today")
+        case 1: today = L("1 stretch break today")
+        default: today = L("%ld stretch breaks today", prefs.breaksToday)
         }
+        // A streak worth mentioning: two days or more
+        let streak = prefs.streak()
+        return streak >= 2 ? today + " · " + L("%ld days in a row", streak) : today
     }
 
     private static func format(_ date: Date) -> String {

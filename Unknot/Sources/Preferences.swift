@@ -163,6 +163,21 @@ final class Preferences: ObservableObject {
 
     func isEnabled(_ exercise: Exercise) -> Bool { !disabledExercises.contains(exercise.id) }
 
+    /// The exercises for one break: none from the break before when there are enough to choose from, and
+    /// each from a different part of the body when possible, so a break isn't three neck stretches.
+    func exercisesForBreak(count: Int, avoiding previous: [Exercise] = []) -> [Exercise] {
+        let used = Set(previous.map(\.id))
+        let fresh = enabledExercises.filter { !used.contains($0.id) }
+        var pool = (fresh.count >= count ? fresh : enabledExercises).shuffled()
+        var picks: [Exercise] = []
+        while picks.count < count, !pool.isEmpty {
+            let areas = Set(picks.map(\.area))
+            let index = pool.firstIndex { !areas.contains($0.area) } ?? 0
+            picks.append(pool.remove(at: index))
+        }
+        return picks
+    }
+
     /// Turns an exercise on or off, but always keeps at least one enabled.
     func setEnabled(_ exercise: Exercise, _ on: Bool) {
         if on {

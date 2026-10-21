@@ -24,6 +24,7 @@ final class BreakScheduler: NSObject {
     private let prefs = Preferences.shared
     private let panel = ReminderPanel()
     private var lastBuddy: Buddy?
+    private var lastExercises: [Exercise] = []
     private var lastCallCheck: (date: Date, onCall: Bool)?
 
     /// Asking the system about microphones and cameras takes a few milliseconds, so the answer is kept a while.
@@ -84,7 +85,8 @@ final class BreakScheduler: NSObject {
     func showBreakNow() {
         guard session == nil else { return }
         waitingFor = nil
-        let picks = Array(prefs.enabledExercises.shuffled().prefix(prefs.exercisesPerBreak))
+        let picks = prefs.exercisesForBreak(count: prefs.exercisesPerBreak, avoiding: lastExercises)
+        lastExercises = picks
         let buddy = prefs.buddyForBreak(avoiding: lastBuddy)
         lastBuddy = buddy
         let s = ReminderSession(exercises: picks, buddy: buddy, nextMinutes: prefs.intervalMinutes,

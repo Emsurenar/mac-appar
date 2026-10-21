@@ -38,6 +38,12 @@ extension Snapshot {
 
         check(Set(allExercises.map(\.id)).count == allExercises.count, "Exercise ids are unique")
         check(Set(Buddy.allCases.map(\.name)).count == Buddy.allCases.count, "Every crew member has their own name")
+        let picker = Preferences(defaults: UserDefaults(suiteName: "unknot.selftest.picks.\(UUID().uuidString)")!)
+        check((0..<30).allSatisfy { _ in
+            let first = picker.exercisesForBreak(count: 3)
+            let second = picker.exercisesForBreak(count: 3, avoiding: first)
+            return Set(first.map(\.area)).count == 3 && Set(first.map(\.id)).isDisjoint(with: second.map(\.id))
+        }, "A break covers three parts of the body, and the next one repeats none of its exercises")
         func day(_ y: Int, _ m: Int, _ d: Int) -> Date { cal.date(from: DateComponents(year: y, month: m, day: d, hour: 12))! }
         check(Holidays.isShroveTuesday(day(2026, 2, 17), calendar: cal) && Holidays.isShroveTuesday(day(2027, 2, 9), calendar: cal)
               && !Holidays.isShroveTuesday(day(2027, 2, 10), calendar: cal), "Shrove Tuesday falls on the right day")

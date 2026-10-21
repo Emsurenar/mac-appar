@@ -514,7 +514,8 @@ struct SemlaArt: CrewArt {
     let hatches: [Hatch]
     let paste: Path
     let pasteGrain: Path
-    let rosettes: [(shape: Path, shadow: Hatch)] // back row first, so the front row overlaps it
+    let rosettes: [Path]                        // back row first, so the front row overlaps it
+    let creamShadow: Hatch                      // the shadow of every rosette, less what the ones in front hide
     let ridges: Path
     let lid: Path
     let lidCut: Path                            // the cut face under the lid, pale crumb
@@ -576,12 +577,21 @@ struct SemlaArt: CrewArt {
         let front: [(CGFloat, CGFloat, CGFloat, CGFloat)] = [(55, 124, 26, 19), (73, 125, 28, 26), (92, 126, 29, 30),
                                                              (110, 126, 28, 27), (128, 125, 28, 25), (146, 124, 25, 18)]
         var ridges = Path()
-        rosettes = (back + front).map { x, y, w, h in
-            let shape = swirl(x, y, w, h)
+        let shapes = (back + front).map { x, y, w, h in
             // One curl where the nozzle turned
             ridges.addPath(bend(pt(x - w * 0.28, y - h * 0.5), pt(x - w * 0.1, y - h * 0.9), pt(x + w * 0.16, y - h * 0.78)))
-            return (shape, Hatch.shadow(of: shape, shift: 9, spacing: 4.2))
+            return swirl(x, y, w, h)
         }
+        rosettes = shapes
+        // Worked out once: each rosette's shadow side, minus the parts the rosettes in front of it cover,
+        // so one hatch can do them all
+        var shadow = Path()
+        for (i, shape) in shapes.enumerated() {
+            var visible = shape.subtracting(shape.applying(CGAffineTransform(translationX: -9, y: -9 * 0.45)))
+            for later in shapes[(i + 1)...] { visible = visible.subtracting(later) }
+            shadow.addPath(visible)
+        }
+        creamShadow = Hatch(shadow, spacing: 4.2)
         self.ridges = ridges
 
         let top = makePath { p in
@@ -617,10 +627,8 @@ struct SemlaArt: CrewArt {
     func feet(_ pen: Pen, _ f: CrewFrame) { ovalFeet(pen, [83, 117]) }
 
     func behind(_ pen: Pen, _ f: CrewFrame) {
-        for rosette in rosettes {
-            pen.shape(rosette.shape, 1.7)
-            pen.hatch(rosette.shadow)
-        }
+        for rosette in rosettes { pen.shape(rosette, 1.7) }
+        pen.hatch(creamShadow)
         pen.fine(ridges)
         // The almond paste lies in front of the cream, on the cut face of the bun
         pen.paper(paste)

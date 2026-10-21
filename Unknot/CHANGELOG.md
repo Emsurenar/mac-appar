@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.21.0 – 2026-10-21
+
+- **Better mixes of exercises.** A break picks each exercise from a different part of the body when it can,
+  so it's no longer three neck stretches in a row, and the next break doesn't repeat any of them.
+- The menu shows your streak next to today's breaks: *4 stretch breaks today · 3 days in a row*.
+- Selma's cream is shaded with one hatch instead of eight, so she draws about 10 % faster.
+
 ## 1.20.0 – 2026-10-21
 
 - **Selma leads every break on Shrove Tuesday**, fettisdagen, and the break ends with *Happy Semla Day*.

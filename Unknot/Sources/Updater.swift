@@ -12,6 +12,21 @@ final class Updater: ObservableObject {
     static let releasesURL = URL(string: "https://github.com/\(repository)/releases/latest")!
     static let issuesURL = URL(string: "https://github.com/\(repository)/issues")!
 
+    /// A new bug report with the app and macOS versions already filled in. Nothing is sent until you submit it.
+    static var reportProblemURL: URL {
+        var model = [CChar](repeating: 0, count: 64)
+        var size = model.count
+        sysctlbyname("hw.model", &model, &size, nil, 0)
+        let os = ProcessInfo.processInfo.operatingSystemVersion
+        var components = URLComponents(string: "https://github.com/\(repository)/issues/new")!
+        components.queryItems = [
+            URLQueryItem(name: "template", value: "bug_report.yml"),
+            URLQueryItem(name: "version", value: currentVersion),
+            URLQueryItem(name: "macos", value: "macOS \(os.majorVersion).\(os.minorVersion).\(os.patchVersion), \(String(cString: model))"),
+        ]
+        return components.url ?? issuesURL
+    }
+
     static var currentVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
     }

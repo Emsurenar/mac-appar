@@ -67,22 +67,22 @@ animation: the crew reaches up and holds on tiptoe, leans into a side bend and p
 with one hand while you look into the distance. Where timing matters, the label at the top keeps time with
 it: *Breathe in · 3*, *Switch sides*.
 
-| Exercise | What you do |
-| --- | --- |
-| Reach for the sky | Interlace your fingers and stretch your arms straight up |
-| Side bend | One arm overhead, lean to the side, switch halfway |
-| Neck stretch | Slowly tilt your ear toward your shoulder, right then left |
-| Shoulder rolls | Roll your shoulders backwards in big, slow circles |
-| Seated twist | Twist your upper body with one hand on the chair back |
-| Deep breaths | In for four seconds, out for four, shoulders down |
-| Rest your eyes | Look at something at least 6 meters away and blink |
-| Open your chest | Arms out and back, squeeze your shoulder blades |
-| Calf raises | Stand up, rise onto your toes and back down |
-| Wrist circles | Roll your wrists slowly in both directions |
-| Shake it out | Shake out your arms and hands |
-| Back hug | Hug yourself and breathe into your back |
-| Shoulder shrugs | Shoulders up to your ears, hold, let them drop |
-| Shoulder stretch | Pull one arm across your chest, switch halfway |
+| | Exercise | What you do |
+| --- | --- | --- |
+| **Neck and shoulders** | Neck stretch | Slowly tilt your ear toward your shoulder, right then left |
+| | Shoulder rolls | Roll your shoulders backwards in big, slow circles |
+| | Shoulder shrugs | Shoulders up to your ears, hold, let them drop |
+| | Shoulder stretch | Pull one arm across your chest, switch halfway |
+| **Back and chest** | Reach for the sky | Interlace your fingers and stretch your arms straight up |
+| | Side bend | One arm overhead, lean to the side, switch halfway |
+| | Seated twist | Twist your upper body with one hand on the chair back |
+| | Open your chest | Arms out and back, squeeze your shoulder blades |
+| | Back hug | Hug yourself and breathe into your back |
+| **Arms, hands and legs** | Wrist circles | Roll your wrists slowly in both directions |
+| | Shake it out | Shake out your arms and hands |
+| | Calf raises | Stand up, rise onto your toes and back down |
+| **Eyes and breathing** | Rest your eyes | Look at something at least 6 meters away and blink |
+| | Deep breaths | In for four seconds, out for four, shoulders down |
 
 **Done** ends the break early and counts it. **In 5 min** puts it off for a while.
 
@@ -125,8 +125,9 @@ pause for 30 minutes, an hour, two hours or the rest of the day. It closes its e
 
 Settings are under the menu bar frog, or open Unknot again from Finder or Spotlight. Besides the interval
 you can change the length of a break, the number of exercises, the snooze time, where the panel appears
-(top center or a corner), the sound and the language (English or Swedish). **Activity** shows your breaks
-today, this week, your streak and a chart of the last seven days.
+(top center or one of the corners, picked on a little map of the screen), the sound and the language
+(English or Swedish). **Activity** shows your breaks today, this week, your streak and a chart of the last
+seven days.
 
 ## Privacy
 

@@ -8,13 +8,29 @@ enum Move: String, CaseIterable {
     case celebrate, wave
 }
 
+/// Where an exercise helps, for grouping them in the settings.
+enum BodyArea: CaseIterable {
+    case neck, back, limbs, eyes
+
+    var title: String {
+        switch self {
+        case .neck: return L("Neck and shoulders")
+        case .back: return L("Back and chest")
+        case .limbs: return L("Arms, hands and legs")
+        case .eyes: return L("Eyes and breathing")
+        }
+    }
+}
+
 struct Exercise: Identifiable {
     let move: Move
+    let area: BodyArea
     let titleKey: String
     let textKey: String
 
-    init(_ move: Move, _ title: String, _ text: String) {
+    init(_ move: Move, _ area: BodyArea, _ title: String, _ text: String) {
         self.move = move
+        self.area = area
         self.titleKey = title
         self.textKey = text
     }
@@ -25,20 +41,20 @@ struct Exercise: Identifiable {
 }
 
 let allExercises: [Exercise] = [
-    Exercise(.armsUp, "Reach for the sky", "Interlace your fingers and stretch your arms straight up."),
-    Exercise(.sideBend, "Side bend", "One arm overhead, lean to the side. Switch halfway."),
-    Exercise(.neckTilt, "Neck stretch", "Slowly tilt your ear toward your shoulder. Right, then left."),
-    Exercise(.shoulderRoll, "Shoulder rolls", "Roll your shoulders backwards in big, slow circles."),
-    Exercise(.twist, "Seated twist", "Twist your upper body with one hand on the chair back. Switch sides."),
-    Exercise(.breathe, "Deep breaths", "Breathe in for four seconds and out for four. Drop your shoulders."),
-    Exercise(.lookAway, "Rest your eyes", "Look at something at least 6 meters away and blink a few times."),
-    Exercise(.armsWide, "Open your chest", "Bring your arms out and back and squeeze your shoulder blades."),
-    Exercise(.calfRaise, "Calf raises", "Stand up, rise slowly onto your toes and back down again."),
-    Exercise(.wristCircles, "Wrist circles", "Slowly roll your wrists in both directions."),
-    Exercise(.wiggle, "Shake it out", "Shake out your arms and hands for a few seconds."),
-    Exercise(.hug, "Back hug", "Give yourself a hug and breathe deeply into your back."),
-    Exercise(.shrug, "Shoulder shrugs", "Pull your shoulders up to your ears, hold for a moment, then let them drop."),
-    Exercise(.crossArm, "Shoulder stretch", "Pull one arm across your chest with the other. Switch halfway."),
+    Exercise(.armsUp, .back, "Reach for the sky", "Interlace your fingers and stretch your arms straight up."),
+    Exercise(.sideBend, .back, "Side bend", "One arm overhead, lean to the side. Switch halfway."),
+    Exercise(.neckTilt, .neck, "Neck stretch", "Slowly tilt your ear toward your shoulder. Right, then left."),
+    Exercise(.shoulderRoll, .neck, "Shoulder rolls", "Roll your shoulders backwards in big, slow circles."),
+    Exercise(.twist, .back, "Seated twist", "Twist your upper body with one hand on the chair back. Switch sides."),
+    Exercise(.breathe, .eyes, "Deep breaths", "Breathe in for four seconds and out for four. Drop your shoulders."),
+    Exercise(.lookAway, .eyes, "Rest your eyes", "Look at something at least 6 meters away and blink a few times."),
+    Exercise(.armsWide, .back, "Open your chest", "Bring your arms out and back and squeeze your shoulder blades."),
+    Exercise(.calfRaise, .limbs, "Calf raises", "Stand up, rise slowly onto your toes and back down again."),
+    Exercise(.wristCircles, .limbs, "Wrist circles", "Slowly roll your wrists in both directions."),
+    Exercise(.wiggle, .limbs, "Shake it out", "Shake out your arms and hands for a few seconds."),
+    Exercise(.hug, .back, "Back hug", "Give yourself a hug and breathe deeply into your back."),
+    Exercise(.shrug, .neck, "Shoulder shrugs", "Pull your shoulders up to your ears, hold for a moment, then let them drop."),
+    Exercise(.crossArm, .neck, "Shoulder stretch", "Pull one arm across your chest with the other. Switch halfway."),
 ]
 
 /// Shown when a break is finished.

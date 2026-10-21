@@ -221,12 +221,16 @@ enum Snapshot {
     /// Renders the real settings and welcome windows off screen.
     static func settingsScreenshots(in dir: String) {
         try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+        // Be the front app, so switches and the selected tab are drawn in colour. macOS only allows that when
+        // the app was opened normally: `open -W -n build/Unknot.app --args --settings-screenshots <dir>`.
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate()
         for dark in [false, true] {
             let appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
             let (window, tabs) = WindowManager.shared.makeSettingsWindow(animatesResize: false)
             window.appearance = appearance
             window.setFrameOrigin(NSPoint(x: -10_000, y: -10_000))
-            window.orderFrontRegardless()
+            window.makeKeyAndOrderFront(nil)
             for tab in SettingsTab.allCases {
                 tabs.selectedTabViewItemIndex = tab.rawValue
                 capture(window, to: "\(dir)/settings-\(tab)\(dark ? "-dark" : "").png")
@@ -240,7 +244,7 @@ enum Snapshot {
         welcome.titleVisibility = .hidden
         welcome.appearance = NSAppearance(named: .aqua)
         welcome.setFrameOrigin(NSPoint(x: -10_000, y: -10_000))
-        welcome.orderFrontRegardless()
+        welcome.makeKeyAndOrderFront(nil)
         capture(welcome, to: "\(dir)/welcome.png")
     }
 

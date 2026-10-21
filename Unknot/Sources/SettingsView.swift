@@ -29,7 +29,7 @@ enum SettingsTab: Int, CaseIterable {
     /// Each tab gets a window height that fits its content.
     var contentSize: NSSize {
         switch self {
-        case .general: return NSSize(width: 580, height: 695)
+        case .general: return NSSize(width: 580, height: 760)
         case .buddies: return NSSize(width: 580, height: 408)
         case .exercises: return NSSize(width: 580, height: 640)
         case .schedule: return NSSize(width: 580, height: 500)
@@ -86,9 +86,11 @@ struct GeneralSettingsView: View {
                 Picker(L("Language"), selection: $prefs.language) {
                     ForEach(AppLanguage.allCases) { Text($0.title).tag($0) }
                 }
-                Picker(L("Position on screen"), selection: $prefs.position) {
-                    ForEach(ReminderPosition.allCases) { Text($0.title).tag($0) }
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(L("Position on screen"))
+                    PositionPicker(selection: $prefs.position)
                 }
+                .padding(.vertical, 4)
                 Toggle(L("Show time until the next break in the menu bar"), isOn: $prefs.showCountdownInMenuBar)
             }
 
@@ -108,6 +110,78 @@ struct GeneralSettingsView: View {
         }
         .formStyle(.grouped)
         .toggleStyle(.switch)
+    }
+}
+
+/// Where the break appears, picked from five small screens.
+struct PositionPicker: View {
+    @Binding var selection: ReminderPosition
+    @Environment(\.colorScheme) private var scheme
+
+    /// Laid out the way the screen is: the top row, then the bottom corners.
+    private let order: [ReminderPosition] = [.topLeft, .topCenter, .topRight, .bottomLeft, .bottomRight]
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            ForEach(order) { position in
+                let selected = position == selection
+                Button { selection = position } label: {
+                    VStack(spacing: 6) {
+                        ScreenThumbnail(position: position, selected: selected, dark: scheme == .dark)
+                            .frame(width: 80, height: 52)
+                        Text(position.title)
+                            .font(.caption)
+                            .foregroundStyle(selected ? .primary : .secondary)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(width: 84)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help(position == .topCenter ? L("Drops out of the camera notch") : "")
+                .accessibilityLabel(position.title)
+                .accessibilityAddTraits(selected ? .isSelected : [])
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+/// A tiny Mac screen with the menu bar, the notch and the break panel where it would appear.
+private struct ScreenThumbnail: View {
+    let position: ReminderPosition
+    let selected: Bool
+    let dark: Bool
+
+    var body: some View {
+        let accent = Brand.accent(dark)
+        GeometryReader { g in
+            let w = g.size.width, h = g.size.height
+            let panel = CGSize(width: w * 0.36, height: h * 0.2)
+            let bar = h * 0.1
+            let inset = w * 0.05
+            let x: CGFloat = position == .topCenter ? (w - panel.width) / 2 : (position.isLeft ? inset : w - panel.width - inset)
+            let y: CGFloat = position.isTop ? bar + (position == .topCenter ? h * 0.05 : inset) : h - panel.height - inset
+            ZStack(alignment: .topLeading) {
+                LinearGradient(colors: dark ? [Color(hex: 0x3A4250), Color(hex: 0x262A31)] : [Color(hex: 0xDCE3EA), Color(hex: 0xC4CFDA)],
+                               startPoint: .top, endPoint: .bottom)
+                Rectangle().fill(Color.white.opacity(dark ? 0.12 : 0.55)).frame(height: bar)
+                UnevenRoundedRectangle(bottomLeadingRadius: 2, bottomTrailingRadius: 2)
+                    .fill(Color.black)
+                    .frame(width: w * 0.18, height: bar)
+                    .offset(x: w * 0.41)
+                RoundedRectangle(cornerRadius: 2.5, style: .continuous)
+                    .fill(selected ? accent : Color.white.opacity(dark ? 0.75 : 0.95))
+                    .shadow(color: .black.opacity(0.18), radius: 1.5, y: 0.5)
+                    .frame(width: panel.width, height: panel.height)
+                    .offset(x: x, y: y)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .strokeBorder(selected ? accent : Color.primary.opacity(0.15), lineWidth: selected ? 2 : 1))
+        }
+        .animation(.easeOut(duration: 0.15), value: selected)
     }
 }
 
@@ -211,31 +285,41 @@ struct ExercisesSettingsView: View {
     var body: some View {
         let enabledCount = allExercises.filter { prefs.isEnabled($0) }.count
         let buddies = prefs.enabledBuddies
+        let areas = BodyArea.allCases
         Form {
-            Section {
-                ForEach(Array(allExercises.enumerated()), id: \.element.id) { index, exercise in
-                    ExerciseRow(exercise: exercise,
-                                buddy: buddies[index % buddies.count],
-                                isOn: Binding(get: { prefs.isEnabled(exercise) },
-                                              set: { prefs.setEnabled(exercise, $0) }),
-                                isLocked: enabledCount == 1 && prefs.isEnabled(exercise))
-                }
-            } header: {
-                Text(L("Choose which exercises Unknot can suggest. Hover over one to see the movement."))
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+            ForEach(Array(areas.enumerated()), id: \.element) { areaIndex, area in
+                Section {
+                    ForEach(allExercises.filter { $0.area == area }) { exercise in
+                        let index = allExercises.firstIndex { $0.id == exercise.id } ?? 0
+                        ExerciseRow(exercise: exercise,
+                                    buddy: buddies[index % buddies.count],
+                                    isOn: Binding(get: { prefs.isEnabled(exercise) },
+                                                  set: { prefs.setEnabled(exercise, $0) }),
+                                    isLocked: enabledCount == 1 && prefs.isEnabled(exercise))
+                    }
+                } header: {
+                    VStack(alignment: .leading, spacing: 14) {
+                        if areaIndex == 0 {
+                            Text(L("Choose which exercises Unknot can suggest. Hover over one to see the movement."))
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Text(area.title)
+                    }
                     .textCase(nil)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.bottom, 4)
-            } footer: {
-                HStack {
-                    Text(L("%ld of %ld selected", enabledCount, allExercises.count))
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Button(L("Select all")) { prefs.disabledExercises = [] }
-                        .disabled(prefs.disabledExercises.isEmpty)
+                } footer: {
+                    if areaIndex == areas.count - 1 {
+                        HStack {
+                            Text(L("%ld of %ld selected", enabledCount, allExercises.count))
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button(L("Select all")) { prefs.disabledExercises = [] }
+                                .disabled(prefs.disabledExercises.isEmpty)
+                        }
+                        .font(.callout)
+                    }
                 }
-                .font(.callout)
             }
         }
         .formStyle(.grouped)
@@ -436,7 +520,7 @@ struct AboutSettingsView: View {
             Text(L("Version %@", Updater.currentVersion))
                 .foregroundStyle(.secondary)
                 .padding(.top, 2)
-            Text(L("A tiny friend that reminds you to stretch."))
+            Text(L("Stretch breaks that drop out of the notch."))
                 .padding(.top, 12)
 
             HStack(spacing: 10) {
@@ -477,7 +561,7 @@ struct AboutSettingsView: View {
             HStack(spacing: 18) {
                 Link(L("GitHub"), destination: Updater.repositoryURL)
                 Link(L("Release notes"), destination: Updater.releasesURL)
-                Link(L("Report a problem"), destination: Updater.issuesURL)
+                Link(L("Report a problem"), destination: Updater.reportProblemURL)
             }
             .font(.callout)
             Text(L("Free and open source under the MIT license."))

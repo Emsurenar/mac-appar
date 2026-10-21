@@ -9,7 +9,7 @@ root = Path(__file__).resolve().parent.parent
 source = "\n".join(p.read_text(encoding="utf-8") for p in sorted((root / "Sources").glob("*.swift")))
 
 keys = set(re.findall(r'\bL\("((?:[^"\\]|\\.)*)"', source))
-for title, text in re.findall(r'Exercise\(\.\w+, "((?:[^"\\]|\\.)*)", "((?:[^"\\]|\\.)*)"\)', source):
+for title, text in re.findall(r'Exercise\(\.\w+, \.\w+, "((?:[^"\\]|\\.)*)", "((?:[^"\\]|\\.)*)"\)', source):
     keys.update([title, text])
 cheers = re.search(r"let cheers = \[(.*?)\]", source)
 if cheers:

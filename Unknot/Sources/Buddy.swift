@@ -62,7 +62,7 @@ func bump(_ x: Double, at center: Double, width: Double) -> Double {
 
 // MARK: Moves
 
-/// Every move starts from rest at t = 0 and loops seamlessly.
+/// Every move starts from rest at t = 0, and its end leads straight back into its start.
 func pose(for move: Move, at t: Double) -> Pose {
     var p = Pose()
     p.sproutSway = sin(t * 2.1) * 6

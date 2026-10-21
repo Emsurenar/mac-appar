@@ -154,7 +154,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         menu.addItem(.separator())
 
-        addItem(to: menu, L("Stretch now"), #selector(stretchNow), symbol: "figure.cooldown")
+        if let session = scheduler.session, !session.finished {
+            // A break is on screen, maybe on another display: finish or snooze it from here too
+            addItem(to: menu, L("Done"), #selector(finishBreak), symbol: "checkmark.circle")
+            addItem(to: menu, L("In %ld min", session.snoozeMinutes), #selector(snoozeBreak), symbol: "clock.arrow.circlepath")
+        } else {
+            addItem(to: menu, L("Stretch now"), #selector(stretchNow), symbol: "figure.cooldown")
+        }
         if scheduler.pausedUntil != nil {
             addItem(to: menu, L("Resume reminders"), #selector(resume), symbol: "play.circle")
         } else {
@@ -230,6 +236,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // MARK: Actions
 
     @objc private func stretchNow() { scheduler.showBreakNow() }
+    @objc private func finishBreak() { scheduler.session?.complete() }
+    @objc private func snoozeBreak() { scheduler.session?.snooze() }
     @objc private func pauseFor(_ sender: NSMenuItem) { scheduler.pause(minutes: sender.tag) }
     @objc private func pauseToday() { scheduler.pauseForRestOfDay() }
     @objc private func resume() { scheduler.resume() }

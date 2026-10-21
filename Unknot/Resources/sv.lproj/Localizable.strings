@@ -26,7 +26,7 @@
 "Back hug" = "Ryggkram";
 "Give yourself a hug and breathe deeply into your back." = "Krama om dig själv och andas djupt in i ryggen.";
 
-/* Kompisar */
+/* The Stretch Crew */
 "Mochi" = "Mochi";
 "Cat" = "Katt";
 "Panda" = "Panda";
@@ -112,7 +112,8 @@
 "Language" = "Språk";
 "System default" = "Systemets språk";
 "Position on screen" = "Placering på skärmen";
-"Top center, from the camera" = "Uppe i mitten, från kameran";
+"Top center" = "Uppe i mitten";
+"Drops out of the camera notch" = "Kommer ned ur kamerahacket";
 "Bottom right" = "Nere till höger";
 "Top right" = "Uppe till höger";
 "Bottom left" = "Nere till vänster";
@@ -160,7 +161,7 @@
 
 /* Om */
 "Version %@" = "Version %@";
-"A tiny friend that reminds you to stretch." = "En liten kompis som påminner dig om att sträcka på dig.";
+"Stretch breaks that drop out of the notch." = "Sträckpauser som kommer ned ur kamerahacket.";
 "Version %@ is available." = "Version %@ finns tillgänglig.";
 "Download" = "Ladda ned";
 "Check for updates" = "Sök efter uppdateringar";
@@ -215,3 +216,9 @@
 "Pull your shoulders up to your ears, hold for a moment, then let them drop." = "Dra upp axlarna mot öronen, håll en stund och släpp sedan ned dem.";
 "Shoulder stretch" = "Axelstretch";
 "Pull one arm across your chest with the other. Switch halfway." = "Dra ena armen över bröstet med den andra. Byt halvvägs.";
+
+/* Body areas, for grouping the exercises */
+"Neck and shoulders" = "Nacke och axlar";
+"Back and chest" = "Rygg och bröst";
+"Arms, hands and legs" = "Armar, händer och ben";
+"Eyes and breathing" = "Ögon och andning";

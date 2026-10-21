@@ -21,8 +21,8 @@ body:
     id: version
     attributes:
       label: Unknot version
-      description: Settings → About
-      placeholder: "1.3.1"
+      description: Settings → About. "Report a problem" there fills this in for you.
+      placeholder: "1.9.0"
     validations:
       required: true
   - type: input

@@ -1,12 +1,12 @@
-name: Idea or new buddy
-description: Suggest an improvement, an exercise or a new buddy
+name: Idea, exercise or crew member
+description: Suggest an improvement, a new exercise or a new member of the Stretch Crew
 labels: [enhancement]
 body:
   - type: textarea
     id: idea
     attributes:
       label: Your idea
-      description: What would you like Unknot to do, or who should visit next?
+      description: What would you like Unknot to do, or who should join the crew next?
     validations:
       required: true
   - type: textarea

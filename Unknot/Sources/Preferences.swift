@@ -9,7 +9,7 @@ enum ReminderPosition: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .topCenter: return L("Top center, from the camera")
+        case .topCenter: return L("Top center")
         case .bottomRight: return L("Bottom right")
         case .topRight: return L("Top right")
         case .bottomLeft: return L("Bottom left")

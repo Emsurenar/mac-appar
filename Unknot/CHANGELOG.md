@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.9.0 – 2026-10-21
+
+- **Pick a position by looking at it.** Settings → General shows five small screens with the panel where it
+  would appear, instead of a menu of long names.
+- **Exercises grouped by where they help**: neck and shoulders, back and chest, arms, hands and legs, eyes
+  and breathing. In the settings and in the README.
+- During a break the menu offers **Done** and **In 5 min**, handy when the panel is on another display.
+- **Report a problem** in Settings → About opens a bug report with your Unknot and macOS versions already
+  filled in. Nothing is sent until you submit it.
+- Clearer issue forms on GitHub.
+
 ## 1.8.1 – 2026-10-21
 
 - **Smoother animations.** The crew now moves at the display's own refresh rate, up to 120 frames a second,

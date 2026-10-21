@@ -24,6 +24,15 @@ protocol CrewArt: Sendable {
     func extras(_ f: CrewFrame) -> [(Path, Color)]
     /// Drawn after the colour, for what has to stay white: eyeballs, teeth.
     func overlay(_ pen: Pen, _ f: CrewFrame)
+    /// The head, for hands that go to it: on top, on the far ear. Everyone but the people is all head.
+    var headBox: CGRect { get }
+    /// Set for figures whose head can tilt on its own (the people): the neck it turns around.
+    var headPivot: CGPoint? { get }
+    /// Where the body bends sideways.
+    var waist: CGPoint { get }
+    /// The head and what's attached to it, drawn turned by the head's tilt.
+    func headParts(_ pen: Pen, _ f: CrewFrame)
+    func headTints(_ f: CrewFrame) -> [(Path, Color)]
 }
 
 extension CrewArt {
@@ -39,6 +48,11 @@ extension CrewArt {
     func front(_ pen: Pen, _ f: CrewFrame) {}
     func extras(_ f: CrewFrame) -> [(Path, Color)] { [] }
     func overlay(_ pen: Pen, _ f: CrewFrame) {}
+    var headBox: CGRect { body.boundingRect }
+    var headPivot: CGPoint? { nil }
+    var waist: CGPoint { pt(100, 150) }
+    func headParts(_ pen: Pen, _ f: CrewFrame) {}
+    func headTints(_ f: CrewFrame) -> [(Path, Color)] { [] }
 }
 
 extension Buddy {
@@ -515,6 +529,8 @@ struct SemlaArt: CrewArt {
     let brow: CGPoint? = pt(116, 137)
     let reachExtra: CGFloat = 26
     let groundWidth: CGFloat = 96
+    // The cream and the lid count as head, for hands that go above it
+    var headBox: CGRect { CGRect(x: 48, y: 55, width: 104, height: 70) }
     private let lip = bend(pt(52, 123), pt(100, 131), pt(148, 123))
 
     init() {

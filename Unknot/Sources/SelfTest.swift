@@ -38,6 +38,13 @@ extension Snapshot {
 
         check(Set(allExercises.map(\.id)).count == allExercises.count, "Exercise ids are unique")
         check(Set(Buddy.allCases.map(\.name)).count == Buddy.allCases.count, "Every crew member has their own name")
+        check(allExercises.allSatisfy { pose(for: $0.move, at: 0).leftReach == 0 && pose(for: $0.move, at: 0).rightReach == 0 },
+              "Every exercise starts with the hands at rest")
+        let fromChest = pose(for: .wristCircles, at: 3), toBend = pose(for: .sideBend, at: 1.2)
+        check(stride(from: 0.0, through: 1.0, by: 0.05).allSatisfy { k in
+            let p = mix(fromChest, toBend, k)
+            return p.leftTarget == (k < 0.5 ? fromChest.leftTarget : toBend.leftTarget) || p.leftReach < 0.01
+        }, "A hand lets go of one target before reaching for another")
         check(NSSound(named: "Unknot") != nil, "The app's own sound is bundled")
 
         let notch = CGRect(x: 270, y: 0, width: 185, height: 32)

@@ -108,7 +108,7 @@ struct ToonEyes {
             case .open:
                 let ball = oval(c.x, c.y, r * 2, r * 2)
                 pen.paper(ball)
-                let pupil = pt(c.x + f.look * 0.45 - side * r * 0.1, c.y + r * 0.08)
+                let pupil = pt(c.x + f.look * 0.45 - side * r * 0.1, c.y + r * 0.08 + f.lookUp * 0.4)
                 pen.solid(oval(pupil.x, pupil.y, r * 0.5, r * 0.5))
                 if lid > 0 {
                     let y = c.y - r + 2 * r * lid
@@ -220,6 +220,9 @@ struct StefanArt: CrewArt {
     let brow: CGPoint? = pt(113, 86)
     let reachExtra: CGFloat = 30
     let groundWidth: CGFloat = 86
+    var headBox: CGRect { head.boundingRect }
+    let headPivot: CGPoint? = pt(100, 118)
+    var waist: CGPoint { pt(100, 150) }
 
     init() {
         suit = Suit(left: 70, right: 130, top: 117)
@@ -280,6 +283,9 @@ struct StefanArt: CrewArt {
     func onBody(_ pen: Pen, _ f: CrewFrame) {
         suit.draw(pen)
         drawFlagPin(pen, at: pt(110.5, 127), swedish: true)
+    }
+
+    func headParts(_ pen: Pen, _ f: CrewFrame) {
         drawEars(pen, at: [73, 127], y: 96, w: 8.5, h: 15)
         pen.shape(head)
         pen.hatch(headHatch)
@@ -326,7 +332,7 @@ struct StefanArt: CrewArt {
 
     func detail(_ f: CrewFrame) -> Path { suit.tie }
 
-    func extras(_ f: CrewFrame) -> [(Path, Color)] {
+    func headTints(_ f: CrewFrame) -> [(Path, Color)] {
         [(skin.subtracting(brows[0].union(brows[1]).applying(CGAffineTransform(translationX: f.fx, y: 0))), Color(hex: 0xEDB9A2)),
          (hair, Color(hex: 0xCDBBA1)), (brows[0].union(brows[1]).applying(CGAffineTransform(translationX: f.fx, y: 0)), Color(hex: 0xC2AE93)),
          (oval(86 + f.fx, 104, 10, 5.5).union(oval(114 + f.fx, 104, 10, 5.5)), Color(hex: 0xE59886).opacity(0.45)),
@@ -366,6 +372,8 @@ struct JesusArt: CrewArt {
     let brow: CGPoint? = pt(111, 86)
     let reachExtra: CGFloat = 30
     let groundWidth: CGFloat = 92
+    var headBox: CGRect { face.boundingRect }
+    let headPivot: CGPoint? = pt(100, 118)
 
     init() {
         let tunic = makePath { p in
@@ -490,6 +498,9 @@ struct JesusArt: CrewArt {
         pen.shape(mantle, 1.6)
         pen.hatch(mantleHatch)
         pen.fine(mantleFolds)
+    }
+
+    func headParts(_ pen: Pen, _ f: CrewFrame) {
         pen.shape(hairBack, 1.8)
         pen.shape(face)
         pen.hatch(faceHatch)
@@ -519,9 +530,11 @@ struct JesusArt: CrewArt {
 
     func detail(_ f: CrewFrame) -> Path { mantleTint }
 
-    func extras(_ f: CrewFrame) -> [(Path, Color)] {
+    func extras(_ f: CrewFrame) -> [(Path, Color)] { [(clavus, Color(hex: 0xDDB54F))] }
+
+    func headTints(_ f: CrewFrame) -> [(Path, Color)] {
         let hair = hairBack.subtracting(face).union(hairCap).union(frontLock)
-        return [(skin, Color(hex: 0xE9C3A2)), (hair, Color(hex: 0x5E4535)), (clavus, Color(hex: 0xDDB54F)),
+        return [(skin, Color(hex: 0xE9C3A2)), (hair, Color(hex: 0x5E4535)),
                 (beard.applying(CGAffineTransform(translationX: f.fx * 0.5, y: 0)), Color(hex: 0x6A4C3A))]
     }
 }
@@ -552,6 +565,9 @@ struct GandhiArt: CrewArt {
     let brow: CGPoint? = pt(112, 86)
     let reachExtra: CGFloat = 30
     let groundWidth: CGFloat = 86
+    var headBox: CGRect { head.boundingRect }
+    let headPivot: CGPoint? = pt(100, 118)
+    var waist: CGPoint { pt(100, 150) }
 
     init() {
         let cloth = makePath { p in
@@ -639,6 +655,9 @@ struct GandhiArt: CrewArt {
         pen.paper(neck)
         pen.fine(folds)
         pen.stroke(shawlEdge, 1.6)
+    }
+
+    func headParts(_ pen: Pen, _ f: CrewFrame) {
         drawEars(pen, at: [71.5, 128.5], y: 92, w: 12.5, h: 18.5)
         pen.shape(head)
         pen.hatch(headHatch)
@@ -698,10 +717,12 @@ struct GandhiArt: CrewArt {
         pen.c.stroke(line(pt(106.5 + x, 89.5), pt(108.5 + x, 87.8)), with: .color(Pen.ink.opacity(0.35)), lineWidth: 0.8)
     }
 
-    func detail(_ f: CrewFrame) -> Path { moustache.applying(CGAffineTransform(translationX: f.fx, y: 0)) }
+    func detail(_ f: CrewFrame) -> Path { Path() }
 
-    func extras(_ f: CrewFrame) -> [(Path, Color)] {
-        [(skin.union(neck), Color(hex: 0xA8785A)),
+    func extras(_ f: CrewFrame) -> [(Path, Color)] { [(neck, Color(hex: 0xA8785A))] }
+
+    func headTints(_ f: CrewFrame) -> [(Path, Color)] {
+        [(skin, Color(hex: 0xA8785A)), (moustache.applying(CGAffineTransform(translationX: f.fx, y: 0)), detailColor),
          (oval(71.5, 92, 12.5, 18.5).union(oval(128.5, 92, 12.5, 18.5)).subtracting(head), Color(hex: 0x9E6E52))]
     }
 }
@@ -731,6 +752,9 @@ struct ObamaArt: CrewArt {
     let brow: CGPoint? = pt(112, 86)
     let reachExtra: CGFloat = 30
     let groundWidth: CGFloat = 86
+    var headBox: CGRect { head.boundingRect }
+    let headPivot: CGPoint? = pt(100, 118)
+    var waist: CGPoint { pt(100, 150) }
 
     init() {
         suit = Suit(left: 71, right: 129, top: 118)
@@ -780,6 +804,9 @@ struct ObamaArt: CrewArt {
         suit.draw(pen)
         pen.paper(suit.tiePattern)
         drawFlagPin(pen, at: pt(110.5, 128), swedish: false)
+    }
+
+    func headParts(_ pen: Pen, _ f: CrewFrame) {
         // Ears that stand out
         drawEars(pen, at: [72.5, 127.5], y: 93, w: 12, h: 18)
         pen.shape(head)
@@ -831,8 +858,10 @@ struct ObamaArt: CrewArt {
 
     func detail(_ f: CrewFrame) -> Path { suit.tie }
 
-    func extras(_ f: CrewFrame) -> [(Path, Color)] {
-        [(skin, Color(hex: 0xA87457)), (suit.shirt, Color(hex: 0xD6E4F3)),
+    func extras(_ f: CrewFrame) -> [(Path, Color)] { [(suit.shirt, Color(hex: 0xD6E4F3))] }
+
+    func headTints(_ f: CrewFrame) -> [(Path, Color)] {
+        [(skin, Color(hex: 0xA87457)),
          (oval(72.5, 93, 12, 18).union(oval(127.5, 93, 12, 18)).subtracting(head), Color(hex: 0x9C6A4F)),
          (hair.subtracting(temples), Color(hex: 0x7C746E)), (temples, Color(hex: 0xB3AEA9))]
     }
@@ -866,19 +895,21 @@ struct DescartesArt: CrewArt {
     let brow: CGPoint? = pt(112, 86)
     let reachExtra: CGFloat = 30
     let groundWidth: CGFloat = 86
+    var headBox: CGRect { face.boundingRect }
+    let headPivot: CGPoint? = pt(100, 118)
 
     init() {
         let doublet = jacket(left: 72, right: 128)
         body = doublet
         let band = makePath { p in
-            p.move(to: pt(100, 118))
-            p.addQuadCurve(to: pt(80, 121), control: pt(86, 117))
+            p.move(to: pt(100, 122.5))
+            p.addQuadCurve(to: pt(80, 121), control: pt(88, 123))
             p.addLine(to: pt(84, 138))
             p.addQuadCurve(to: pt(99, 133), control: pt(92, 137))
             p.addLine(to: pt(101, 133))
             p.addQuadCurve(to: pt(116, 138), control: pt(108, 137))
             p.addLine(to: pt(120, 121))
-            p.addQuadCurve(to: pt(100, 118), control: pt(114, 117))
+            p.addQuadCurve(to: pt(100, 122.5), control: pt(112, 123))
             p.closeSubpath()
         }
         collar = band
@@ -938,9 +969,10 @@ struct DescartesArt: CrewArt {
         pen.hatch(cloth)
         pen.c.fill(buttons, with: .color(Pen.paper))
         pen.c.stroke(buttons, with: .color(Pen.ink), lineWidth: 0.8)
+    }
+
+    func headParts(_ pen: Pen, _ f: CrewFrame) {
         pen.shape(hairBack, 1.8)
-        pen.shape(collar, 1.4)
-        pen.fine(collarLines)
         pen.shape(face)
         pen.hatch(faceHatch)
         pen.shape(fringe, 1.4)
@@ -976,11 +1008,17 @@ struct DescartesArt: CrewArt {
         pen.solid(makePath { p in p.move(to: pt(98.5 + x, 117.5)); p.addLine(to: pt(101.5 + x, 117.5)); p.addLine(to: pt(100 + x, 121.5)); p.closeSubpath() })
     }
 
+    // The collar lies over the hair, just under the chin
+    func front(_ pen: Pen, _ f: CrewFrame) {
+        pen.shape(collar, 1.4)
+        pen.fine(collarLines)
+    }
+
     func overlay(_ pen: Pen, _ f: CrewFrame) { eyes.draw(pen, f) }
 
     func detail(_ f: CrewFrame) -> Path { collar }
 
-    func extras(_ f: CrewFrame) -> [(Path, Color)] {
+    func headTints(_ f: CrewFrame) -> [(Path, Color)] {
         [(skin, Color(hex: 0xEBC2A4)), (hairBack.subtracting(face).subtracting(collar).union(fringe), Color(hex: 0x4E3A2E)),
          (oval(87 + f.fx, 104, 9, 5).union(oval(113 + f.fx, 104, 9, 5)), Color(hex: 0xE09A88).opacity(0.4))]
     }

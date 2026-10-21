@@ -25,6 +25,7 @@ $U --cast cast.png                      # every crew member in nine poses
 $U --filmstrip film.png                 # ten frames across one cycle of a dozen moves
 $U --transitions changes.png            # the frames around a change of exercise, which should never jump
 $U --portraits people.png               # the people in the crew, large, for checking the likeness
+$U --moves moves.png                    # every exercise at its peak, done by ten of the crew
 $U --previews previews                  # the break panel for every exercise, light and dark
 $U --gif demo.gif                       # the README animation: a break dropping out of the notch
 $U --settings-screenshots shots         # every settings tab, light and dark, and the welcome window

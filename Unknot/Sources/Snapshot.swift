@@ -25,6 +25,7 @@ enum Snapshot {
         if args.contains("--benchmark") { benchmark(); return true }
         if let path = value("--transitions") { transitions(to: path); return true }
         if let path = value("--portraits") { portraits(to: path); return true }
+        if let path = value("--moves") { moves(to: path); return true }
         if args.contains("--selftest") { exit(selfTest() ? 0 : 1) }
         return false
     }
@@ -112,10 +113,10 @@ enum Snapshot {
 
     /// Ten frames across one cycle of each move, for checking that the motion flows.
     static func filmstrip(to path: String) {
-        let rows: [(Buddy, Move, Double)] = [(.frog, .armsUp, 4.6), (.frog, .sideBend, 6.4), (.mochi, .twist, 5.6), (.cat, .lookAway, 6.4),
-                                             (.semla, .armsWide, 4.8), (.chick, .hug, 3.14), (.toast, .calfRaise, 2.4), (.panda, .breathe, 8),
-                                             (.bunny, .wiggle, 1.4), (.stefan, .celebrate, 0.84), (.onigiri, .wristCircles, 1.05), (.frog, .shoulderRoll, 2.2),
-                                             (.frog, .shrug, 3.6), (.cat, .crossArm, 6.4)]
+        let rows: [(Buddy, Move, Double)] = [(.obama, .armsUp, 4.6), (.frog, .sideBend, 6.4), (.jesus, .neckTilt, 6.4), (.mochi, .twist, 5.6),
+                                             (.cat, .lookAway, 6.4), (.semla, .armsWide, 4.8), (.gandhi, .hug, 3.14), (.toast, .calfRaise, 2.6),
+                                             (.panda, .breathe, 8), (.bunny, .wiggle, 1.4), (.stefan, .celebrate, 0.84), (.onigiri, .wristCircles, 1.25),
+                                             (.descartes, .shoulderRoll, 2.4), (.stefan, .shrug, 3.6), (.cat, .crossArm, 6.4)]
         let sheet = VStack(alignment: .leading, spacing: 0) {
             ForEach(rows.indices, id: \.self) { r in
                 HStack(spacing: 0) {
@@ -145,6 +146,28 @@ enum Snapshot {
             .background(dark ? Color(hex: 0x2A2A2C) : Color(hex: 0xECEBEA))
         }
         save(VStack(spacing: 0) { row(false); row(true) }, to: path, scale: 8)
+    }
+
+    /// Every exercise at the moment that shows it best, done by a spread of the crew: a sheet for checking
+    /// that each one really looks like the exercise.
+    static func moves(to path: String) {
+        let peaks: [(Move, Double)] = [(.armsUp, 2.3), (.sideBend, 1.7), (.neckTilt, 1.8), (.shoulderRoll, 1.2), (.twist, 1.7),
+                                       (.breathe, 3.6), (.lookAway, 1.9), (.armsWide, 2.4), (.calfRaise, 1.1), (.wristCircles, 2.0),
+                                       (.wiggle, 0.5), (.hug, 1.6), (.shrug, 1.5), (.crossArm, 1.9)]
+        let cast: [Buddy] = [.mochi, .frog, .semla, .chick, .panda, .stefan, .jesus, .gandhi, .obama, .descartes]
+        let sheet = VStack(alignment: .leading, spacing: 0) {
+            ForEach(peaks.indices, id: \.self) { r in
+                HStack(spacing: 0) {
+                    Text(verbatim: peaks[r].0.rawValue).font(.system(size: 11, weight: .semibold)).frame(width: 90, alignment: .leading)
+                    ForEach(cast) { buddy in
+                        BuddyView(move: peaks[r].0, buddy: buddy, fixedTime: peaks[r].1).frame(width: 96, height: 96)
+                    }
+                }
+            }
+        }
+        .padding(10)
+        .background(Pen.paper)
+        save(sheet, to: path, scale: 1.5)
     }
 
     /// The people in the crew, large, waving and at rest, for checking the likeness.

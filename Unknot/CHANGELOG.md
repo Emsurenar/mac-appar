@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.15.0 – 2026-10-21
+
+- **The crew really does the exercises.** Every move is rechoreographed so it looks like the exercise itself:
+  - *Reach for the sky*: the arms go up round the head, the fingers lace above it, and up onto the toes.
+  - *Side bend*: the body bends at the waist, one arm sweeping over the top of the head.
+  - *Neck stretch*: the head leans on its own (for the people in the crew), and the hand on that side reaches
+    over the top of the head to the far ear.
+  - *Seated twist*: one hand goes across to the far hip, as if holding the chair, the other swings back.
+  - *Calf raises*: the heels rise and the feet stay on the ground, instead of the whole figure floating up.
+  - *Wrist circles*: the hands are in front of the chest, drawing circles.
+  - *Back hug*: the hands go round to the opposite shoulders.
+  - *Shoulder stretch*: one arm straight across the chest, the other hand pressing it in at the elbow.
+  - *Shoulder shrugs*: the people's heads sink down between their raised shoulders.
+  - *Open your chest* and *Shoulder rolls* lift the chin and look up as the chest opens.
+- **Motion lines**, the way comics draw them: round arrows above rolling shoulders, ticks above lifted
+  shoulders, circles round turning wrists and shake lines by shaking hands.
+- Hands that move from one place to another between exercises let go first, then reach, so nothing jumps.
+- `Unknot --moves` draws every exercise at its peak for ten members of the crew.
+
 ## 1.14.0 – 2026-10-21
 
 - **The people in the crew look like themselves.** Stefan Löfven, Jesus, Gandhi, Obama and Descartes are

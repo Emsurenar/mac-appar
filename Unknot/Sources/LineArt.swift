@@ -132,7 +132,7 @@ struct Pen {
     // MARK: Faces
 
     func eye(_ center: CGPoint, _ f: CrewFrame, r: CGFloat = 2.6, color: Color = Pen.ink) {
-        let x = center.x + f.look * 0.5, y = center.y
+        let x = center.x + f.look * 0.5, y = center.y + f.lookUp * 0.5
         switch f.eyes {
         case .open:
             solid(oval(x, y, r * 1.8, r * 2.1), color: color)
@@ -195,6 +195,7 @@ struct CrewFrame {
 
     var fx: CGFloat { CGFloat(pose.faceShiftX) }
     var look: CGFloat { CGFloat(pose.lookX) }
+    var lookUp: CGFloat { CGFloat(pose.lookY) }
     var sway: Double { pose.sproutSway }
     var eyes: Eyes {
         if pose.eyes == .open && fmod(max(t, 0), 3.8) > 3.66 { return .closed }  // an idle blink every few seconds
@@ -215,6 +216,16 @@ enum ArmStyle {
     case flap(Path, hatch: Hatch?, rest: Double, inFront: Bool)
 }
 
+extension ArmStyle {
+    /// How long the arm is at rest, for arms that reach with a hand.
+    var baseLength: CGFloat? {
+        switch self {
+        case .noodle(let length, _), .bold(let length): return length
+        case .flap: return nil
+        }
+    }
+}
+
 /// Arms grow when raised, so hands clear the head.
 func armReach(_ base: CGFloat, _ angle: Double, extra: CGFloat = 22) -> CGFloat {
     let x = min(max((abs(angle) - 60) / 100, 0), 1)
@@ -227,25 +238,132 @@ func handPoint(from shoulder: CGPoint, side: CGFloat, angle: Double, length: CGF
     return pt(shoulder.x - length * CGFloat(sin(theta)), shoulder.y + length * CGFloat(cos(theta)))
 }
 
-func drawArm(_ pen: Pen, side: CGFloat, shoulder: CGPoint, angle: Double, art: CrewArt, frame f: CrewFrame) {
+/// Where a hand target is for this member of the crew, in the space the arms are drawn in.
+func targetPoint(_ target: HandTarget, side: CGFloat, art: CrewArt, shoulders: [CGPoint], frame f: CrewFrame) -> CGPoint {
+    let head = art.headBox
+    let chestY = (shoulders[0].y + shoulders[1].y) / 2
+    let half = abs(shoulders[1].x - shoulders[0].x) / 2
+    var p: CGPoint
+    switch target {
+    case .overhead: p = pt(head.midX + side * 2.5, head.minY - 7)
+    case .farEar: p = pt(head.midX - side * head.width * 0.4, head.minY + head.height * 0.3)
+    case .farShoulder: p = pt(100 - side * (half - 3), chestY + 3)
+    case .chest: p = pt(100 + side * 12, chestY + 9)
+    case .acrossChest: p = pt(100 - side * (half + 12), chestY + 7)
+    case .elbow: p = pt(100 - side * 8, chestY + 10)
+    case .farHip: p = pt(100 - side * (half - 2), chestY + 28)
+    }
+    // A hand on the head goes where the head has tilted to
+    if case .farEar = target, let pivot = art.headPivot, f.pose.headTilt != 0 {
+        let a = f.pose.headTilt * .pi / 180
+        let d = pt(p.x - pivot.x, p.y - pivot.y)
+        p = pt(pivot.x + d.x * CGFloat(cos(a)) - d.y * CGFloat(sin(a)), pivot.y + d.x * CGFloat(sin(a)) + d.y * CGFloat(cos(a)))
+    }
+    return p
+}
+
+/// Where a hand ends up: from the arm's angle, drawn towards its target and the brow, never further than the
+/// arm can stretch.
+func handEnd(side: CGFloat, shoulder: CGPoint, shoulders: [CGPoint], angle: Double, base: CGFloat,
+                     art: CrewArt, frame f: CrewFrame) -> CGPoint {
+    var end = handPoint(from: shoulder, side: side, angle: angle, length: armReach(base, angle, extra: art.reachExtra))
+    let target = side < 0 ? f.pose.leftTarget : f.pose.rightTarget
+    let reach = CGFloat(side < 0 ? f.pose.leftReach : f.pose.rightReach)
+    if let target, reach > 0 {
+        var goal = targetPoint(target, side: side, art: art, shoulders: shoulders, frame: f)
+        let d = pt(goal.x - shoulder.x, goal.y - shoulder.y)
+        let distance = sqrt(d.x * d.x + d.y * d.y)
+        let longest = (base + art.reachExtra) * 1.5
+        if distance > longest { goal = pt(shoulder.x + d.x / distance * longest, shoulder.y + d.y / distance * longest) }
+        end = pt(end.x + (goal.x - end.x) * reach, end.y + (goal.y - end.y) * reach)
+    }
+    if side > 0, f.pose.handToBrow > 0, let brow = art.brow {
+        let k = CGFloat(f.pose.handToBrow)
+        end = pt(end.x + (brow.x - end.x) * k, end.y + (brow.y + CGFloat(sin(f.t * 1.4)) * 1.2 - end.y) * k)
+    }
     let orbit = CGFloat(f.pose.handOrbit)
     let phase = f.pose.handPhase + (side < 0 ? 0 : .pi)
-    let wobble = pt(CGFloat(cos(phase)) * orbit, CGFloat(sin(phase)) * orbit)
+    return pt(end.x + CGFloat(cos(phase)) * orbit, end.y + CGFloat(sin(phase)) * orbit)
+}
+
+/// The line of an arm. Usually a gentle curve; reaching over the head or onto the far ear, it goes up the outside
+/// of the head and over the top, so it never crosses the face.
+private func armPath(side: CGFloat, shoulder: CGPoint, mid: CGPoint, end: CGPoint, art: CrewArt, frame f: CrewFrame) -> Path {
+    var c1 = pt(shoulder.x + (mid.x - shoulder.x) * 2 / 3, shoulder.y + (mid.y - shoulder.y) * 2 / 3)
+    var c2 = pt(end.x + (mid.x - end.x) * 2 / 3, end.y + (mid.y - end.y) * 2 / 3)
+    let target = side < 0 ? f.pose.leftTarget : f.pose.rightTarget
+    let k = CGFloat(side < 0 ? f.pose.leftReach : f.pose.rightReach)
+    if let target, k > 0 {
+        let head = art.headBox
+        let outside = side < 0 ? head.minX - 8 : head.maxX + 8
+        var round: (CGPoint, CGPoint)?
+        switch target {
+        case .overhead:
+            round = (pt(outside, shoulder.y - (shoulder.y - head.minY) * 0.5), pt(outside - side * 2, head.minY - 2))
+        case .farEar:
+            round = (pt(outside, head.minY + head.height * 0.25), pt(head.midX + side * 6, head.minY - 16))
+        default:
+            break
+        }
+        if var (r1, r2) = round {
+            if case .farEar = target, let pivot = art.headPivot, f.pose.headTilt != 0 {
+                let a = f.pose.headTilt * .pi / 180
+                func turn(_ p: CGPoint) -> CGPoint {
+                    let d = pt(p.x - pivot.x, p.y - pivot.y)
+                    return pt(pivot.x + d.x * CGFloat(cos(a)) - d.y * CGFloat(sin(a)), pivot.y + d.x * CGFloat(sin(a)) + d.y * CGFloat(cos(a)))
+                }
+                r1 = turn(r1); r2 = turn(r2)
+            }
+            c1 = pt(c1.x + (r1.x - c1.x) * k, c1.y + (r1.y - c1.y) * k)
+            c2 = pt(c2.x + (r2.x - c2.x) * k, c2.y + (r2.y - c2.y) * k)
+        }
+    }
+    return makePath { $0.move(to: shoulder); $0.addCurve(to: end, control1: c1, control2: c2) }
+}
+
+/// Comic motion lines: how the shoulders circle or lift, how the wrists turn, how the hands shake.
+private func drawMarks(_ pen: Pen, _ f: CrewFrame, shoulders: [CGPoint], hands: [CGPoint]) {
+    let k = CGFloat(f.pose.markStrength)
+    guard f.pose.marks != .none, k > 0.05 else { return }
+    let ink = Pen.ink.opacity(Double(0.75 * k))
+    let style = StrokeStyle(lineWidth: 1.3, lineCap: .round, lineJoin: .round)
+    for (i, side) in [CGFloat(-1), 1].enumerated() {
+        let s = shoulders[i], h = hands[i]
+        var lines = Path()
+        switch f.pose.marks {
+        case .shoulderRolls:
+            // A round arrow above each shoulder, rolling backwards
+            let c = pt(s.x + side * 8, s.y - 12)
+            lines.addArc(center: c, radius: 6.5, startAngle: .degrees(side < 0 ? 200 : -20), endAngle: .degrees(side < 0 ? 20 : 160), clockwise: side > 0)
+            let tip = pt(c.x + side * 6.5 * CGFloat(cos(20 * Double.pi / 180)), c.y + 6.5 * CGFloat(sin(20 * Double.pi / 180)))
+            lines.move(to: pt(tip.x - side * 1, tip.y - 3.5)); lines.addLine(to: tip); lines.addLine(to: pt(tip.x - side * 3.8, tip.y + 0.5))
+        case .shoulderLift:
+            for dx: CGFloat in [4, 9] {
+                lines.move(to: pt(s.x + side * dx, s.y - 9 - dx * 0.4)); lines.addLine(to: pt(s.x + side * dx, s.y - 15 - dx * 0.4))
+            }
+        case .wristCircles:
+            lines.addArc(center: h, radius: 7.5, startAngle: .degrees(-60), endAngle: .degrees(200), clockwise: false)
+        case .shake:
+            for r: CGFloat in [7, 10.5] {
+                lines.addArc(center: h, radius: r, startAngle: .degrees(side < 0 ? 140 : -40), endAngle: .degrees(side < 0 ? 220 : 40), clockwise: false)
+            }
+        case .none:
+            break
+        }
+        pen.c.stroke(lines, with: .color(ink), style: style)
+    }
+}
+
+func drawArm(_ pen: Pen, side: CGFloat, shoulder: CGPoint, shoulders: [CGPoint], angle: Double, art: CrewArt, frame f: CrewFrame) {
     switch art.arm {
     case .noodle(let base, let hand):
-        let length = armReach(base, angle, extra: art.reachExtra)
-        var end = handPoint(from: shoulder, side: side, angle: angle, length: length)
-        if side > 0, f.pose.handToBrow > 0, let brow = art.brow {
-            let k = CGFloat(f.pose.handToBrow)
-            end = pt(end.x + (brow.x - end.x) * k, end.y + (brow.y + CGFloat(sin(f.t * 1.4)) * 1.2 - end.y) * k)
-        }
-        end = pt(end.x + wobble.x, end.y + wobble.y)
+        let end = handEnd(side: side, shoulder: shoulder, shoulders: shoulders, angle: angle, base: base, art: art, frame: f)
         let dx = end.x - shoulder.x, dy = end.y - shoulder.y
         let len = max(1, sqrt(dx * dx + dy * dy))
         var n = pt(-dy / len, dx / len)
         if n.x * side < 0 { n = pt(-n.x, -n.y) }  // bow outwards, like a relaxed elbow
         let mid = pt((shoulder.x + end.x) / 2 + n.x * 4, (shoulder.y + end.y) / 2 + n.y * 4)
-        pen.stroke(bend(shoulder, mid, end))
+        pen.stroke(armPath(side: side, shoulder: shoulder, mid: mid, end: end, art: art, frame: f))
         switch hand {
         case .loop:
             pen.shape(oval(end.x, end.y, 6.4, 6.4), 1.8)
@@ -260,14 +378,10 @@ func drawArm(_ pen: Pen, side: CGFloat, shoulder: CGPoint, angle: Double, art: C
             }
         }
     case .bold(let base):
-        let length = armReach(base, angle, extra: art.reachExtra)
-        var end = handPoint(from: shoulder, side: side, angle: angle, length: length)
-        if side > 0, f.pose.handToBrow > 0, let brow = art.brow {
-            let k = CGFloat(f.pose.handToBrow)
-            end = pt(end.x + (brow.x - end.x) * k, end.y + (brow.y - end.y) * k)
-        }
+        let end = handEnd(side: side, shoulder: shoulder, shoulders: shoulders, angle: angle, base: base, art: art, frame: f)
         let mid = pt((shoulder.x + end.x) / 2 + side * 3, (shoulder.y + end.y) / 2 + 2)
-        pen.c.stroke(bend(shoulder, mid, end), with: .color(Pen.ink), style: StrokeStyle(lineWidth: 9, lineCap: .round))
+        pen.c.stroke(armPath(side: side, shoulder: shoulder, mid: mid, end: end, art: art, frame: f),
+                     with: .color(Pen.ink), style: StrokeStyle(lineWidth: 9, lineCap: .round))
     case .flap(let shapePath, let hatch, let rest, _):
         let p = pen.moved { ctx in
             ctx.translateBy(x: shoulder.x, y: shoulder.y)
@@ -296,17 +410,35 @@ func drawCrew(_ ctx: inout GraphicsContext, _ buddy: Buddy, _ p: Pose, t: Double
         ctx.stroke(line(pt(100 - half, y), pt(100 + half, y)), with: .color(Pen.ink.opacity(0.7)), lineWidth: 0.9)
     }
 
+    // Up on the toes the feet stay on the ground and stand taller; a jump lifts them too
     var feetSpace = ctx
     feetSpace.translateBy(x: 0, y: -lift)
+    if p.tiptoe > 0 {
+        feetSpace.translateBy(x: 100, y: 175)
+        feetSpace.scaleBy(x: 1 - 0.2 * CGFloat(p.tiptoe), y: 1 + 0.9 * CGFloat(p.tiptoe))
+        feetSpace.translateBy(x: -100, y: -175)
+    }
     art.feet(Pen(c: feetSpace), f)
 
     var b = ctx
     let a = art.anchor
-    b.translateBy(x: a.x, y: a.y - lift)
-    b.rotate(by: .degrees(p.tilt))
+    let ownHead = art.headPivot != nil
+    b.translateBy(x: a.x, y: a.y - lift - CGFloat(p.tiptoe) * 10)
+    b.rotate(by: .degrees(p.tilt + (ownHead ? 0 : p.headTilt)))
     b.scaleBy(x: CGFloat(p.scaleX), y: CGFloat(p.scaleY))
     b.translateBy(x: -a.x, y: -a.y)
+    if p.bend != 0 {
+        let w = art.waist
+        b.translateBy(x: w.x, y: w.y)
+        b.rotate(by: .degrees(p.bend))
+        b.translateBy(x: -w.x, y: -w.y)
+    }
     let pen = Pen(c: b)
+    // People turn their head on its own; for everyone else the head is the body
+    // and when they pull their shoulders up, the head sinks down between them
+    let headPen = art.headPivot.map { pivot in
+        pen.moved { $0.translateBy(x: 0, y: CGFloat(max(p.shoulderLift, 0)) * 0.55) }.rotated(p.headTilt, around: pivot)
+    } ?? pen
 
     art.behind(pen, f)
 
@@ -318,12 +450,19 @@ func drawCrew(_ ctx: inout GraphicsContext, _ buddy: Buddy, _ p: Pose, t: Double
     func isInFront(_ i: Int) -> Bool {
         if alwaysInFront || angles[i] < -6 { return true }
         if i == 1 && p.handToBrow > 0.5 && art.brow != nil { return true }
+        // A hand that's gone to a target in front of the body is drawn over it; overhead stays behind
+        let target = i == 0 ? p.leftTarget : p.rightTarget
+        let reach = i == 0 ? p.leftReach : p.rightReach
+        if let target, reach > 0.35 {
+            if case .overhead = target { return false }
+            if case .flap = art.arm {} else { return true }
+        }
         if let below = art.armsInFrontBelow { return angles[i] < below }
         return false
     }
     func arms(inFront: Bool) {
         for i in 0..<2 where isInFront(i) == inFront {
-            drawArm(pen, side: i == 0 ? -1 : 1, shoulder: shoulders[i], angle: angles[i], art: art, frame: f)
+            drawArm(pen, side: i == 0 ? -1 : 1, shoulder: shoulders[i], shoulders: shoulders, angle: angles[i], art: art, frame: f)
         }
     }
 
@@ -331,16 +470,25 @@ func drawCrew(_ ctx: inout GraphicsContext, _ buddy: Buddy, _ p: Pose, t: Double
     pen.shape(art.body)
     for h in art.hatches { pen.hatch(h) }
     art.onBody(pen, f)
-    art.face(pen, f)
+    art.headParts(headPen, f)
+    art.face(headPen, f)
     art.front(pen, f)
 
     // Colour is printed over the body before the arms in front, so wings and hugging arms aren't tinted twice
     pen.tint(art.wash, art.accent.opacity(0.6))
     for (path, colour) in art.extras(f) { pen.tint(path, colour) }
+    for (path, colour) in art.headTints(f) { headPen.tint(path, colour) }
     pen.tint(art.detail(f), art.detailColor)
-    art.overlay(pen, f)
+    art.overlay(headPen, f)
 
     arms(inFront: true)
+
+    if p.marks != .none, case let base = (art.arm.baseLength ?? 24) {
+        let hands = [CGFloat(-1), 1].enumerated().map { i, side in
+            handEnd(side: side, shoulder: shoulders[i], shoulders: shoulders, angle: angles[i], base: base, art: art, frame: f)
+        }
+        drawMarks(pen, f, shoulders: shoulders, hands: hands)
+    }
 }
 
 /// A member of the crew, animated. Pass `fixedTime` for a still frame, or `epoch` to start the move from rest

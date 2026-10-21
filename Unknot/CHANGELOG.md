@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.12.0 – 2026-10-21
+
+- **Stefan Löfven joins the Stretch Crew** in place of Sol the cactus: a dark suit, a red tie, a shiny crown
+  with grey hair at the sides, and the same moves as everyone else.
+
 ## 1.11.0 – 2026-10-21
 
 - **The crew have names**: Momo the mochi, Miso the cat, Bao the panda, Juni the bunny, Otto the frog, Selma

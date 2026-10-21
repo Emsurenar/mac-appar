@@ -108,7 +108,7 @@ struct Pen {
         m.blendMode = .multiply
         m.stroke(p, with: .color(color), style: StrokeStyle(lineWidth: width, lineCap: .round, lineJoin: .round))
     }
-    /// An outlined tube along a path: tails, cactus branches.
+    /// An outlined tube along a path, like the cat's tail.
     func tube(_ p: Path, width: CGFloat) {
         c.stroke(p, with: .color(Pen.ink), style: StrokeStyle(lineWidth: width + Pen.weight * 2, lineCap: .round, lineJoin: .round))
         c.stroke(p, with: .color(Pen.paper), style: StrokeStyle(lineWidth: width, lineCap: .round, lineJoin: .round))
@@ -213,8 +213,6 @@ enum ArmStyle {
     case bold(length: CGFloat)
     /// A closed shape (flipper, wing) drawn for the left side with the shoulder at the origin.
     case flap(Path, hatch: Hatch?, rest: Double, inFront: Bool)
-    /// A cactus branch: out to an elbow, then a segment that tilts with the pose.
-    case branch
 }
 
 /// Arms grow when raised, so hands clear the head.
@@ -280,15 +278,6 @@ func drawArm(_ pen: Pen, side: CGFloat, shoulder: CGPoint, angle: Double, art: C
         p.shape(shapePath)
         if let hatch { p.hatch(hatch) }
         p.tint(shapePath, art.accent.opacity(0.6))
-    case .branch:
-        let elbow = pt(shoulder.x + side * 12, shoulder.y)
-        let segment = 170 + (angle - 30) * 0.2
-        let tip = handPoint(from: elbow, side: side, angle: segment, length: 18)
-        let branch = makePath { $0.move(to: shoulder); $0.addLine(to: elbow); $0.addLine(to: tip) }
-        pen.tube(branch, width: 11)
-        pen.tintLine(branch, width: 11, art.accent.opacity(0.6))
-        let areole = pt((elbow.x + tip.x) / 2, (elbow.y + tip.y) / 2)
-        pen.c.stroke(oval(areole.x, areole.y, 2.2, 2.2), with: .color(Pen.ink), lineWidth: 1)
     }
 }
 

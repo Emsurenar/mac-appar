@@ -46,7 +46,7 @@ enum CrewArtwork {
     static let mochi = MochiArt()
     static let all: [Buddy: CrewArt] = [
         .mochi: mochi, .cat: CatArt(), .panda: PandaArt(), .bunny: BunnyArt(), .frog: FrogArt(),
-        .semla: SemlaArt(), .chick: ChickArt(), .toast: ToastArt(), .onigiri: OnigiriArt(), .cactus: CactusArt(),
+        .semla: SemlaArt(), .chick: ChickArt(), .toast: ToastArt(), .onigiri: OnigiriArt(), .stefan: StefanArt(),
     ]
 }
 
@@ -858,72 +858,127 @@ struct OnigiriArt: CrewArt {
     func detail(_ f: CrewFrame) -> Path { plum }
 }
 
-// MARK: - Cactus
+// MARK: - Stefan
 
-struct CactusArt: CrewArt {
-    let accent = Color(hex: 0xB9D3A8)
-    let detailColor = Color(hex: 0xE58F78)
-    let body = Path(roundedRect: CGRect(x: 77, y: 66, width: 46, height: 92), cornerRadius: 23)
+/// Stefan Löfven, drawn the same way as the rest of the crew: a dark suit, a red tie, a shiny crown with grey
+/// hair at the sides, and noodle arms like everyone else.
+struct StefanArt: CrewArt {
+    let accent = Color(hex: 0x46536C)            // the suit, dark navy
+    let detailColor = Color(hex: 0xD45A4C)       // the tie
+    let body: Path                               // the suit
     let wash: Path
     let hatches: [Hatch]
-    let pot = makePath { p in p.move(to: pt(70, 150)); p.addLine(to: pt(130, 150)); p.addLine(to: pt(124, 174)); p.addLine(to: pt(76, 174)); p.closeSubpath() }
-    let rim = Path(roundedRect: CGRect(x: 66, y: 142, width: 68, height: 11), cornerRadius: 2.5)
-    let potHatch: Hatch
-    let potTint: Path
-    let petals: Path
-    let flowerOutline: Path
-    let shoulders = [pt(80, 120), pt(120, 106)]
-    let arm = ArmStyle.branch
-    let groundWidth: CGFloat = 70
-    var anchor: CGPoint { pt(100, 174) }
+    let shirt: Path
+    let lapels: Path
+    let tie: Path
+    let head: Path
+    let headHatch: Hatch
+    let ears: [Path]
+    let hair: Path
+    let hairStrands: Path
+    let skin: Path
+    let shoulders = [pt(71, 128), pt(129, 128)]
+    let arm = ArmStyle.noodle(length: 26, hand: .loop)
+    let armOffset = -12.0
+    let brow: CGPoint? = pt(113, 88)
+    let reachExtra: CGFloat = 30
+    let groundWidth: CGFloat = 84
 
     init() {
-        wash = body.subtracting(pot).subtracting(rim)
-        hatches = [Hatch.shadow(of: body, shift: 10)]
-        potHatch = Hatch.shadow(of: pot, shift: 9, spacing: 2.3)
-        potTint = pot.union(rim)
-        var petals = Path()
-        for k in 0..<5 {
-            let a = Double(k) / 5 * 2 * .pi - .pi / 2
-            petals.addPath(oval(104 + CGFloat(cos(a)) * 5.6, 64 + CGFloat(sin(a)) * 5.6, 8.6, 8.6))
+        let suit = makePath { p in
+            p.move(to: pt(70, 124))
+            p.addCurve(to: pt(84, 116), control1: pt(71, 119), control2: pt(77, 116))
+            p.addLine(to: pt(116, 116))
+            p.addCurve(to: pt(130, 124), control1: pt(123, 116), control2: pt(129, 119))
+            p.addCurve(to: pt(134, 160), control1: pt(133, 136), control2: pt(135, 150))
+            p.addQuadCurve(to: pt(124, 166), control: pt(134, 166))
+            p.addLine(to: pt(76, 166))
+            p.addQuadCurve(to: pt(66, 160), control: pt(66, 166))
+            p.addCurve(to: pt(70, 124), control1: pt(65, 150), control2: pt(67, 136))
         }
-        self.petals = petals
-        flowerOutline = petals.union(oval(104, 64, 8, 8))
+        body = suit
+        shirt = makePath { p in
+            p.move(to: pt(91, 116)); p.addLine(to: pt(109, 116)); p.addLine(to: pt(100, 139)); p.closeSubpath()
+        }
+        lapels = makePath { p in
+            p.move(to: pt(87, 117)); p.addLine(to: pt(99, 148))
+            p.move(to: pt(113, 117)); p.addLine(to: pt(101, 148))
+            p.move(to: pt(87, 117)); p.addLine(to: pt(84, 127)); p.addLine(to: pt(91, 131))
+            p.move(to: pt(113, 117)); p.addLine(to: pt(116, 127)); p.addLine(to: pt(109, 131))
+        }
+        tie = makePath { p in
+            p.move(to: pt(97.5, 117)); p.addLine(to: pt(102.5, 117)); p.addLine(to: pt(101.6, 121.5))
+            p.addLine(to: pt(103.6, 137)); p.addLine(to: pt(100, 141.5)); p.addLine(to: pt(96.4, 137))
+            p.addLine(to: pt(98.4, 121.5)); p.closeSubpath()
+        }
+        wash = suit.subtracting(shirt)
+        hatches = [Hatch.shadow(of: suit, shift: 12)]
+
+        let face = superellipse(cx: 100, cy: 90, a: 25, b: 28, n: 2.3)
+        head = face
+        // A narrow shadow along the edge only; any wider and it reads as stubble
+        headHatch = Hatch.shadow(of: face, shift: 5, spacing: 2.9)
+        ears = [oval(73, 95, 9, 13), oval(127, 95, 9, 13)]
+        // Short grey hair only at the sides and round the back; the crown is bare and shiny
+        let sides = makePath { p in
+            p.move(to: pt(74, 80)); p.addQuadCurve(to: pt(77, 103), control: pt(72, 92))
+            p.addLine(to: pt(82, 101)); p.addQuadCurve(to: pt(80, 80), control: pt(79.5, 90)); p.closeSubpath()
+            p.move(to: pt(126, 80)); p.addQuadCurve(to: pt(123, 103), control: pt(128, 92))
+            p.addLine(to: pt(118, 101)); p.addQuadCurve(to: pt(120, 80), control: pt(120.5, 90)); p.closeSubpath()
+        }
+        let hairShape = sides.intersection(face)
+        hair = hairShape
+        // Drawn as short strokes, without an outline, so it reads as hair and not as headphones
+        hairStrands = makePath { p in
+            var r = SeededRandom(state: 12)
+            for side: CGFloat in [-1, 1] {
+                for i in 0..<9 {
+                    let y = 81 + CGFloat(i) * 2.4 + r.next()
+                    let x = 100 + side * (23.5 - r.next() * 3 - abs(CGFloat(i) - 4) * 0.25)
+                    p.move(to: pt(x, y)); p.addLine(to: pt(x - side * (1.8 + r.next() * 1.5), y + 2.2))
+                }
+            }
+        }
+        let shine = bend(pt(85, 71), pt(91, 66.5), pt(99, 65.5)).strokedPath(StrokeStyle(lineWidth: 2.4, lineCap: .round))
+        skin = face.subtracting(hairShape).subtracting(shine)
+    }
+
+    func feet(_ pen: Pen, _ f: CrewFrame) {
+        // Polished black shoes
+        for x: CGFloat in [86, 114] { pen.solid(oval(x, 171, 18, 8)) }
     }
 
     func onBody(_ pen: Pen, _ f: CrewFrame) {
-        for x: CGFloat in [89, 111] { pen.fine(line(pt(x, 80), pt(x, 146))) }
-        for (x, y) in [(83.0, 96.0), (117.0, 88.0), (84.0, 138.0), (116.0, 130.0), (100.0, 150.0)] {
-            pen.c.stroke(oval(x, y, 2.2, 2.2), with: .color(Pen.ink), lineWidth: 1)
-            pen.fine(line(pt(x - 1.6, y - 0.6), pt(x - 4.6, y - 2)))
-            pen.fine(line(pt(x + 1.6, y - 0.6), pt(x + 4.6, y - 2)))
+        pen.paper(shirt)
+        pen.fine(shirt)
+        pen.fine(lapels)
+        pen.shape(tie, 1.3)
+        for y: CGFloat in [152, 159] { pen.c.stroke(oval(100, y, 2.6, 2.6), with: .color(Pen.ink), lineWidth: 1) }
+        for ear in ears {
+            pen.shape(ear, 1.8)
         }
+        pen.fine(bend(pt(71.5, 91), pt(74.5, 95), pt(72, 99)))
+        pen.fine(bend(pt(128.5, 91), pt(125.5, 95), pt(128, 99)))
+        pen.shape(head)
+        pen.hatch(headHatch)
+        pen.paper(hair)
+        pen.c.stroke(hairStrands, with: .color(Pen.ink.opacity(0.7)), style: StrokeStyle(lineWidth: 0.9, lineCap: .round))
     }
 
     func face(_ pen: Pen, _ f: CrewFrame) {
-        pen.eye(pt(92 + f.fx, 104), f)
-        pen.eye(pt(108 + f.fx, 104), f)
-        pen.mouth(pt(100 + f.fx, 112), f, width: 4, depth: 3)
+        let x = f.fx
+        // Thick, level brows give him his calm look
+        pen.stroke(bend(pt(84.5 + x, 86), pt(90 + x, 84), pt(95.5 + x, 86)), 1.9)
+        pen.stroke(bend(pt(104.5 + x, 86), pt(110 + x, 84), pt(115.5 + x, 86)), 1.9)
+        pen.eye(pt(90 + x, 93), f, r: 2.3)
+        pen.eye(pt(110 + x, 93), f, r: 2.3)
+        pen.fine(bend(pt(100 + x, 96), pt(97 + x, 102.5), pt(101.5 + x, 103)))
+        pen.mouth(pt(100 + x, 109), f, width: 5.5, depth: 2.6)
     }
 
-    func front(_ pen: Pen, _ f: CrewFrame) {
-        // Flower, nodding a little
-        let flower = pen.rotated(f.sway * 1.4, around: pt(104, 68))
-        flower.shape(flowerOutline, 1.6)
-        flower.c.stroke(petals, with: .color(Pen.ink), lineWidth: 1.2)
-        flower.tint(flowerOutline, detailColor)
-        flower.shape(oval(104, 64, 5, 5), 1.2)
-        // Pot with a zigzag band
-        pen.shape(pot)
-        pen.hatch(potHatch)
-        pen.shape(rim)
-        pen.fine(makePath { p in
-            p.move(to: pt(74, 162))
-            var up = true
-            for x in stride(from: 80.0, through: 126.0, by: 6.0) { p.addLine(to: pt(x, up ? 158 : 162)); up.toggle() }
-        })
-        pen.tint(potTint, Color(hex: 0xEDC0A6))
-    }
+    func detail(_ f: CrewFrame) -> Path { tie }
 
-    func detail(_ f: CrewFrame) -> Path { Path() }
+    func extras(_ f: CrewFrame) -> [(Path, Color)] {
+        [(skin, Color(hex: 0xF0CDB4)), (hair, Color(hex: 0xDAD6D0)), (ears.reduce(Path()) { $0.union($1) }.subtracting(head), Color(hex: 0xEBC0A4))]
+    }
 }

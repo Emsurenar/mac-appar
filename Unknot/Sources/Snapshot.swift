@@ -113,7 +113,7 @@ enum Snapshot {
     static func filmstrip(to path: String) {
         let rows: [(Buddy, Move, Double)] = [(.frog, .armsUp, 4.6), (.frog, .sideBend, 6.4), (.mochi, .twist, 5.6), (.cat, .lookAway, 6.4),
                                              (.semla, .armsWide, 4.8), (.chick, .hug, 3.14), (.toast, .calfRaise, 2.4), (.panda, .breathe, 8),
-                                             (.bunny, .wiggle, 1.4), (.cactus, .celebrate, 0.84), (.onigiri, .wristCircles, 1.05), (.frog, .shoulderRoll, 2.2),
+                                             (.bunny, .wiggle, 1.4), (.stefan, .celebrate, 0.84), (.onigiri, .wristCircles, 1.05), (.frog, .shoulderRoll, 2.2),
                                              (.frog, .shrug, 3.6), (.cat, .crossArm, 6.4)]
         let sheet = VStack(alignment: .leading, spacing: 0) {
             ForEach(rows.indices, id: \.self) { r in

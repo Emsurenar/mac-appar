@@ -89,7 +89,7 @@ it: *Breathe in · 3*, *Switch sides*.
 ## The Stretch Crew
 
 <p align="center">
-  <img src="docs/buddies.png" width="640" alt="The Stretch Crew: Momo the mochi, Miso the cat, Bao the panda, Juni the bunny, Otto the frog, Selma the semla, Pip the chick, Toby the toast, Nori the onigiri and Sol the cactus">
+  <img src="docs/buddies.png" width="640" alt="The Stretch Crew: Momo the mochi, Miso the cat, Bao the panda, Juni the bunny, Otto the frog, Selma the semla, Pip the chick, Toby the toast, Nori the onigiri and Stefan Löfven">
 </p>
 
 Ten characters drawn like small engravings: one ink line, hatching for shadow and a soft wash of colour.

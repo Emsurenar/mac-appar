@@ -1080,19 +1080,20 @@ struct BardArt: CrewArt {
         }
         stubble = texture(in: face.intersection(Path(CGRect(x: 75, y: 76, width: 7, height: 18)))
             .union(face.intersection(Path(CGRect(x: 118, y: 76, width: 7, height: 18)))), count: 18, seed: 9, length: 1.6, angle: 100)
-        // The beard starts low on the cheeks, is widest along the jaw and falls a long way, broad at the bottom,
-        // its edge wiry all the way round
-        let full = frizzy([pt(79, 104), pt(77, 112), pt(76, 121), pt(77.5, 131), pt(81.5, 140), pt(88, 147.5), pt(95, 151.5),
-                           pt(100, 152.5), pt(105, 151.5), pt(112, 147.5), pt(118.5, 140), pt(122.5, 131), pt(124, 121),
-                           pt(123, 112), pt(121, 104), pt(114, 108.5), pt(100, 108), pt(86, 108.5)],
-                          around: pt(100, 125), seed: 41, amount: 1.6)
+        // The beard runs up the cheeks to the sideburns, so there's no straight edge across the face, is widest
+        // along the jaw and tapers into a long, rounded point, its edge wiry all the way round
+        let full = frizzy([pt(77.5, 96), pt(76.5, 107), pt(77.5, 118), pt(80.5, 128), pt(85, 137.5), pt(90.5, 146),
+                           pt(95.5, 152.5), pt(100, 155.5), pt(104.5, 152.5), pt(109.5, 146), pt(115, 137.5),
+                           pt(119.5, 128), pt(122.5, 118), pt(123.5, 107), pt(122.5, 96), pt(119.5, 100.5),
+                           pt(115.5, 105.5), pt(108, 110), pt(100, 111), pt(92, 110), pt(84.5, 105.5), pt(80.5, 100.5)],
+                          around: pt(100, 126), seed: 41, amount: 1.5)
         beard = full
         // Wiry strands running down, a little wavy
         curls = makePath { p in
             var c = SeededRandom(state: 27)
             var placed = 0
-            while placed < 46 {
-                let q = pt(79 + c.next() * 42, 110 + c.next() * 34)
+            while placed < 50 {
+                let q = pt(79 + c.next() * 42, 104 + c.next() * 44)
                 guard full.contains(q) else { continue }
                 let length = 6 + c.next() * 8
                 let lean = (q.x - 100) * 0.06
@@ -1106,7 +1107,7 @@ struct BardArt: CrewArt {
             var c = SeededRandom(state: 64)
             var placed = 0
             while placed < 16 {
-                let q = pt(81 + c.next() * 38, 112 + c.next() * 30)
+                let q = pt(81 + c.next() * 38, 108 + c.next() * 36)
                 guard full.contains(q) else { continue }
                 let length = 5 + c.next() * 6
                 p.move(to: q)
@@ -1119,8 +1120,9 @@ struct BardArt: CrewArt {
                             pt(111, 113.5), pt(105, 111.5), pt(100, 112.5), pt(95, 111.5), pt(89, 113.5), pt(84, 117.5),
                             pt(80.5, 116), pt(82, 109.5), pt(87, 104), pt(93.5, 101)],
                            around: pt(100, 108), seed: 13, amount: 1.1)
-        cheeks = texture(in: face.intersection(Path(CGRect(x: 77, y: 95, width: 10, height: 11)))
-            .union(face.intersection(Path(CGRect(x: 113, y: 95, width: 10, height: 11)))), count: 22, seed: 3, length: 1.4, angle: 95)
+        // Short beard on the cheeks just above the long one
+        cheeks = texture(in: face.intersection(oval(84, 99, 12, 9)).union(face.intersection(oval(116, 99, 12, 9))),
+                         count: 22, seed: 3, length: 1.4, angle: 95)
         skin = face.subtracting(full).subtracting(shine)
         earTint = oval(74.5, 92, 8.5, 14.5).union(oval(125.5, 92, 8.5, 14.5)).subtracting(face)
     }

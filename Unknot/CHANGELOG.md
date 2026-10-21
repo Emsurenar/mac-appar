@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.19.2 – 2026-10-21
+
+- **Alexander Bard's beard no longer looks cut off.** It had a straight edge across the face and a flat bottom;
+  now it runs up the cheeks to the sideburns and tapers into a long, rounded point, as in the photograph.
+
 ## 1.19.1 – 2026-10-21
 
 - **Alexander Bard's eyes look like his own**: pale grey-blue with big irises, open wide under heavy lids,

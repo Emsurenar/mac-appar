@@ -28,5 +28,10 @@ fi
 # Downloads made with curl aren't quarantined, but clear the flag in case the zip was.
 xattr -dr com.apple.quarantine "$APP" 2>/dev/null || true
 
-open "$APP"
+# macOS can take a moment to notice the old copy is gone; try again before giving up.
+for _ in 1 2 3; do
+    open "$APP" 2>/dev/null || true
+    sleep 1
+    pgrep -xq Unknot && break
+done
 echo "Done! Unknot now lives in your menu bar."

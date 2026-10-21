@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.1 – 2026-10-21
+
+- Updating could leave Unknot closed: the new copy saw the old one, which was still quitting, and stepped aside.
+  It now ignores a copy that's on its way out, and the installer retries opening the app.
+
 ## 1.3.0 – 2026-10-21
 
 - **Nine new buddies**: a cat, a panda, a bunny, a frog, a penguin, a chick, a slice of toast, an onigiri and

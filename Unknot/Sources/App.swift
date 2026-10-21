@@ -70,7 +70,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func quitIfAlreadyRunning() -> Bool {
         guard !CommandLine.arguments.contains("--relaunched"),
               let id = Bundle.main.bundleIdentifier else { return false }
-        let others = NSRunningApplication.runningApplications(withBundleIdentifier: id).filter { $0 != .current }
+        // A copy that was just quit (by an update, say) can still be listed for a moment; ignore it.
+        let others = NSRunningApplication.runningApplications(withBundleIdentifier: id)
+            .filter { $0 != .current && !$0.isTerminated }
         guard !others.isEmpty else { return false }
         DistributedNotificationCenter.default().postNotificationName(showSettingsNotification, object: nil,
                                                                      userInfo: nil, deliverImmediately: true)

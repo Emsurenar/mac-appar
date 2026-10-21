@@ -99,7 +99,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
 
     private func present(_ window: NSWindow) {
         NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         window.makeKeyAndOrderFront(nil)
     }
 

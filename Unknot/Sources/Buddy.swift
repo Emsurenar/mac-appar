@@ -1,6 +1,6 @@
 import SwiftUI
 
-// Poses and the drawing every member of the Stretch Crew shares, done with Canvas so any pose can be animated.
+// The choreography: how the crew moves through every exercise. Drawing lives in LineArt.swift and Crew.swift.
 
 extension Color {
     init(hex: UInt32) {
@@ -11,239 +11,224 @@ extension Color {
     }
 }
 
-enum Eyes { case open, happy }
+enum Eyes { case open, happy, closed }
 enum Mouth { case smile, open, o }
 
 struct Pose {
-    var tilt = 0.0          // degrees; the whole body leans around the feet
-    var lift = 0.0          // jump height in points
+    var tilt = 0.0          // degrees; the whole body leans around its feet
+    var lift = 0.0          // height off the ground
     var scaleX = 1.0
     var scaleY = 1.0
     var leftArm = 30.0      // degrees: 0 hangs down, positive raises outwards, negative crosses in front
     var rightArm = 30.0
     var shoulderLift = 0.0
-    var faceShiftX = 0.0
-    var lookX = 0.0
+    var faceShiftX = 0.0    // the face turns sideways
+    var lookX = 0.0         // the eyes look sideways
     var eyes = Eyes.open
     var mouth = Mouth.smile
-    var sproutSway = 0.0
+    var sproutSway = 0.0    // sprouts, tufts and flowers sway with this
+    var handOrbit = 0.0     // hands draw small circles (wrist circles)
+    var handPhase = 0.0
+    var handToBrow = false  // the right hand shades the eyes
 }
 
+// MARK: Timing helpers
+
+/// Where in a repeating cycle of `period` seconds we are, from 0 to 1.
+func phase(_ t: Double, _ period: Double) -> Double {
+    let x = t.truncatingRemainder(dividingBy: period) / period
+    return x < 0 ? x + 1 : x
+}
+
+/// Smooth start and smooth stop.
+func ease(_ x: Double) -> Double {
+    let c = min(max(x, 0), 1)
+    return c * c * (3 - 2 * c)
+}
+
+/// 0 until `a`, rises to 1 at `b`, holds until `c`, falls back to 0 at `d`. Eased at both ends.
+func hold(_ x: Double, _ a: Double, _ b: Double, _ c: Double, _ d: Double) -> Double {
+    if x <= a || x >= d { return 0 }
+    if x < b { return ease((x - a) / (b - a)) }
+    if x <= c { return 1 }
+    return 1 - ease((x - c) / (d - c))
+}
+
+/// A short bump around `center`, for squash on landing and similar accents.
+func bump(_ x: Double, at center: Double, width: Double) -> Double {
+    let d = abs(x - center) / width
+    return d >= 1 ? 0 : 0.5 + 0.5 * cos(d * .pi)
+}
+
+// MARK: Moves
+
+/// Every move starts from rest at t = 0 and loops seamlessly.
 func pose(for move: Move, at t: Double) -> Pose {
     var p = Pose()
-    p.sproutSway = sin(t * 2.2) * 7
-    func wave(_ speed: Double) -> Double { (sin(t * speed) + 1) / 2 }
+    p.sproutSway = sin(t * 2.1) * 6
+    // A quiet breath underneath everything, so nobody ever stands completely still
+    let idle = sin(t * 1.6) * 0.012
+    p.scaleY = 1 + idle
+    p.scaleX = 1 - idle * 0.5
 
     switch move {
     case .armsUp:
-        let s = wave(1.6)
-        p.leftArm = 158 + s * 12; p.rightArm = p.leftArm
-        p.scaleY = 1 + 0.08 * s; p.scaleX = 1 - 0.04 * s
-        p.eyes = .happy; p.mouth = s > 0.6 ? .open : .smile
+        // Reach up, hold the stretch on tiptoe, come back down
+        let c = phase(t, 4.6)
+        let up = hold(c, 0.04, 0.30, 0.68, 0.90)
+        p.leftArm = 25 + up * 147 + up * sin(t * 2.6) * 2.5
+        p.rightArm = 25 + up * 147 + up * sin(t * 2.6 + 1.2) * 2.5
+        p.scaleY += up * 0.075
+        p.scaleX -= up * 0.035
+        p.lift = up * 3.5
+        p.eyes = up > 0.65 ? .happy : .open
+        p.mouth = up > 0.9 ? .open : .smile
+
     case .sideBend:
-        let s = sin(t * 1.2)
-        p.tilt = s * 13
-        p.leftArm = 30 + max(0, s) * 135
-        p.rightArm = 30 + max(0, -s) * 135
-        p.eyes = .happy
+        // Left arm over, lean right; hold; then the other side
+        let c = phase(t, 6.4)
+        let right = hold(c, 0.03, 0.18, 0.36, 0.48)
+        let left = hold(c, 0.53, 0.68, 0.86, 0.98)
+        p.tilt = (right - left) * 13
+        p.leftArm = 25 + right * 142
+        p.rightArm = 25 + left * 142
+        p.scaleY += (right + left) * 0.03
+        p.faceShiftX = (right - left) * 2
+        p.eyes = max(right, left) > 0.6 ? .happy : .open
+
     case .neckTilt:
-        p.tilt = sin(t * 0.9) * 9
-        p.faceShiftX = sin(t * 0.9) * 3
-        p.leftArm = 24; p.rightArm = 24
-        p.eyes = .happy
+        // Ear towards the shoulder, slowly, eyes closed
+        let c = phase(t, 6.4)
+        let right = hold(c, 0.03, 0.2, 0.38, 0.5)
+        let left = hold(c, 0.53, 0.7, 0.88, 1.0)
+        let lean = right - left
+        p.tilt = lean * 10
+        p.faceShiftX = lean * 3.5
+        p.leftArm = 22 - lean * 4
+        p.rightArm = 22 + lean * 4
+        p.eyes = max(right, left) > 0.3 ? .closed : .open
+
     case .shoulderRoll:
-        let a = t * 3.4
-        p.shoulderLift = (sin(a) + 1) * 3.5
-        p.leftArm = 30 + cos(a) * 9; p.rightArm = p.leftArm
-        p.scaleY = 1 + sin(a) * 0.015
+        // Big, slow circles: up, back, down
+        let a = t * 2 * .pi / 2.2
+        p.shoulderLift = (1 - cos(a)) * 3.4
+        p.leftArm = 22 + sin(a) * 9
+        p.rightArm = 22 + sin(a) * 9
+        p.scaleY += (1 - cos(a)) * 0.012
+        p.tilt = sin(a) * 1.2
+
     case .twist:
-        let s = sin(t * 1.5)
-        p.faceShiftX = s * 11
-        p.scaleX = 1 - abs(s) * 0.05
-        p.leftArm = 42 - s * 24; p.rightArm = 42 + s * 24
+        // Turn the upper body to one side, hold, then the other
+        let c = phase(t, 5.6)
+        let right = hold(c, 0.04, 0.2, 0.38, 0.5)
+        let left = hold(c, 0.54, 0.7, 0.88, 1.0)
+        let turn = right - left
+        p.faceShiftX = turn * 10
+        p.lookX = turn * 1.6
+        p.scaleX -= abs(turn) * 0.06
+        p.leftArm = 30 - turn * 62     // one arm swings across the front, the other back
+        p.rightArm = 30 + turn * 62
+        p.tilt = turn * 2
+
     case .breathe:
-        let s = wave(2 * .pi / 8)
-        p.scaleX = 1 + 0.07 * s; p.scaleY = 1 + 0.05 * s
-        p.leftArm = 26 + s * 26; p.rightArm = p.leftArm
-        p.eyes = .happy; p.mouth = .o
+        // In for four, out for four
+        let c = phase(t, 8)
+        let breath = c < 0.5 ? ease(c / 0.5) : 1 - ease((c - 0.5) / 0.5)
+        p.scaleX += breath * 0.06
+        p.scaleY += breath * 0.05
+        p.lift = breath * 1.5
+        p.leftArm = 20 + breath * 26
+        p.rightArm = 20 + breath * 26
+        p.shoulderLift = breath * 2
+        p.eyes = .closed
+        p.mouth = (c > 0.52 && c < 0.92) ? .o : .smile
+
     case .lookAway:
-        let look = max(-1, min(1, sin(t * 0.8) * 2.5)) * 3.2
-        p.lookX = look; p.faceShiftX = look * 0.8
-        p.rightArm = -150 + sin(t * 2) * 3
-        p.leftArm = 26
+        // A hand over the brow, a long look into the distance, then the other way; blink in between
+        let c = phase(t, 6.4)
+        let look = hold(c, 0.06, 0.18, 0.40, 0.50) - hold(c, 0.56, 0.68, 0.90, 1.0)
+        p.lookX = look * 3.6
+        p.faceShiftX = look * 2.5
+        p.rightArm = -152 + sin(t * 1.4) * 2.5
+        p.handToBrow = true
+        p.leftArm = 18
+        p.tilt = look * 1.5
+        if bump(c, at: 0.52, width: 0.025) > 0.3 || bump(c, at: 0.02, width: 0.02) > 0.3 { p.eyes = .closed }
+
     case .armsWide:
-        let s = wave(1.8)
-        p.leftArm = 92 + s * 18; p.rightArm = p.leftArm
-        p.scaleY = 1 + 0.03 * s; p.mouth = .open
+        // Arms out and back, chest open, hold, release
+        let c = phase(t, 4.8)
+        let open = hold(c, 0.05, 0.30, 0.70, 0.92)
+        p.leftArm = 25 + open * 88
+        p.rightArm = 25 + open * 88
+        p.scaleY += open * 0.04
+        p.scaleX += open * 0.02
+        p.lift = open * 1.5
+        p.shoulderLift = -open * 1.5
+        p.eyes = open > 0.8 ? .happy : .open
+        p.mouth = open > 0.75 ? .open : .smile
+
     case .calfRaise:
-        let h = abs(sin(t * 3))
-        p.lift = h * 12; p.scaleY = 1 + h * 0.04
-        p.leftArm = 24 + h * 16; p.rightArm = p.leftArm
-        p.mouth = h > 0.5 ? .open : .smile
+        // Up on the toes, hold, down with a soft landing
+        let c = phase(t, 2.4)
+        let rise = hold(c, 0.04, 0.32, 0.52, 0.78)
+        let land = bump(c, at: 0.84, width: 0.08)
+        p.lift = rise * 10
+        p.scaleY += rise * 0.045 - land * 0.045
+        p.scaleX += land * 0.04
+        p.leftArm = 22 + rise * 12
+        p.rightArm = 22 + rise * 12
+        p.mouth = rise > 0.6 ? .open : .smile
+
     case .wristCircles:
-        p.leftArm = 68 + sin(t * 7) * 12; p.rightArm = 68 + cos(t * 7) * 12
+        // Arms forward, hands drawing small circles
+        let raise = ease(min(t / 0.8, 1))
+        p.leftArm = 22 + raise * 56
+        p.rightArm = 22 + raise * 56
+        p.handOrbit = 3 * raise
+        p.handPhase = t * 6
+        p.tilt = sin(t * 3) * 1
+
     case .wiggle:
-        p.tilt = sin(t * 9) * 5
-        p.leftArm = 55 + sin(t * 11) * 28; p.rightArm = 55 + cos(t * 11) * 28
-        p.eyes = .happy; p.mouth = .open
-    case .hug:
-        p.leftArm = -58 + sin(t * 2) * 4; p.rightArm = p.leftArm
-        p.scaleX = 0.97 + sin(t * 2) * 0.01
-        p.tilt = sin(t * 1.3) * 4
+        // Shake it all out, in bursts
+        let burst = 0.55 + 0.45 * (0.5 + 0.5 * sin(t * 1.4))
+        p.tilt = sin(t * 9.5) * 5 * burst
+        p.leftArm = 50 + sin(t * 11) * 30 * burst
+        p.rightArm = 50 + sin(t * 11 + 2.1) * 30 * burst
+        p.lift = abs(sin(t * 9.5)) * 2 * burst
+        p.scaleX += sin(t * 19) * 0.015 * burst
         p.eyes = .happy
+        p.mouth = .open
+
+    case .hug:
+        // Arms around, a slow squeeze, a gentle rock
+        let squeeze = 0.5 + 0.5 * sin(t * 2.0 - .pi / 2)
+        p.leftArm = -50 - squeeze * 10
+        p.rightArm = -50 - squeeze * 10
+        p.scaleX -= squeeze * 0.035
+        p.scaleY += squeeze * 0.015
+        p.tilt = sin(t * 1.1) * 4
+        p.eyes = .happy
+
     case .celebrate:
-        let h = abs(sin(t * 5))
-        p.lift = h * 14
-        p.leftArm = 148 + sin(t * 10) * 16; p.rightArm = 148 - sin(t * 10) * 16
-        p.eyes = .happy; p.mouth = .open
+        // Little jumps with arms up, squash on every landing
+        let c = phase(t, 0.84)
+        let air = c < 0.68 ? sin(c / 0.68 * .pi) : 0
+        let land = bump(c, at: 0.78, width: 0.12)
+        p.lift = air * 14
+        p.scaleY += air * 0.04 - land * 0.06
+        p.scaleX += land * 0.05
+        p.leftArm = 148 + sin(t * 9) * 14
+        p.rightArm = 148 - sin(t * 9) * 14
+        p.eyes = .happy
+        p.mouth = .open
+
     case .wave:
-        p.rightArm = 145 + sin(t * 7) * 20
-        p.leftArm = 26
-        p.tilt = sin(t * 1.6) * 3
+        // Hello: a raised hand waving, a friendly lean
+        p.rightArm = 138 + sin(t * 7) * 22
+        p.leftArm = 22
+        p.tilt = sin(t * 1.6) * 2.5
         p.mouth = .open
     }
     return p
-}
-
-/// Draws a member of the crew in a 150×150 coordinate space.
-func drawBuddy(_ ctx: inout GraphicsContext, _ p: Pose, t: Double, buddy: Buddy = .mochi) {
-    let look = buddy.look
-    let ground: CGFloat = 141
-    let cx: CGFloat = 75
-    let lift = CGFloat(p.lift)
-
-    // Ground shadow
-    let sw = 64 - lift * 1.6
-    ctx.fill(Path(ellipseIn: CGRect(x: cx - sw / 2, y: ground - 2.5, width: sw, height: 6)),
-             with: .color(.black.opacity(0.09)))
-
-    // Feet
-    for dx: CGFloat in [-15, 15] {
-        ctx.fill(Path(ellipseIn: CGRect(x: cx + dx - 9.5, y: ground - 9 - lift, width: 19, height: 10)),
-                 with: .color(look.foot ?? look.limb))
-    }
-
-    // Body space: origin at the bottom centre of the body
-    var b = ctx
-    b.translateBy(x: cx, y: ground - 6 - lift)
-    b.rotate(by: .degrees(p.tilt))
-    b.scaleBy(x: CGFloat(p.scaleX), y: CGFloat(p.scaleY))
-
-    let w = buddy.size.width, h = buddy.size.height
-    let frame = BuddyFrame(w: w, h: h, pose: p, look: look)
-    buddy.drawBehind(&b, frame)
-
-    // Arms: outward arms go behind the body, inward ones (hug, salute) in front
-    let shoulderY = -h * look.shoulderY - CGFloat(p.shoulderLift)
-    let shoulderX = w * look.shoulderX
-    func arm(x: CGFloat, angle: Double) {
-        var a = b
-        a.translateBy(x: x, y: shoulderY)
-        a.rotate(by: .degrees(angle))
-        // Raised arms get longer so they reach above the head
-        let outward = (x < 0) == (angle > 0)
-        let reach = outward ? min(max((abs(angle) - 90) / 70, 0), 1) * 20 : 0
-        a.fill(Path(roundedRect: CGRect(x: -5.5, y: -5, width: 11, height: 32 + reach), cornerRadius: 5.5),
-               with: .color(look.limb))
-    }
-    if p.leftArm >= 0 { arm(x: -shoulderX, angle: p.leftArm) }
-    if p.rightArm >= 0 { arm(x: shoulderX, angle: -p.rightArm) }
-
-    // Body
-    let body = buddy.bodyPath(w: w, h: h)
-    b.fill(body, with: .color(look.body))
-    var onBody = b
-    onBody.clip(to: body)
-    buddy.drawOnBody(&onBody, frame)
-    if let edge = look.edge {
-        b.stroke(body, with: .color(edge), style: StrokeStyle(lineWidth: 1.5, lineJoin: .round))
-    }
-    buddy.drawFront(&b, frame)
-
-    // Face: small, simple features
-    let fx = CGFloat(p.faceShiftX)
-    let eyeY = frame.eyeY
-    let eyeColor = look.eye ?? look.ink
-    let blink = p.eyes == .open && fmod(t, 3.8) < 0.14
-    for side: CGFloat in [-1, 1] {
-        let ex = fx + side * look.eyeSpacing + CGFloat(p.lookX)
-        if p.eyes == .happy || blink {
-            var e = Path()
-            if blink {
-                e.move(to: CGPoint(x: ex - 3.5, y: eyeY))
-                e.addLine(to: CGPoint(x: ex + 3.5, y: eyeY))
-            } else {
-                e.move(to: CGPoint(x: ex - 4, y: eyeY + 1.5))
-                e.addQuadCurve(to: CGPoint(x: ex + 4, y: eyeY + 1.5), control: CGPoint(x: ex, y: eyeY - 3.5))
-            }
-            b.stroke(e, with: .color(eyeColor), style: StrokeStyle(lineWidth: 2.2, lineCap: .round))
-        } else {
-            b.fill(Path(ellipseIn: CGRect(x: ex - 3.2, y: eyeY - 4, width: 6.4, height: 8)), with: .color(eyeColor))
-        }
-    }
-
-    let my = eyeY + look.mouthOffset
-    if let beak = look.beak {
-        // A small beak instead of a mouth; it opens when the buddy cheers
-        let open: CGFloat = p.mouth == .open ? 2.5 : 0
-        var upper = Path()
-        upper.move(to: CGPoint(x: fx - 5, y: my - 2))
-        upper.addLine(to: CGPoint(x: fx + 5, y: my - 2))
-        upper.addLine(to: CGPoint(x: fx, y: my + 2.5))
-        upper.closeSubpath()
-        var lower = Path()
-        lower.move(to: CGPoint(x: fx - 3.5, y: my + 1 + open))
-        lower.addLine(to: CGPoint(x: fx + 3.5, y: my + 1 + open))
-        lower.addLine(to: CGPoint(x: fx, y: my + 5 + open))
-        lower.closeSubpath()
-        b.fill(lower, with: .color(beak.opacity(0.85)))
-        b.fill(upper, with: .color(beak))
-    } else {
-        switch p.mouth {
-        case .smile:
-            var m = Path()
-            m.move(to: CGPoint(x: fx - 4, y: my))
-            m.addQuadCurve(to: CGPoint(x: fx + 4, y: my), control: CGPoint(x: fx, y: my + 4.5))
-            b.stroke(m, with: .color(look.ink), style: StrokeStyle(lineWidth: 2, lineCap: .round))
-        case .open:
-            var m = Path()
-            m.move(to: CGPoint(x: fx - 4.5, y: my - 0.5))
-            m.addLine(to: CGPoint(x: fx + 4.5, y: my - 0.5))
-            m.addQuadCurve(to: CGPoint(x: fx - 4.5, y: my - 0.5), control: CGPoint(x: fx, y: my + 8))
-            m.closeSubpath()
-            b.fill(m, with: .color(look.ink))
-        case .o:
-            b.fill(Path(ellipseIn: CGRect(x: fx - 2.3, y: my - 0.5, width: 4.6, height: 5.5)), with: .color(look.ink))
-        }
-    }
-
-    if p.leftArm < 0 { arm(x: -shoulderX, angle: p.leftArm) }
-    if p.rightArm < 0 { arm(x: shoulderX, angle: -p.rightArm) }
-}
-
-/// Animated buddy. Pass `fixedTime` to draw a single still frame (previews, lists).
-struct BuddyView: View {
-    let move: Move
-    var buddy: Buddy = .mochi
-    var fixedTime: Double? = nil
-
-    var body: some View {
-        Group {
-            if let t = fixedTime {
-                canvas(t)
-            } else {
-                TimelineView(.animation(minimumInterval: 1.0 / 30)) { tl in canvas(tl.date.timeIntervalSinceReferenceDate) }
-            }
-        }
-        .accessibilityHidden(true)
-    }
-
-    private func canvas(_ t: Double) -> some View {
-        Canvas { ctx, size in
-            let k = min(size.width, size.height) / 150
-            ctx.translateBy(x: (size.width - 150 * k) / 2, y: (size.height - 150 * k) / 2)
-            ctx.scaleBy(x: k, y: k)
-            drawBuddy(&ctx, pose(for: move, at: t), t: t, buddy: buddy)
-        }
-    }
 }

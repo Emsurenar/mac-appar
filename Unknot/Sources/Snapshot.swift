@@ -17,6 +17,7 @@ enum Snapshot {
         if let path = value("--gif") { gif(to: path); return true }
         if let dir = value("--settings-screenshots") { settingsScreenshots(in: dir); return true }
         if let path = value("--cast") { cast(to: path); return true }
+        if let path = value("--filmstrip") { filmstrip(to: path); return true }
         if let path = value("--buddies-image") { buddiesImage(to: path); return true }
         if args.contains("--selftest") { exit(selfTest() ? 0 : 1) }
         return false
@@ -51,14 +52,17 @@ enum Snapshot {
     }
 
     static func icon(to path: String) {
+        // The frog reaching up, engraved on paper, with a soft green field behind it
         let view = ZStack {
             RoundedRectangle(cornerRadius: 186, style: .continuous)
-                .fill(LinearGradient(colors: [Color(hex: 0xEEF3EA), Color(hex: 0xCADBC1)], startPoint: .top, endPoint: .bottom))
+                .fill(LinearGradient(colors: [Color(hex: 0xFBF9F4), Color(hex: 0xEEEAE1)], startPoint: .top, endPoint: .bottom))
                 .frame(width: 824, height: 824)
                 .shadow(color: .black.opacity(0.22), radius: 18, y: 10)
-            Circle().fill(Color.white.opacity(0.35)).frame(width: 560, height: 560).offset(y: 40)
-            BuddyView(move: .armsUp, fixedTime: 0.98).frame(width: 660, height: 660).offset(y: 6)
+            Circle().fill(Color(hex: 0xCFE0C3)).frame(width: 520, height: 520).offset(x: 40, y: -10)
+            BuddyView(move: .armsUp, buddy: .frog, fixedTime: 2.3).frame(width: 760, height: 760).offset(y: 10)
+                .blendMode(.multiply)
         }
+        .compositingGroup()
         .frame(width: 1024, height: 1024)
         save(view, to: path, scale: 1)
     }
@@ -81,20 +85,42 @@ enum Snapshot {
 
     /// Every buddy in a few poses: a contact sheet for checking the drawings.
     static func cast(to path: String) {
-        let moves: [(Move, Double)] = [(.wave, 0.4), (.armsUp, 1.0), (.sideBend, 1.3), (.hug, 0.5), (.lookAway, 2.0), (.celebrate, 0.31)]
+        // Each move at a telling moment: the top of a reach, the middle of a hold, the peak of a jump
+        let moves: [(Move, Double)] = [(.wave, 0.5), (.armsUp, 2.3), (.sideBend, 1.7), (.twist, 1.7),
+                                       (.armsWide, 2.4), (.hug, 1.6), (.lookAway, 1.9), (.calfRaise, 1.0), (.celebrate, 0.28)]
         let sheet = VStack(spacing: 0) {
             ForEach(Buddy.allCases) { buddy in
                 HStack(spacing: 0) {
                     Text(verbatim: buddy.rawValue).font(.system(size: 13, weight: .semibold)).frame(width: 70, alignment: .leading)
                     ForEach(moves.indices, id: \.self) { i in
-                        BuddyView(move: moves[i].0, buddy: buddy, fixedTime: 100 + moves[i].1).frame(width: 120, height: 120)
+                        BuddyView(move: moves[i].0, buddy: buddy, fixedTime: moves[i].1).frame(width: 120, height: 120)
                     }
                 }
             }
         }
         .padding(12)
-        .background(Color(hex: 0xF4F3F1))
+        .background(Pen.paper)
         save(sheet, to: path, scale: 2)
+    }
+
+    /// Ten frames across one cycle of each move, for checking that the motion flows.
+    static func filmstrip(to path: String) {
+        let rows: [(Buddy, Move, Double)] = [(.frog, .armsUp, 4.6), (.frog, .sideBend, 6.4), (.mochi, .twist, 5.6), (.cat, .lookAway, 6.4),
+                                             (.penguin, .armsWide, 4.8), (.chick, .hug, 3.14), (.toast, .calfRaise, 2.4), (.panda, .breathe, 8),
+                                             (.bunny, .wiggle, 1.4), (.cactus, .celebrate, 0.84), (.onigiri, .wristCircles, 1.05), (.frog, .shoulderRoll, 2.2)]
+        let sheet = VStack(alignment: .leading, spacing: 0) {
+            ForEach(rows.indices, id: \.self) { r in
+                HStack(spacing: 0) {
+                    Text(verbatim: "\(rows[r].0.rawValue) · \(rows[r].1.rawValue)").font(.system(size: 11, weight: .semibold)).frame(width: 120, alignment: .leading)
+                    ForEach(0..<10, id: \.self) { k in
+                        BuddyView(move: rows[r].1, buddy: rows[r].0, fixedTime: rows[r].2 * Double(k) / 10).frame(width: 100, height: 100)
+                    }
+                }
+            }
+        }
+        .padding(12)
+        .background(Pen.paper)
+        save(sheet, to: path, scale: 1.5)
     }
 
     /// The whole Stretch Crew waving, with their names, for the README.
@@ -126,9 +152,11 @@ enum Snapshot {
     /// An animated GIF of one break, sped up, for the README.
     static func gif(to path: String) {
         let picks = [Move.armsUp, .sideBend, .breathe].compactMap { m in allExercises.first { $0.move == m } }
-        let s = ReminderSession(exercises: picks, nextMinutes: 20, total: 30)
+        let s = ReminderSession(exercises: picks, buddy: .frog, nextMinutes: 20, total: 30)
         let fps = 12.0
-        let activeFrames = Int(2.6 * Double(picks.count) * fps)
+        let secondsPerMove = 3.0
+        let framesPerMove = Int(secondsPerMove * fps)
+        let activeFrames = framesPerMove * picks.count
         let doneFrames = Int(2.2 * fps)
         guard let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: path) as CFURL,
                                                          UTType.gif.identifier as CFString,
@@ -136,13 +164,14 @@ enum Snapshot {
         CGImageDestinationSetProperties(dest, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
         let frameProperties = [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 1 / fps]] as CFDictionary
         for frame in 0..<(activeFrames + doneFrames) {
-            let t = Double(frame) / fps
+            // Each move plays in real time from its start; the progress bar runs faster than the clock
             if frame < activeFrames {
                 s.elapsed = Double(frame) / Double(activeFrames) * s.total
+                s.fixedTime = Double(frame % framesPerMove) / fps
             } else {
                 s.markFinishedForPreview()
+                s.fixedTime = Double(frame - activeFrames) / fps
             }
-            s.fixedTime = 200 + t
             let renderer = ImageRenderer(content: framed(ReminderView(s: s), dark: false))
             renderer.scale = 1.5
             if let cg = renderer.cgImage { CGImageDestinationAddImage(dest, cg, frameProperties) }

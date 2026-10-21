@@ -13,8 +13,9 @@ struct WelcomeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            BuddyView(move: .wave, buddy: buddy)
+            BuddyView(move: .wave, buddy: buddy, epoch: Date())
                 .frame(width: 150, height: 150)
+                .background(Circle().fill(Pen.paper).frame(width: 168, height: 168))
                 .padding(.top, 34)
 
             Text(L("Hi, I'm Unknot!"))

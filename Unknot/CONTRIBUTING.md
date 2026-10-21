@@ -22,10 +22,12 @@ build/Unknot.app/Contents/MacOS/Unknot --previews previews -AppleLanguages '(sv)
 
 ## Adding a crew member
 
-The Stretch Crew lives in `Sources/Buddies.swift`. Add a case to `Buddy`, then give it a name, a body `size`, a `look`
-(colours and face layout) and, if it needs them, details in `drawBehind`, `drawOnBody` and `drawFront`.
+Add a case to `Buddy` in `Sources/Buddies.swift` and give it a name. Then draw it in `Sources/Crew.swift`: a struct
+that conforms to `CrewArt`, with a body contour, shoulders and an arm style, a face, and details behind, on and in
+front of the body. Shapes are built once in `init`; the frame decides eyes, mouth and anything that sways.
 The crew shares the face, arms and moves, so a new member can do all the exercises straight away. Keep to
-the style: flat shapes, no outlines, small features and colours from the muted palette. Check it with
+the style: one ink line (2.2) for contours, 1.25 for details, `Hatch.shadow` for the shadow side, a soft tint
+and at most one or two stronger colour details. Check it with `--cast` and `--filmstrip`. Check it with
 `--cast` and add its name to `Resources/sv.lproj/Localizable.strings`.
 
 ## Translations

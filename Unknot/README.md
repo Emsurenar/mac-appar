@@ -11,21 +11,21 @@
 <p align="center">
   <a href="https://github.com/Emsurenar/unknot/releases/latest"><img src="https://img.shields.io/github/v/release/Emsurenar/unknot?label=release&color=de6447" alt="Latest release"></a>
   <a href="https://github.com/Emsurenar/unknot/actions/workflows/build.yml"><img src="https://github.com/Emsurenar/unknot/actions/workflows/build.yml/badge.svg" alt="Build status"></a>
-  <img src="https://img.shields.io/badge/macOS-13%2B-555" alt="macOS 13 or later">
+  <img src="https://img.shields.io/badge/macOS-14%2B-555" alt="macOS 14 or later">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/Emsurenar/unknot?color=555" alt="MIT license"></a>
 </p>
 
 <p align="center">
   <a href="https://github.com/Emsurenar/unknot/releases/latest"><strong>Download for macOS</strong></a>
-  &nbsp;·&nbsp; macOS 13 or later &nbsp;·&nbsp; Apple silicon and Intel &nbsp;·&nbsp; Free and open source
+  &nbsp;·&nbsp; macOS 14 or later &nbsp;·&nbsp; Apple silicon and Intel &nbsp;·&nbsp; Free and open source
 </p>
 
 <p align="center">
   <img src="docs/demo.gif" width="460" alt="A stretch break: the buddy shows three exercises, then cheers">
 </p>
 
-Every 20 minutes a small glass panel slides into the corner of your screen. A member of the Stretch Crew
-demonstrates a few quick exercises, a progress bar counts down, and after 30 seconds it's gone again.
+Every 20 minutes a small glass panel slides into the corner of your screen. A member of the Stretch Crew, drawn
+like a little engraving, demonstrates a few quick exercises, a progress bar counts down, and after 30 seconds it's gone again.
 It never steals focus, so you can keep typing if you really have to.
 
 *Unknot* (verb): to undo the knots in your neck, your shoulders and your back. Unknot was called Sträckis
@@ -34,8 +34,10 @@ before version 1.2.0; updating keeps your settings and statistics.
 ## Features
 
 - **Gentle breaks.** A non-activating panel in the corner of your screen, light and dark mode, sound optional.
-- **The Stretch Crew.** Ten characters: Mochi, a cat, a panda, a bunny, a frog, a penguin, a chick, a slice of
-  toast, an onigiri and a cactus. A random one leads each break, or pick your favourites.
+- **The Stretch Crew.** Ten engraved characters: Mochi, a cat, a panda, a bunny, a frog, a penguin, a chick, a
+  slice of toast, an onigiri and a cactus. A random one leads each break, or pick your favourites.
+- **Animations made for each exercise.** Reach, hold, release. Leans that pause at the stretch, a soft landing
+  after calf raises, a hand over the brow while you rest your eyes.
 - **12 animated exercises.** Each break picks a few at random. Turn off the ones you don't like.
 - **Smart timing.** Time away from the computer counts as a break. Sleep and a locked screen restart the countdown.
   Optional working hours, and Unknot can wait while an app is in full screen (presentations, calls, movies).
@@ -124,8 +126,9 @@ translations and runs a small self-test (`Unknot --selftest`).
 | `Sources/App.swift` | App start, menu bar icon and menu |
 | `Sources/BreakScheduler.swift` | When to show a break: interval, pauses, working hours, idle time |
 | `Sources/ReminderView.swift`, `ReminderPanel.swift` | The break itself and its floating glass window |
-| `Sources/Buddy.swift` | Poses and the drawing the whole crew shares, with SwiftUI `Canvas` |
-| `Sources/Buddies.swift` | The Stretch Crew: body shapes, colours and details |
+| `Sources/Buddy.swift` | The choreography: one animated pose per exercise |
+| `Sources/LineArt.swift` | The engraving renderer: pen, hatching, arms and the animated `BuddyView` |
+| `Sources/Crew.swift` | The Stretch Crew, drawn: shapes, details and colours for each member |
 | `Sources/Localization.swift` | Translations and the in-app language setting |
 | `Sources/SettingsView.swift`, `WelcomeView.swift`, `WindowManager.swift` | Settings and first-launch windows |
 | `Sources/System.swift` | Login item, moving to Applications, idle and full-screen detection |

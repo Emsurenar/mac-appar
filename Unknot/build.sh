@@ -21,7 +21,7 @@ $RELEASE && ARCHS=(arm64 x86_64)
 for arch in "${ARCHS[@]}"; do
     echo "→ Compiling for $arch"
     swiftc -O -swift-version 5 -parse-as-library \
-        -target "$arch-apple-macos13.0" \
+        -target "$arch-apple-macos14.0" \
         Sources/*.swift -o "build/obj/Unknot-$arch"
 done
 lipo -create build/obj/Unknot-* -output "$BIN"

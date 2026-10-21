@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.5.0 – 2026-10-21
+
+- **The Stretch Crew, redrawn.** Every member is now an engraved line drawing: one ink line, finer lines for
+  detail, hatching for shadow and a soft tint of colour printed on top. Each has its own details, from the
+  frog's golden eyes and webbed toes to the cat's tabby stripes and the cactus's patterned pot.
+- **New animations for every exercise.** Moves have a beginning, a hold and an end, with smooth easing,
+  a quiet breath at rest, a soft landing after jumps, tails and ears that follow a beat behind, and a real
+  hand over the brow when resting your eyes. Every exercise starts from rest.
+- The crew always stands on paper, so the drawings read just as well in dark mode.
+- A new app icon: the frog, reaching up.
+- Unknot now needs macOS 14 Sonoma or later.
+
 ## 1.4.0 – 2026-10-21
 
 - **A new look for the crew**: a flat, calmer illustration style with no outlines, small features, soft shading

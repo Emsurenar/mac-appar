@@ -30,7 +30,7 @@ enum SettingsTab: Int, CaseIterable {
     var contentSize: NSSize {
         switch self {
         case .general: return NSSize(width: 580, height: 695)
-        case .buddies: return NSSize(width: 580, height: 398)
+        case .buddies: return NSSize(width: 580, height: 408)
         case .exercises: return NSSize(width: 580, height: 640)
         case .schedule: return NSSize(width: 580, height: 450)
         case .activity: return NSSize(width: 580, height: 440)
@@ -98,7 +98,7 @@ struct GeneralSettingsView: View {
                     ForEach(Preferences.soundOptions, id: \.self) { Text(verbatim: $0).tag($0) }
                 }
                 .disabled(!prefs.soundEnabled)
-                .onChange(of: prefs.soundName) { name in NSSound(named: name)?.play() }
+                .onChange(of: prefs.soundName) { _, name in NSSound(named: name)?.play() }
             }
 
             Section(L("System")) {
@@ -168,11 +168,12 @@ struct BuddyCard: View {
         Button {
             if !isLocked { toggle() }
         } label: {
-            VStack(spacing: 2) {
+            VStack(spacing: 6) {
                 BuddyView(move: .wave, buddy: buddy, fixedTime: hovering ? nil : stillTime)
-                    .frame(width: 74, height: 74)
+                    .frame(width: 72, height: 72)
+                    .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Pen.paper))
                     .saturation(isOn ? 1 : 0)
-                    .opacity(isOn ? 1 : 0.45)
+                    .opacity(isOn ? 1 : 0.5)
                 Text(buddy.name)
                     .font(.callout.weight(isOn ? .medium : .regular))
                     .foregroundStyle(isOn ? .primary : .secondary)
@@ -250,8 +251,8 @@ struct ExerciseRow: View {
     var body: some View {
         HStack(spacing: 12) {
             BuddyView(move: exercise.move, buddy: buddy, fixedTime: hovering ? nil : 1.2)
-                .frame(width: 46, height: 46)
-                .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.primary.opacity(0.05)))
+                .frame(width: 48, height: 48)
+                .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Pen.paper))
             VStack(alignment: .leading, spacing: 2) {
                 Text(exercise.title).fontWeight(.medium)
                 Text(exercise.text)

@@ -23,6 +23,7 @@ final class ReminderSession: NSObject, ObservableObject {
 
     private var timer: Timer?
     private var startDate = Date()
+    private var finishDate = Date()
 
     init(exercises: [Exercise], buddy: Buddy = .mochi, nextMinutes: Int, snoozeMinutes: Int = 5, total: Double) {
         self.exercises = exercises.isEmpty ? [allExercises[0]] : exercises
@@ -33,6 +34,8 @@ final class ReminderSession: NSObject, ObservableObject {
     }
 
     var perExercise: Double { total / Double(exercises.count) }
+    /// When the current move began, so every exercise starts from rest.
+    var moveStart: Date { finished ? finishDate : startDate.addingTimeInterval(Double(index) * perExercise) }
     var index: Int { min(Int(elapsed / perExercise), exercises.count - 1) }
     var current: Exercise { exercises[index] }
     var remaining: Int { max(0, Int((total - elapsed).rounded(.up))) }
@@ -57,6 +60,7 @@ final class ReminderSession: NSObject, ObservableObject {
         guard !finished else { return }
         timer?.invalidate()
         finished = true
+        finishDate = Date()
         perform(#selector(closeAfterCheer), with: nil, afterDelay: 2.4)
     }
 
@@ -109,9 +113,12 @@ struct ReminderView: View {
 
     var body: some View {
         HStack(spacing: 14) {
+            // The crew is drawn in ink, so it always stands on paper, also in dark mode
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.primary.opacity(dark ? 0.07 : 0.05))
-                .overlay(BuddyView(move: s.finished ? .celebrate : s.current.move, buddy: s.buddy, fixedTime: s.fixedTime).padding(6))
+                .fill(Pen.paper)
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.black.opacity(dark ? 0 : 0.05)))
+                .overlay(BuddyView(move: s.finished ? .celebrate : s.current.move, buddy: s.buddy,
+                                   fixedTime: s.fixedTime, epoch: s.moveStart).padding(4))
                 .frame(width: 116, height: 116)
 
             VStack(alignment: .leading, spacing: 0) {

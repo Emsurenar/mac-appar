@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.21.5 – 2026-10-21
+
+- **Stefan Löfven in his usual dark suit.** The jacket gets a second layer of colour, so it reads as the dark
+  charcoal of the photographs instead of mid grey, the red tie is one even colour all the way down, and his
+  hair is the ash brown, greying at the sides, that it is now rather than beige.
+
 ## 1.21.4 – 2026-10-21
 
 - **Pip looks like a chick, not a lemon.** The outline is a row of small soft bumps, like down, the breast is

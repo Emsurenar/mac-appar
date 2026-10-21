@@ -250,10 +250,10 @@ struct Suit {
 
 // MARK: - Stefan Löfven
 
-/// Stefan Löfven, from two photographs: a long face with a broad jaw, light brown greying hair with a side
+/// Stefan Löfven, from photographs: a long face with a broad jaw, ash-brown greying hair with a side
 /// parting, combed smoothly across the top; narrowed, smiling eyes with laughter lines, light brows that slope
 /// down at the ends, a broad nose with a round tip, a thin closed smile pulled up at one corner, a strong
-/// chin, a dark suit, a red tie and a Swedish flag pin.
+/// chin, a dark charcoal suit, a red tie and a Swedish flag pin.
 struct StefanArt: CrewArt {
     let accent = Color(hex: 0x3A4256)
     let detailColor = Color(hex: 0xCC4448)
@@ -283,7 +283,7 @@ struct StefanArt: CrewArt {
     init() {
         suit = Suit(left: 70, right: 130, top: 119)
         body = suit.body
-        wash = suit.body.subtracting(suit.shirt)
+        wash = suit.body.subtracting(suit.shirt).subtracting(suit.tie)
         hatches = [Hatch.shadow(of: suit.body, shift: 12)]
         // Long, with wide cheeks and a broad jaw ending in a big rounded chin
         let face = makePath { p in
@@ -406,8 +406,11 @@ struct StefanArt: CrewArt {
 
     func detail(_ f: CrewFrame) -> Path { suit.tie }
 
+    // A second layer of colour, so the suit reads as the dark charcoal of the photographs
+    func extras(_ f: CrewFrame) -> [(Path, Color)] { [(wash, Color(hex: 0xB9BBC2))] }
+
     func headTints(_ f: CrewFrame) -> [(Path, Color)] {
-        [(skin, Color(hex: 0xEDB8A0)), (hairTint, Color(hex: 0xBDA587)), (sideHair, Color(hex: 0xCFC5B8)),
+        [(skin, Color(hex: 0xEDB8A0)), (hairTint, Color(hex: 0xAE9C86)), (sideHair, Color(hex: 0xC9C3BB)),
          (makePath { $0.addPath(oval(86.5 + f.fx, 104, 10, 5)); $0.addPath(oval(113.5 + f.fx, 104, 10, 5)) }, Color(hex: 0xE5947F).opacity(0.4)),
          (earTint, Color(hex: 0xE6AE97))]
     }

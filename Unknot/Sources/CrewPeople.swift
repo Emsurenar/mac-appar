@@ -1034,6 +1034,8 @@ struct BardArt: CrewArt {
     let highlights: Path                         // lighter, greyer strands, printed over the ginger
     let cheeks: Path                             // the short beard on the cheeks above the full one
     let moustache: Path
+    let brows: Path                              // heavy, pale strawberry-blond brows on a strong brow ridge
+    let browHairs: Path
     let skin: Path
     let earTint: Path
     // Pale grey-blue eyes with big irises under heavy lids, the outer corners sloping down a little
@@ -1114,7 +1116,7 @@ struct BardArt: CrewArt {
                           around: pt(100, 126), seed: 41, amount: 1.5)
         beard = full
         // Wiry strands running down, a little wavy
-        curls = makePath { p in
+        curls = flattened(makePath { p in
             var c = SeededRandom(state: 27)
             var placed = 0
             while placed < 50 {
@@ -1127,8 +1129,8 @@ struct BardArt: CrewArt {
                            control1: pt(q.x + 1.6, q.y + length * 0.33), control2: pt(q.x - 1.6 + lean, q.y + length * 0.66))
                 placed += 1
             }
-        }
-        highlights = makePath { p in
+        })
+        highlights = flattened(makePath { p in
             var c = SeededRandom(state: 64)
             var placed = 0
             while placed < 16 {
@@ -1139,7 +1141,7 @@ struct BardArt: CrewArt {
                 p.addQuadCurve(to: pt(q.x + (q.x - 100) * 0.05, q.y + length), control: pt(q.x + 1.4, q.y + length / 2))
                 placed += 1
             }
-        }
+        }, steps: 3)
         // A big, bushy moustache from right under the nose, hanging down over the mouth at both ends
         moustache = frizzy([pt(100, 100.5), pt(106.5, 101), pt(113, 104), pt(118, 109.5), pt(119.5, 116), pt(116, 117.5),
                             pt(111, 113.5), pt(105, 111.5), pt(100, 112.5), pt(95, 111.5), pt(89, 113.5), pt(84, 117.5),
@@ -1148,6 +1150,21 @@ struct BardArt: CrewArt {
         // Short beard on the cheeks just above the long one
         cheeks = texture(in: face.intersection(oval(84, 99, 12, 9)).union(face.intersection(oval(116, 99, 12, 9))),
                          count: 22, seed: 3, length: 1.4, angle: 95)
+        // The inner ends of the brows are drawn down into a frown; short hairs grow outwards and up
+        var band = Path(), hairs = Path()
+        for s: CGFloat in [-1, 1] {
+            let outer = pt(100 + s * 16.5, 84), top = pt(100 + s * 11, 81.6), inner = pt(100 + s * 4, 84.4)
+            band.addPath(bend(outer, top, inner))
+            for k in 0..<8 {
+                let t = 0.06 + CGFloat(k) * 0.125, u = 1 - t
+                let q = pt(u * u * outer.x + 2 * u * t * top.x + t * t * inner.x, u * u * outer.y + 2 * u * t * top.y + t * t * inner.y)
+                hairs.move(to: pt(q.x - s * 0.8, q.y + 1)); hairs.addLine(to: pt(q.x + s * 0.9, q.y - 0.9))
+            }
+            // two short creases between the brows
+            hairs.move(to: pt(100 + s * 1.8, 83.6)); hairs.addLine(to: pt(100 + s * 1.2, 87.4))
+        }
+        brows = band
+        browHairs = hairs
         skin = face.subtracting(full).subtracting(shine)
         earTint = oval(74.5, 92, 8.5, 14.5).union(oval(125.5, 92, 8.5, 14.5)).subtracting(face)
     }
@@ -1182,14 +1199,17 @@ struct BardArt: CrewArt {
             pen.c.stroke(bend(pt(100 + s * 6 + x, 94.5), pt(100 + s * 10 + x, 96.2), pt(100 + s * 14.5 + x, 94.3)),
                          with: .color(Pen.ink.opacity(0.45)), lineWidth: 0.9)
         }
-        // Pale brows, barely there
-        pen.c.stroke(bend(pt(84.5 + x, 83), pt(90 + x, 81.5), pt(95.5 + x, 83)), with: .color(Pen.ink.opacity(0.5)), lineWidth: 1.2)
-        pen.c.stroke(bend(pt(104.5 + x, 83), pt(110 + x, 81.5), pt(115.5 + x, 83)), with: .color(Pen.ink.opacity(0.5)), lineWidth: 1.2)
+        let browPen = pen.moved { $0.translateBy(x: x, y: 0) }
+        browPen.tintLine(brows, width: 3, Color(hex: 0xDDA27C))
+        browPen.c.stroke(browHairs, with: .color(Pen.ink.opacity(0.5)), style: StrokeStyle(lineWidth: 0.8, lineCap: .round))
+        // A broad nose with a round, fleshy tip and full wings, the bridge shaded on the right
+        pen.c.stroke(bend(pt(101.8 + x, 89.5), pt(103.3 + x, 92.6), pt(103.6 + x, 95.4)), with: .color(Pen.ink.opacity(0.55)), lineWidth: 1)
         pen.stroke(makePath { p in
-            p.move(to: pt(99 + x, 93)); p.addQuadCurve(to: pt(96 + x, 100.5), control: pt(97 + x, 97))
-            p.addQuadCurve(to: pt(100 + x, 103), control: pt(95.5 + x, 103.5))
-            p.addQuadCurve(to: pt(104.5 + x, 100.5), control: pt(104.5 + x, 103.5))
-        }, 1.6)
+            for s: CGFloat in [-1, 1] {
+                p.move(to: pt(100 + s * 3.4 + x, 95.2)); p.addQuadCurve(to: pt(100 + s * 4.4 + x, 99.6), control: pt(100 + s * 6.6 + x, 97.4))
+            }
+            p.move(to: pt(96.6 + x, 99.1)); p.addQuadCurve(to: pt(103.4 + x, 99.1), control: pt(100 + x, 101.4))
+        }, 1.5)
         pen.c.stroke(cheeks, with: .color(Pen.ink.opacity(0.4)), style: StrokeStyle(lineWidth: 0.7, lineCap: .round))
         let b = pen.moved { $0.translateBy(x: x * 0.5, y: 0) }
         b.shape(beard, 1.5)
@@ -1220,6 +1240,8 @@ struct BardArt: CrewArt {
     func headTints(_ f: CrewFrame) -> [(Path, Color)] {
         let ginger = Color(hex: 0xC9693A)
         return [(skin, Color(hex: 0xF0C0AA)), (earTint, Color(hex: 0xE9AE96)),
+                // A ruddier nose tip
+                (oval(100 + f.fx, 98, 8, 4.6), Color(hex: 0xF8DAD0)),
                 (beard.applying(CGAffineTransform(translationX: f.fx * 0.5, y: 0)), ginger),
                 // The moustache lies over the beard, so a lighter layer gives the same colour
                 (moustache.applying(CGAffineTransform(translationX: f.fx * 0.8, y: 0)), Color(hex: 0xE9B790))]

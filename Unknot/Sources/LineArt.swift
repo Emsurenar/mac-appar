@@ -11,6 +11,39 @@ func oval(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat) -> Path {
     Path(ellipseIn: CGRect(x: x - w / 2, y: y - h / 2, width: w, height: h))
 }
 
+/// The same path with its curves replaced by short straight lines. Thin strands drawn in every frame are much
+/// cheaper to stroke this way, and at their size the corners don't show.
+func flattened(_ path: Path, steps: Int = 4) -> Path {
+    var out = Path()
+    var current = CGPoint.zero, start = CGPoint.zero
+    path.forEach { element in
+        switch element {
+        case .move(let to):
+            out.move(to: to); current = to; start = to
+        case .line(let to):
+            out.addLine(to: to); current = to
+        case .quadCurve(let to, let c):
+            for i in 1...steps {
+                let t = CGFloat(i) / CGFloat(steps), u = 1 - t
+                out.addLine(to: pt(u * u * current.x + 2 * u * t * c.x + t * t * to.x,
+                                   u * u * current.y + 2 * u * t * c.y + t * t * to.y))
+            }
+            current = to
+        case .curve(let to, let c1, let c2):
+            for i in 1...steps {
+                let t = CGFloat(i) / CGFloat(steps), u = 1 - t
+                let a = u * u * u, b = 3 * u * u * t, c = 3 * u * t * t, d = t * t * t
+                out.addLine(to: pt(a * current.x + b * c1.x + c * c2.x + d * to.x,
+                                   a * current.y + b * c1.y + c * c2.y + d * to.y))
+            }
+            current = to
+        case .closeSubpath:
+            out.closeSubpath(); current = start
+        }
+    }
+    return out
+}
+
 func makePath(_ build: (inout Path) -> Void) -> Path {
     var p = Path()
     build(&p)

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.21.3 – 2026-10-21
+
+- **Alexander Bard, closer to his photographs.** Heavy, pale strawberry-blond brows on a strong brow ridge,
+  drawn down into a frown with two creases between them, and a broad nose with a round, ruddy tip and full
+  wings instead of a single hooked line.
+- The strands in his beard are drawn as short straight segments, so he draws about 10 % faster with the same
+  look.
+
 ## 1.21.2 – 2026-10-21
 
 - **Kaknästornet, closer to the real tower.** The platforms for the radio links sit on sloping undersides in

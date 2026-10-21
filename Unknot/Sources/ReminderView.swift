@@ -10,6 +10,7 @@ enum BreakOutcome { case completed, snoozed }
 @MainActor
 final class ReminderSession: NSObject, ObservableObject {
     let exercises: [Exercise]
+    let buddy: Buddy
     let cheer = L(cheers.randomElement()!)
     let nextMinutes: Int
     let snoozeMinutes: Int
@@ -23,8 +24,9 @@ final class ReminderSession: NSObject, ObservableObject {
     private var timer: Timer?
     private var startDate = Date()
 
-    init(exercises: [Exercise], nextMinutes: Int, snoozeMinutes: Int = 5, total: Double) {
+    init(exercises: [Exercise], buddy: Buddy = .mochi, nextMinutes: Int, snoozeMinutes: Int = 5, total: Double) {
         self.exercises = exercises.isEmpty ? [allExercises[0]] : exercises
+        self.buddy = buddy
         self.nextMinutes = nextMinutes
         self.snoozeMinutes = snoozeMinutes
         self.total = total
@@ -109,7 +111,7 @@ struct ReminderView: View {
         HStack(spacing: 14) {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color.primary.opacity(dark ? 0.07 : 0.05))
-                .overlay(BuddyView(move: s.finished ? .celebrate : s.current.move, fixedTime: s.fixedTime).padding(6))
+                .overlay(BuddyView(move: s.finished ? .celebrate : s.current.move, buddy: s.buddy, fixedTime: s.fixedTime).padding(6))
                 .frame(width: 116, height: 116)
 
             VStack(alignment: .leading, spacing: 0) {

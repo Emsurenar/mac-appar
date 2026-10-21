@@ -39,6 +39,7 @@ final class Preferences: ObservableObject {
         static let position = "position"
         static let showCountdown = "showCountdownInMenuBar"
         static let disabledExercises = "disabledExercises"
+        static let disabledBuddies = "disabledBuddies"
         static let countAway = "countAwayAsBreak"
         static let awayMinutes = "awayMinutes"
         static let workHours = "workHoursEnabled"
@@ -66,6 +67,7 @@ final class Preferences: ObservableObject {
     @Published var position: ReminderPosition { didSet { d.set(position.rawValue, forKey: Key.position) } }
     @Published var showCountdownInMenuBar: Bool { didSet { d.set(showCountdownInMenuBar, forKey: Key.showCountdown) } }
     @Published var disabledExercises: Set<String> { didSet { d.set(Array(disabledExercises).sorted(), forKey: Key.disabledExercises) } }
+    @Published var disabledBuddies: Set<String> { didSet { d.set(Array(disabledBuddies).sorted(), forKey: Key.disabledBuddies) } }
     @Published var countAwayAsBreak: Bool { didSet { d.set(countAwayAsBreak, forKey: Key.countAway) } }
     @Published var awayMinutes: Int { didSet { d.set(awayMinutes, forKey: Key.awayMinutes) } }
     @Published var workHoursEnabled: Bool { didSet { d.set(workHoursEnabled, forKey: Key.workHours) } }
@@ -108,6 +110,7 @@ final class Preferences: ObservableObject {
         position = ReminderPosition(rawValue: d.string(forKey: Key.position) ?? "") ?? .bottomRight
         showCountdownInMenuBar = d.bool(forKey: Key.showCountdown)
         disabledExercises = Set(d.stringArray(forKey: Key.disabledExercises) ?? [])
+        disabledBuddies = Set(d.stringArray(forKey: Key.disabledBuddies) ?? [])
         countAwayAsBreak = d.bool(forKey: Key.countAway)
         awayMinutes = d.integer(forKey: Key.awayMinutes)
         workHoursEnabled = d.bool(forKey: Key.workHours)
@@ -152,6 +155,30 @@ final class Preferences: ObservableObject {
         } else if enabledExercises.count > 1 {
             disabledExercises.insert(exercise.id)
         }
+    }
+
+    // MARK: Buddies
+
+    var enabledBuddies: [Buddy] {
+        let enabled = Buddy.allCases.filter { !disabledBuddies.contains($0.id) }
+        return enabled.isEmpty ? Buddy.allCases : enabled
+    }
+
+    func isEnabled(_ buddy: Buddy) -> Bool { !disabledBuddies.contains(buddy.id) }
+
+    /// Turns a buddy on or off, but always keeps at least one.
+    func setEnabled(_ buddy: Buddy, _ on: Bool) {
+        if on {
+            disabledBuddies.remove(buddy.id)
+        } else if enabledBuddies.count > 1 {
+            disabledBuddies.insert(buddy.id)
+        }
+    }
+
+    /// A random buddy from the enabled ones, avoiding `previous` when there's a choice.
+    func randomBuddy(avoiding previous: Buddy? = nil) -> Buddy {
+        let choices = enabledBuddies.filter { $0 != previous }
+        return (choices.isEmpty ? enabledBuddies : choices).randomElement() ?? .mochi
     }
 
     // MARK: Statistics

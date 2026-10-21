@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0 – 2026-10-21
+
+- **Nine new buddies**: a cat, a panda, a bunny, a frog, a penguin, a chick, a slice of toast, an onigiri and
+  a cactus join Mochi. Every break brings a random one, never the same twice in a row.
+- New **Buddies** tab: pick who can visit you. Hover over a buddy to see it wave.
+- The welcome window and the exercise list show off the whole cast.
+
 ## 1.2.0 – 2026-10-21
 
 - **Sträckis is now called Unknot.** A name that works in every language and says what the app is for.

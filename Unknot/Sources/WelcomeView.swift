@@ -8,11 +8,12 @@ struct WelcomeView: View {
     var onDone: () -> Void
 
     @State private var moveError: String?
+    @State private var buddy = Preferences.shared.randomBuddy()
     private let inApplications = AppMover.isInApplicationsFolder
 
     var body: some View {
         VStack(spacing: 0) {
-            BuddyView(move: .wave)
+            BuddyView(move: .wave, buddy: buddy)
                 .frame(width: 150, height: 150)
                 .padding(.top, 34)
 

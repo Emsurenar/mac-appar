@@ -2,11 +2,12 @@ import Charts
 import SwiftUI
 
 enum SettingsTab: Int, CaseIterable {
-    case general, exercises, schedule, activity, about
+    case general, buddies, exercises, schedule, activity, about
 
     var title: String {
         switch self {
         case .general: return L("General")
+        case .buddies: return L("Buddies")
         case .exercises: return L("Exercises")
         case .schedule: return L("Schedule")
         case .activity: return L("Activity")
@@ -17,6 +18,7 @@ enum SettingsTab: Int, CaseIterable {
     var symbol: String {
         switch self {
         case .general: return "gearshape"
+        case .buddies: return "pawprint"
         case .exercises: return "figure.cooldown"
         case .schedule: return "calendar.badge.clock"
         case .activity: return "chart.bar.xaxis"
@@ -28,6 +30,7 @@ enum SettingsTab: Int, CaseIterable {
     var contentSize: NSSize {
         switch self {
         case .general: return NSSize(width: 580, height: 655)
+        case .buddies: return NSSize(width: 580, height: 372)
         case .exercises: return NSSize(width: 580, height: 640)
         case .schedule: return NSSize(width: 580, height: 450)
         case .activity: return NSSize(width: 580, height: 440)
@@ -39,6 +42,7 @@ enum SettingsTab: Int, CaseIterable {
     func makeView(onTestBreak: @escaping () -> Void) -> AnyView {
         switch self {
         case .general: return AnyView(GeneralSettingsView(onTestBreak: onTestBreak))
+        case .buddies: return AnyView(BuddiesSettingsView())
         case .exercises: return AnyView(ExercisesSettingsView())
         case .schedule: return AnyView(ScheduleSettingsView())
         case .activity: return AnyView(ActivitySettingsView())
@@ -99,6 +103,96 @@ struct GeneralSettingsView: View {
     }
 }
 
+// MARK: - Buddies
+
+struct BuddiesSettingsView: View {
+    @ObservedObject private var prefs = Preferences.shared
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 5)
+
+    var body: some View {
+        let enabledCount = Buddy.allCases.filter { prefs.isEnabled($0) }.count
+        Form {
+            Section {
+                LazyVGrid(columns: columns, spacing: 10) {
+                    ForEach(Array(Buddy.allCases.enumerated()), id: \.element) { index, buddy in
+                        BuddyCard(buddy: buddy,
+                                  isOn: prefs.isEnabled(buddy),
+                                  isLocked: enabledCount == 1 && prefs.isEnabled(buddy),
+                                  stillTime: 0.5 + Double(index) * 0.37) {
+                            prefs.setEnabled(buddy, !prefs.isEnabled(buddy))
+                        }
+                    }
+                }
+                .padding(.vertical, 6)
+            } header: {
+                Text(L("Pick who can visit you. With more than one, a random buddy shows up for each break."))
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .textCase(nil)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.bottom, 4)
+            } footer: {
+                HStack {
+                    Text(L("%ld of %ld selected", enabledCount, Buddy.allCases.count))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button(L("Select all")) { prefs.disabledBuddies = [] }
+                        .disabled(prefs.disabledBuddies.isEmpty)
+                }
+                .font(.callout)
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
+
+struct BuddyCard: View {
+    let buddy: Buddy
+    let isOn: Bool
+    let isLocked: Bool
+    let stillTime: Double
+    let toggle: () -> Void
+    @State private var hovering = false
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        let accent = Brand.accent(scheme == .dark)
+        Button {
+            if !isLocked { toggle() }
+        } label: {
+            VStack(spacing: 2) {
+                BuddyView(move: .wave, buddy: buddy, fixedTime: hovering ? nil : stillTime)
+                    .frame(width: 74, height: 74)
+                    .saturation(isOn ? 1 : 0)
+                    .opacity(isOn ? 1 : 0.45)
+                Text(buddy.name)
+                    .font(.callout.weight(isOn ? .medium : .regular))
+                    .foregroundStyle(isOn ? .primary : .secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(isOn ? accent.opacity(0.09) : Color.primary.opacity(0.03)))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(isOn ? accent.opacity(0.75) : Color.primary.opacity(0.08), lineWidth: isOn ? 1.5 : 1))
+            .overlay(alignment: .topTrailing) {
+                Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 13))
+                    .foregroundStyle(isOn ? accent : Color.secondary.opacity(0.5))
+                    .padding(6)
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .help(isLocked ? L("At least one buddy has to stay.") : "")
+        .accessibilityLabel(buddy.name)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+}
+
 // MARK: - Exercises
 
 struct ExercisesSettingsView: View {
@@ -106,10 +200,12 @@ struct ExercisesSettingsView: View {
 
     var body: some View {
         let enabledCount = allExercises.filter { prefs.isEnabled($0) }.count
+        let buddies = prefs.enabledBuddies
         Form {
             Section {
-                ForEach(allExercises) { exercise in
+                ForEach(Array(allExercises.enumerated()), id: \.element.id) { index, exercise in
                     ExerciseRow(exercise: exercise,
+                                buddy: buddies[index % buddies.count],
                                 isOn: Binding(get: { prefs.isEnabled(exercise) },
                                               set: { prefs.setEnabled(exercise, $0) }),
                                 isLocked: enabledCount == 1 && prefs.isEnabled(exercise))
@@ -138,13 +234,14 @@ struct ExercisesSettingsView: View {
 
 struct ExerciseRow: View {
     let exercise: Exercise
+    let buddy: Buddy
     @Binding var isOn: Bool
     var isLocked: Bool
     @State private var hovering = false
 
     var body: some View {
         HStack(spacing: 12) {
-            BuddyView(move: exercise.move, fixedTime: hovering ? nil : 1.2)
+            BuddyView(move: exercise.move, buddy: buddy, fixedTime: hovering ? nil : 1.2)
                 .frame(width: 46, height: 46)
                 .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.primary.opacity(0.05)))
             VStack(alignment: .leading, spacing: 2) {

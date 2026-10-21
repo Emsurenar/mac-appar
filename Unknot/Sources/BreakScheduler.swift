@@ -18,6 +18,7 @@ final class BreakScheduler: NSObject {
 
     private let prefs = Preferences.shared
     private let panel = ReminderPanel()
+    private var lastBuddy: Buddy?
 
     func start() {
         reschedule()
@@ -67,7 +68,9 @@ final class BreakScheduler: NSObject {
     func showBreakNow() {
         guard session == nil else { return }
         let picks = Array(prefs.enabledExercises.shuffled().prefix(prefs.exercisesPerBreak))
-        let s = ReminderSession(exercises: picks, nextMinutes: prefs.intervalMinutes,
+        let buddy = prefs.randomBuddy(avoiding: lastBuddy)
+        lastBuddy = buddy
+        let s = ReminderSession(exercises: picks, buddy: buddy, nextMinutes: prefs.intervalMinutes,
                                 snoozeMinutes: prefs.snoozeMinutes, total: Double(prefs.breakSeconds))
         s.onClose = { [weak self] outcome in
             guard let self else { return }

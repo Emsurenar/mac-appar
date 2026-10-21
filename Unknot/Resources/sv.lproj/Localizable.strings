@@ -26,6 +26,21 @@
 "Back hug" = "Ryggkram";
 "Give yourself a hug and breathe deeply into your back." = "Krama om dig själv och andas djupt in i ryggen.";
 
+/* Kompisar */
+"Mochi" = "Mochi";
+"Cat" = "Katt";
+"Panda" = "Panda";
+"Bunny" = "Kanin";
+"Frog" = "Groda";
+"Penguin" = "Pingvin";
+"Chick" = "Kyckling";
+"Toast" = "Rostbröd";
+"Onigiri" = "Onigiri";
+"Cactus" = "Kaktus";
+"Buddies" = "Kompisar";
+"Pick who can visit you. With more than one, a random buddy shows up for each break." = "Välj vilka som får hälsa på. Väljer du fler än en dyker en slumpad kompis upp vid varje paus.";
+"At least one buddy has to stay." = "Minst en kompis måste vara kvar.";
+
 /* Beröm efter en paus */
 "Nice work" = "Bra jobbat";
 "Well done" = "Snyggt";

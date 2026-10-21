@@ -17,7 +17,7 @@
   <img src="docs/demo.gif" width="460" alt="A stretch break: the buddy shows three exercises, then cheers">
 </p>
 
-Every 20 minutes a small glass panel slides into the corner of your screen. A little mochi buddy
+Every 20 minutes a small glass panel slides into the corner of your screen. A little buddy
 demonstrates a few quick exercises, a progress bar counts down, and after 30 seconds it's gone again.
 It never steals focus, so you can keep typing if you really have to.
 
@@ -27,6 +27,8 @@ before version 1.2.0; updating keeps your settings and statistics.
 ## Features
 
 - **Gentle breaks.** A non-activating panel in the corner of your screen, light and dark mode, sound optional.
+- **Ten buddies.** Mochi, a cat, a panda, a bunny, a frog, a penguin, a chick, a slice of toast, an onigiri and a
+  cactus. A random one visits each break, or pick your favourites.
 - **12 animated exercises.** Each break picks a few at random. Turn off the ones you don't like.
 - **Smart timing.** Time away from the computer counts as a break. Sleep and a locked screen restart the countdown.
   Optional working hours, and Unknot can wait while an app is in full screen (presentations, calls, movies).
@@ -35,6 +37,10 @@ before version 1.2.0; updating keeps your settings and statistics.
 - **See your progress.** Breaks today, this week, days in a row and a chart of the last seven days.
 - **Native and tiny.** About 1 MB, written in Swift and SwiftUI. No account, no tracking, no ads.
 - **English and Swedish**, following your Mac's language.
+
+<p align="center">
+  <img src="docs/buddies.png" width="640" alt="The ten buddies: Mochi, Cat, Panda, Bunny, Frog, Penguin, Chick, Toast, Onigiri and Cactus">
+</p>
 
 <p align="center">
   <img src="docs/break-light.png" width="420" alt="A stretch break in light mode">
@@ -67,16 +73,18 @@ A welcome window shows up on first launch. From then on Unknot lives in the menu
 
 Click the menu bar icon and choose **Settings…**, or open the app again from Finder or Spotlight.
 
-| General | Exercises |
+| General | Buddies |
 | --- | --- |
-| <img src="docs/settings-general.png" alt="General settings"> | <img src="docs/settings-exercises.png" alt="Exercise settings"> |
+| <img src="docs/settings-general.png" alt="General settings"> | <img src="docs/settings-buddies.png" alt="Pick which buddies can visit you"> |
 
-| Schedule | Activity |
+| Exercises | Activity |
 | --- | --- |
-| <img src="docs/settings-schedule.png" alt="Schedule settings"> | <img src="docs/settings-activity.png" alt="Activity: today, this week, streak and a chart of the last 7 days"> |
+| <img src="docs/settings-exercises.png" alt="Exercise settings"> | <img src="docs/settings-activity.png" alt="Activity: today, this week, streak and a chart of the last 7 days"> |
+
 
 - **General:** how often, how long, how many exercises per break, how long to snooze, position on screen,
   a countdown in the menu bar, sound, open at login and update checks.
+- **Buddies:** pick who can visit you. With more than one, a random buddy shows up for each break.
 - **Exercises:** choose which exercises can come up. Hover over one to watch the movement.
 - **Schedule:** working hours and smart pauses.
 - **Activity:** your breaks today, this week, days in a row and all time, with a chart of the last seven days.
@@ -109,7 +117,8 @@ translations and runs a small self-test (`Unknot --selftest`).
 | `Sources/App.swift` | App start, menu bar icon and menu |
 | `Sources/BreakScheduler.swift` | When to show a break: interval, pauses, working hours, idle time |
 | `Sources/ReminderView.swift`, `ReminderPanel.swift` | The break itself and its floating glass window |
-| `Sources/Buddy.swift` | The buddy and its poses, drawn with SwiftUI `Canvas` |
+| `Sources/Buddy.swift` | Poses and the drawing shared by every buddy, with SwiftUI `Canvas` |
+| `Sources/Buddies.swift` | The ten buddies: body shapes, colours and details |
 | `Sources/SettingsView.swift`, `WelcomeView.swift`, `WindowManager.swift` | Settings and first-launch windows |
 | `Sources/System.swift` | Login item, moving to Applications, idle and full-screen detection |
 | `Sources/Preferences.swift` | All settings, stored in `UserDefaults` |

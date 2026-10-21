@@ -16,6 +16,8 @@ enum Snapshot {
         if let dir = value("--previews") { previews(in: dir); return true }
         if let path = value("--gif") { gif(to: path); return true }
         if let dir = value("--settings-screenshots") { settingsScreenshots(in: dir); return true }
+        if let path = value("--cast") { cast(to: path); return true }
+        if let path = value("--buddies-image") { buddiesImage(to: path); return true }
         if args.contains("--selftest") { exit(selfTest() ? 0 : 1) }
         return false
     }
@@ -75,6 +77,50 @@ enum Snapshot {
         done.markFinishedForPreview()
         done.fixedTime = 0.3
         save(framed(ReminderView(s: done), dark: false), to: "\(dir)/card-done.png")
+    }
+
+    /// Every buddy in a few poses: a contact sheet for checking the drawings.
+    static func cast(to path: String) {
+        let moves: [(Move, Double)] = [(.wave, 0.4), (.armsUp, 1.0), (.sideBend, 1.3), (.hug, 0.5), (.lookAway, 2.0), (.celebrate, 0.31)]
+        let sheet = VStack(spacing: 0) {
+            ForEach(Buddy.allCases) { buddy in
+                HStack(spacing: 0) {
+                    Text(verbatim: buddy.rawValue).font(.system(size: 13, weight: .semibold)).frame(width: 70, alignment: .leading)
+                    ForEach(moves.indices, id: \.self) { i in
+                        BuddyView(move: moves[i].0, buddy: buddy, fixedTime: 100 + moves[i].1).frame(width: 120, height: 120)
+                    }
+                }
+            }
+        }
+        .padding(12)
+        .background(Color(hex: 0xF4F3F1))
+        save(sheet, to: path, scale: 2)
+    }
+
+    /// All buddies waving, with their names, for the README.
+    static func buddiesImage(to path: String) {
+        let rows = [Array(Buddy.allCases.prefix(5)), Array(Buddy.allCases.dropFirst(5))]
+        let image = VStack(spacing: 6) {
+            ForEach(rows.indices, id: \.self) { r in
+                HStack(spacing: 6) {
+                    ForEach(Array(rows[r].enumerated()), id: \.element) { i, buddy in
+                        VStack(spacing: 0) {
+                            BuddyView(move: .wave, buddy: buddy, fixedTime: 0.4 + Double(r * 5 + i) * 0.41)
+                                .frame(width: 130, height: 130)
+                            Text(buddy.name)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(Color(hex: 0x4A403A))
+                        }
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 18)
+        .background(RoundedRectangle(cornerRadius: 28, style: .continuous)
+            .fill(LinearGradient(colors: [Color(hex: 0xFBF8F4), Color(hex: 0xF1ECE6)], startPoint: .top, endPoint: .bottom)))
+        .environment(\.colorScheme, .light)
+        save(image, to: path)
     }
 
     /// An animated GIF of one break, sped up, for the README.
@@ -187,6 +233,14 @@ enum Snapshot {
         check(stats.recentDays(7, until: date(21, 12), calendar: cal).map(\.count) == [0, 0, 0, 0, 1, 2, 1],
               "The last 7 days are counted per day")
         check(stats.breaksTotal == 4, "All breaks are counted in the total")
+
+        stats.setEnabled(Buddy.cat, false)
+        check(!stats.enabledBuddies.contains(.cat), "A buddy can be turned off")
+        for buddy in Buddy.allCases where buddy != .toast { stats.setEnabled(buddy, false) }
+        check(stats.enabledBuddies == [.toast], "The last buddy can't be turned off")
+        check(stats.randomBuddy(avoiding: .toast) == .toast, "With one buddy left, it's always that one")
+        stats.disabledBuddies = []
+        check((0..<20).allSatisfy { _ in stats.randomBuddy(avoiding: .mochi) != .mochi }, "The same buddy never comes twice in a row")
 
         if let path = Bundle.main.path(forResource: "Localizable", ofType: "strings", inDirectory: nil, forLocalization: "sv"),
            let table = NSDictionary(contentsOfFile: path) as? [String: String] {

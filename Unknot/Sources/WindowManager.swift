@@ -44,7 +44,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
         present(welcomeWindow!)
     }
 
-    func makeSettingsWindow(animatesResize: Bool = true) -> (NSWindow, NSTabViewController) {
+    func makeSettingsWindow(animatesResize: Bool = true) -> (NSWindow, SettingsTabViewController) {
         let tabs = makeSettingsTabs(animatesResize: animatesResize)
         let window = NSWindow(contentViewController: tabs)
         window.styleMask = [.titled, .closable, .miniaturizable]
@@ -54,21 +54,29 @@ final class WindowManager: NSObject, NSWindowDelegate {
         return (window, tabs)
     }
 
-    /// Rebuilds the open windows' contents in the newly chosen language, keeping the same tab and place.
+    /// Shows the settings in the newly chosen language. An open window is replaced by a fresh one in the
+    /// same place and on the same tab; the toolbar belongs to the window, so swapping only its contents
+    /// could leave the old tab names behind.
     func reloadForLanguageChange() {
         welcomeWindow?.title = L("Welcome to Unknot")
-        guard let window = settingsWindow else { return }
-        let index = settingsTabs?.selectedTabViewItemIndex ?? 0
-        let topLeft = NSPoint(x: window.frame.minX, y: window.frame.maxY)
-        let tabs = makeSettingsTabs(animatesResize: false)
-        window.contentViewController = tabs
-        tabs.selectedTabViewItemIndex = index
-        if let size = tabs.tabViewItems[index].viewController?.preferredContentSize {
-            window.setContentSize(size)
+        guard let old = settingsWindow else { return }
+        guard old.isVisible else {
+            settingsWindow = nil
+            settingsTabs = nil
+            return
         }
+        let index = settingsTabs?.selectedTabViewItemIndex ?? 0
+        let topLeft = NSPoint(x: old.frame.minX, y: old.frame.maxY)
+        let (window, tabs) = makeSettingsWindow(animatesResize: false)
+        window.delegate = self
+        tabs.selectedTabViewItemIndex = index
         window.setFrameTopLeftPoint(topLeft)
         tabs.animatesResize = true
+        // Swap the references first, so closing the old window doesn't hide the Dock icon.
+        settingsWindow = window
         settingsTabs = tabs
+        window.makeKeyAndOrderFront(nil)
+        old.close()
     }
 
     private func makeSettingsTabs(animatesResize: Bool) -> SettingsTabViewController {

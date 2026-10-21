@@ -28,7 +28,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
         if welcomeWindow == nil {
             let view = WelcomeView(onTryBreak: { [weak self] in self?.onTestBreak?() },
                                    onDone: { [weak self] in self?.welcomeWindow?.close() })
-            let host = NSHostingController(rootView: view)
+            let host = NSHostingController(rootView: view.environment(\.locale, Localizer.locale))
             let window = NSWindow(contentViewController: host)
             window.styleMask = [.titled, .closable, .fullSizeContentView]
             window.titlebarAppearsTransparent = true
@@ -45,6 +45,33 @@ final class WindowManager: NSObject, NSWindowDelegate {
     }
 
     func makeSettingsWindow(animatesResize: Bool = true) -> (NSWindow, NSTabViewController) {
+        let tabs = makeSettingsTabs(animatesResize: animatesResize)
+        let window = NSWindow(contentViewController: tabs)
+        window.styleMask = [.titled, .closable, .miniaturizable]
+        window.toolbarStyle = .preference
+        window.setContentSize(SettingsTab.general.contentSize)
+        window.isReleasedWhenClosed = false
+        return (window, tabs)
+    }
+
+    /// Rebuilds the open windows' contents in the newly chosen language, keeping the same tab and place.
+    func reloadForLanguageChange() {
+        welcomeWindow?.title = L("Welcome to Unknot")
+        guard let window = settingsWindow else { return }
+        let index = settingsTabs?.selectedTabViewItemIndex ?? 0
+        let topLeft = NSPoint(x: window.frame.minX, y: window.frame.maxY)
+        let tabs = makeSettingsTabs(animatesResize: false)
+        window.contentViewController = tabs
+        tabs.selectedTabViewItemIndex = index
+        if let size = tabs.tabViewItems[index].viewController?.preferredContentSize {
+            window.setContentSize(size)
+        }
+        window.setFrameTopLeftPoint(topLeft)
+        tabs.animatesResize = true
+        settingsTabs = tabs
+    }
+
+    private func makeSettingsTabs(animatesResize: Bool) -> SettingsTabViewController {
         let tabs = SettingsTabViewController()
         tabs.animatesResize = animatesResize
         tabs.tabStyle = .toolbar
@@ -59,12 +86,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
             item.image = NSImage(systemSymbolName: tab.symbol, accessibilityDescription: tab.title)
             tabs.addTabViewItem(item)
         }
-        let window = NSWindow(contentViewController: tabs)
-        window.styleMask = [.titled, .closable, .miniaturizable]
-        window.toolbarStyle = .preference
-        window.setContentSize(SettingsTab.general.contentSize)
-        window.isReleasedWhenClosed = false
-        return (window, tabs)
+        return tabs
     }
 
     private func present(_ window: NSWindow) {

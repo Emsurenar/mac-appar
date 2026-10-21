@@ -53,10 +53,10 @@ enum Snapshot {
     static func icon(to path: String) {
         let view = ZStack {
             RoundedRectangle(cornerRadius: 186, style: .continuous)
-                .fill(LinearGradient(colors: [Color(hex: 0xFFF7EE), Color(hex: 0xFFDCC4)], startPoint: .top, endPoint: .bottom))
+                .fill(LinearGradient(colors: [Color(hex: 0xEEF3EA), Color(hex: 0xCADBC1)], startPoint: .top, endPoint: .bottom))
                 .frame(width: 824, height: 824)
                 .shadow(color: .black.opacity(0.22), radius: 18, y: 10)
-            Circle().fill(Brand.accent(false).opacity(0.12)).frame(width: 560, height: 560).offset(y: 40)
+            Circle().fill(Color.white.opacity(0.35)).frame(width: 560, height: 560).offset(y: 40)
             BuddyView(move: .armsUp, fixedTime: 0.98).frame(width: 660, height: 660).offset(y: 6)
         }
         .frame(width: 1024, height: 1024)
@@ -97,7 +97,7 @@ enum Snapshot {
         save(sheet, to: path, scale: 2)
     }
 
-    /// All buddies waving, with their names, for the README.
+    /// The whole Stretch Crew waving, with their names, for the README.
     static func buddiesImage(to path: String) {
         let rows = [Array(Buddy.allCases.prefix(5)), Array(Buddy.allCases.dropFirst(5))]
         let image = VStack(spacing: 6) {
@@ -221,6 +221,13 @@ enum Snapshot {
               "After Friday evening, work resumes Monday 08:00")
 
         check(Set(allExercises.map(\.id)).count == allExercises.count, "Exercise ids are unique")
+
+        Localizer.apply(.swedish)
+        check(L("Stretch now") == "Sträck på dig nu", "Swedish can be chosen in the app")
+        Localizer.apply(.english)
+        check(L("Stretch now") == "Stretch now", "English can be chosen in the app")
+        check(L("%ld minutes", 20) == "20 minutes", "Formatted strings follow the chosen language")
+        Localizer.apply(.system)
 
         let stats = Preferences(defaults: UserDefaults(suiteName: "unknot.selftest.\(UUID().uuidString)")!)
         stats.recordCompletedBreak(at: date(19, 10))

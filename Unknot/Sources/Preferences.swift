@@ -31,6 +31,7 @@ final class Preferences: ObservableObject {
 
     private enum Key {
         static let interval = "intervalMinutes"
+        static let language = "language"
         static let snooze = "snoozeMinutes"
         static let breakLength = "breakSeconds"
         static let exerciseCount = "exercisesPerBreak"
@@ -58,6 +59,12 @@ final class Preferences: ObservableObject {
 
     private let d: UserDefaults
 
+    @Published var language: AppLanguage {
+        didSet {
+            d.set(language.rawValue, forKey: Key.language)
+            Localizer.apply(language)
+        }
+    }
     @Published var intervalMinutes: Int { didSet { d.set(intervalMinutes, forKey: Key.interval) } }
     @Published var snoozeMinutes: Int { didSet { d.set(snoozeMinutes, forKey: Key.snooze) } }
     @Published var breakSeconds: Int { didSet { d.set(breakSeconds, forKey: Key.breakLength) } }
@@ -101,6 +108,7 @@ final class Preferences: ObservableObject {
             Key.waitForFullscreen: false,
             Key.checkForUpdates: true,
         ])
+        language = AppLanguage(rawValue: d.string(forKey: Key.language) ?? "") ?? .system
         intervalMinutes = d.integer(forKey: Key.interval)
         snoozeMinutes = d.integer(forKey: Key.snooze)
         breakSeconds = d.integer(forKey: Key.breakLength)
@@ -123,6 +131,7 @@ final class Preferences: ObservableObject {
         history = d.dictionary(forKey: Key.history) as? [String: Int] ?? [:]
         breaksTotal = d.integer(forKey: Key.breaksTotal)
         migrateLegacyStatistics()
+        Localizer.apply(language)
     }
 
     /// Default settings with a made-up week of breaks, for screenshots. Never touches the real settings.

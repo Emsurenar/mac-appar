@@ -1,6 +1,6 @@
 import SwiftUI
 
-// The little mochi buddy, drawn with Canvas so every pose can be animated freely.
+// Poses and the drawing every member of the Stretch Crew shares, done with Canvas so any pose can be animated.
 
 extension Color {
     init(hex: UInt32) {
@@ -9,17 +9,6 @@ extension Color {
                   green: Double((hex >> 8) & 0xFF) / 255,
                   blue: Double(hex & 0xFF) / 255)
     }
-}
-
-enum Palette {
-    static let bodyTop = Color(hex: 0xFFEBDA)
-    static let bodyBottom = Color(hex: 0xFFC4A2)
-    static let limb = Color(hex: 0xFFD2B8)
-    static let outline = Color(hex: 0x7A4B37)
-    static let ink = Color(hex: 0x3B2620)
-    static let blush = Color(hex: 0xFF8C9E)
-    static let leaf = Color(hex: 0x8FD072)
-    static let leafDark = Color(hex: 0x4E8C3A)
 }
 
 enum Eyes { case open, happy }
@@ -37,7 +26,6 @@ struct Pose {
     var lookX = 0.0
     var eyes = Eyes.open
     var mouth = Mouth.smile
-    var blush = 0.55
     var sproutSway = 0.0
 }
 
@@ -102,7 +90,7 @@ func pose(for move: Move, at t: Double) -> Pose {
         p.leftArm = -58 + sin(t * 2) * 4; p.rightArm = p.leftArm
         p.scaleX = 0.97 + sin(t * 2) * 0.01
         p.tilt = sin(t * 1.3) * 4
-        p.eyes = .happy; p.blush = 0.95
+        p.eyes = .happy
     case .celebrate:
         let h = abs(sin(t * 5))
         p.lift = h * 14
@@ -117,24 +105,22 @@ func pose(for move: Move, at t: Double) -> Pose {
     return p
 }
 
-/// Draws a buddy in a 150×150 coordinate space.
+/// Draws a member of the crew in a 150×150 coordinate space.
 func drawBuddy(_ ctx: inout GraphicsContext, _ p: Pose, t: Double, buddy: Buddy = .mochi) {
     let look = buddy.look
     let ground: CGFloat = 141
     let cx: CGFloat = 75
     let lift = CGFloat(p.lift)
-    let line = StrokeStyle(lineWidth: 2.4, lineCap: .round, lineJoin: .round)
 
-    // Shadow
-    let sw = 74 - lift * 1.8
-    ctx.fill(Path(ellipseIn: CGRect(x: cx - sw / 2, y: ground - 3, width: sw, height: 7)),
-             with: .color(.black.opacity(0.12)))
+    // Ground shadow
+    let sw = 64 - lift * 1.6
+    ctx.fill(Path(ellipseIn: CGRect(x: cx - sw / 2, y: ground - 2.5, width: sw, height: 6)),
+             with: .color(.black.opacity(0.09)))
 
     // Feet
-    for dx: CGFloat in [-16, 16] {
-        let foot = Path(ellipseIn: CGRect(x: cx + dx - 11, y: ground - 10 - lift, width: 22, height: 12))
-        ctx.fill(foot, with: .color(look.foot ?? look.limb))
-        ctx.stroke(foot, with: .color(look.outline), style: line)
+    for dx: CGFloat in [-15, 15] {
+        ctx.fill(Path(ellipseIn: CGRect(x: cx + dx - 9.5, y: ground - 9 - lift, width: 19, height: 10)),
+                 with: .color(look.foot ?? look.limb))
     }
 
     // Body space: origin at the bottom centre of the body
@@ -144,7 +130,7 @@ func drawBuddy(_ ctx: inout GraphicsContext, _ p: Pose, t: Double, buddy: Buddy 
     b.scaleBy(x: CGFloat(p.scaleX), y: CGFloat(p.scaleY))
 
     let w = buddy.size.width, h = buddy.size.height
-    let frame = BuddyFrame(w: w, h: h, pose: p, look: look, line: line)
+    let frame = BuddyFrame(w: w, h: h, pose: p, look: look)
     buddy.drawBehind(&b, frame)
 
     // Arms: outward arms go behind the body, inward ones (hug, salute) in front
@@ -157,30 +143,24 @@ func drawBuddy(_ ctx: inout GraphicsContext, _ p: Pose, t: Double, buddy: Buddy 
         // Raised arms get longer so they reach above the head
         let outward = (x < 0) == (angle > 0)
         let reach = outward ? min(max((abs(angle) - 90) / 70, 0), 1) * 20 : 0
-        let path = Path(roundedRect: CGRect(x: -6.5, y: -5, width: 13, height: 33 + reach), cornerRadius: 6.5)
-        a.fill(path, with: .color(look.limb))
-        a.stroke(path, with: .color(look.outline), style: line)
+        a.fill(Path(roundedRect: CGRect(x: -5.5, y: -5, width: 11, height: 32 + reach), cornerRadius: 5.5),
+               with: .color(look.limb))
     }
     if p.leftArm >= 0 { arm(x: -shoulderX, angle: p.leftArm) }
     if p.rightArm >= 0 { arm(x: shoulderX, angle: -p.rightArm) }
 
     // Body
     let body = buddy.bodyPath(w: w, h: h)
-    b.fill(body, with: .linearGradient(Gradient(colors: [look.top, look.bottom]),
-                                       startPoint: CGPoint(x: 0, y: -h), endPoint: .zero))
+    b.fill(body, with: .color(look.body))
     var onBody = b
     onBody.clip(to: body)
     buddy.drawOnBody(&onBody, frame)
-    b.stroke(body, with: .color(look.outline), style: StrokeStyle(lineWidth: 2.6, lineJoin: .round))
-    if look.shine {
-        var shine = b
-        shine.translateBy(x: -w * 0.25, y: -h * 0.78)
-        shine.rotate(by: .degrees(-32))
-        shine.fill(Path(ellipseIn: CGRect(x: -7, y: -4, width: 14, height: 8)), with: .color(.white.opacity(0.6)))
+    if let edge = look.edge {
+        b.stroke(body, with: .color(edge), style: StrokeStyle(lineWidth: 1.5, lineJoin: .round))
     }
     buddy.drawFront(&b, frame)
 
-    // Face
+    // Face: small, simple features
     let fx = CGFloat(p.faceShiftX)
     let eyeY = frame.eyeY
     let eyeColor = look.eye ?? look.ink
@@ -190,57 +170,50 @@ func drawBuddy(_ ctx: inout GraphicsContext, _ p: Pose, t: Double, buddy: Buddy 
         if p.eyes == .happy || blink {
             var e = Path()
             if blink {
-                e.move(to: CGPoint(x: ex - 4.5, y: eyeY))
-                e.addLine(to: CGPoint(x: ex + 4.5, y: eyeY))
+                e.move(to: CGPoint(x: ex - 3.5, y: eyeY))
+                e.addLine(to: CGPoint(x: ex + 3.5, y: eyeY))
             } else {
-                e.move(to: CGPoint(x: ex - 5, y: eyeY + 2))
-                e.addQuadCurve(to: CGPoint(x: ex + 5, y: eyeY + 2), control: CGPoint(x: ex, y: eyeY - 5))
+                e.move(to: CGPoint(x: ex - 4, y: eyeY + 1.5))
+                e.addQuadCurve(to: CGPoint(x: ex + 4, y: eyeY + 1.5), control: CGPoint(x: ex, y: eyeY - 3.5))
             }
-            b.stroke(e, with: .color(eyeColor), style: StrokeStyle(lineWidth: 2.8, lineCap: .round))
+            b.stroke(e, with: .color(eyeColor), style: StrokeStyle(lineWidth: 2.2, lineCap: .round))
         } else {
-            b.fill(Path(ellipseIn: CGRect(x: ex - 4.6, y: eyeY - 5.6, width: 9.2, height: 11.2)), with: .color(eyeColor))
-            b.fill(Path(ellipseIn: CGRect(x: ex - 2.6 + CGFloat(p.lookX) * 0.3, y: eyeY - 4.4, width: 3.6, height: 3.6)),
-                   with: .color(look.eyeHighlight))
+            b.fill(Path(ellipseIn: CGRect(x: ex - 3.2, y: eyeY - 4, width: 6.4, height: 8)), with: .color(eyeColor))
         }
-        b.fill(Path(ellipseIn: CGRect(x: fx * 0.85 + side * look.blushSpacing - 7, y: eyeY + look.blushOffset, width: 14, height: 8)),
-               with: .color(Palette.blush.opacity(p.blush * look.blush)))
     }
 
     let my = eyeY + look.mouthOffset
     if let beak = look.beak {
-        // A little beak instead of a mouth; it opens when the buddy cheers
-        let open: CGFloat = p.mouth == .open ? 3 : 0
+        // A small beak instead of a mouth; it opens when the buddy cheers
+        let open: CGFloat = p.mouth == .open ? 2.5 : 0
         var upper = Path()
-        upper.move(to: CGPoint(x: fx - 6, y: my - 2))
-        upper.addLine(to: CGPoint(x: fx + 6, y: my - 2))
-        upper.addLine(to: CGPoint(x: fx, y: my + 3))
+        upper.move(to: CGPoint(x: fx - 5, y: my - 2))
+        upper.addLine(to: CGPoint(x: fx + 5, y: my - 2))
+        upper.addLine(to: CGPoint(x: fx, y: my + 2.5))
         upper.closeSubpath()
         var lower = Path()
-        lower.move(to: CGPoint(x: fx - 4.5, y: my + 1 + open))
-        lower.addLine(to: CGPoint(x: fx + 4.5, y: my + 1 + open))
-        lower.addLine(to: CGPoint(x: fx, y: my + 6 + open))
+        lower.move(to: CGPoint(x: fx - 3.5, y: my + 1 + open))
+        lower.addLine(to: CGPoint(x: fx + 3.5, y: my + 1 + open))
+        lower.addLine(to: CGPoint(x: fx, y: my + 5 + open))
         lower.closeSubpath()
-        for part in [lower, upper] {
-            b.fill(part, with: .color(beak))
-            b.stroke(part, with: .color(look.outline), style: StrokeStyle(lineWidth: 1.4, lineJoin: .round))
-        }
+        b.fill(lower, with: .color(beak.opacity(0.85)))
+        b.fill(upper, with: .color(beak))
     } else {
         switch p.mouth {
         case .smile:
             var m = Path()
-            m.move(to: CGPoint(x: fx - 5, y: my))
-            m.addQuadCurve(to: CGPoint(x: fx + 5, y: my), control: CGPoint(x: fx, y: my + 6))
-            b.stroke(m, with: .color(look.ink), style: StrokeStyle(lineWidth: 2.4, lineCap: .round))
+            m.move(to: CGPoint(x: fx - 4, y: my))
+            m.addQuadCurve(to: CGPoint(x: fx + 4, y: my), control: CGPoint(x: fx, y: my + 4.5))
+            b.stroke(m, with: .color(look.ink), style: StrokeStyle(lineWidth: 2, lineCap: .round))
         case .open:
             var m = Path()
-            m.move(to: CGPoint(x: fx - 6, y: my - 1))
-            m.addLine(to: CGPoint(x: fx + 6, y: my - 1))
-            m.addQuadCurve(to: CGPoint(x: fx - 6, y: my - 1), control: CGPoint(x: fx, y: my + 11))
+            m.move(to: CGPoint(x: fx - 4.5, y: my - 0.5))
+            m.addLine(to: CGPoint(x: fx + 4.5, y: my - 0.5))
+            m.addQuadCurve(to: CGPoint(x: fx - 4.5, y: my - 0.5), control: CGPoint(x: fx, y: my + 8))
             m.closeSubpath()
             b.fill(m, with: .color(look.ink))
-            b.fill(Path(ellipseIn: CGRect(x: fx - 3, y: my + 2.2, width: 6, height: 3.4)), with: .color(Palette.blush))
         case .o:
-            b.fill(Path(ellipseIn: CGRect(x: fx - 3, y: my - 1, width: 6, height: 7)), with: .color(look.ink))
+            b.fill(Path(ellipseIn: CGRect(x: fx - 2.3, y: my - 0.5, width: 4.6, height: 5.5)), with: .color(look.ink))
         }
     }
 

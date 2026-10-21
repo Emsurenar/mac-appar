@@ -15,16 +15,17 @@ runs a self-test; `build/Unknot.app/Contents/MacOS/Unknot --selftest` runs it on
 Handy helpers for checking your work without clicking around:
 
 ```bash
-build/Unknot.app/Contents/MacOS/Unknot --cast cast.png                # every buddy in six poses
+build/Unknot.app/Contents/MacOS/Unknot --cast cast.png                # the whole crew in six poses
 build/Unknot.app/Contents/MacOS/Unknot --settings-screenshots shots   # every settings tab, light and dark
 build/Unknot.app/Contents/MacOS/Unknot --previews previews -AppleLanguages '(sv)'
 ```
 
-## Adding a buddy
+## Adding a crew member
 
-Buddies live in `Sources/Buddies.swift`. Add a case to `Buddy`, then give it a name, a body `size`, a `look`
+The Stretch Crew lives in `Sources/Buddies.swift`. Add a case to `Buddy`, then give it a name, a body `size`, a `look`
 (colours and face layout) and, if it needs them, details in `drawBehind`, `drawOnBody` and `drawFront`.
-Every buddy shares the face, arms and moves, so it can do all the exercises straight away. Check it with
+The crew shares the face, arms and moves, so a new member can do all the exercises straight away. Keep to
+the style: flat shapes, no outlines, small features and colours from the muted palette. Check it with
 `--cast` and add its name to `Resources/sv.lproj/Localizable.strings`.
 
 ## Translations

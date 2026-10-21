@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// The cast. Every buddy shares the same face, arms and moves, but has its own body and details.
+/// The Stretch Crew. Every member shares the face, arms and moves, but has its own body and details.
+/// The style is flat and quiet: no outlines, one soft form shadow, small features, a muted palette.
 enum Buddy: String, CaseIterable, Identifiable {
     case mochi, cat, panda, bunny, frog, penguin, chick, toast, onigiri, cactus
 
@@ -24,53 +25,45 @@ enum Buddy: String, CaseIterable, Identifiable {
     /// Body width and height in the 150×150 drawing space.
     var size: CGSize {
         switch self {
-        case .mochi: return CGSize(width: 88, height: 86)
-        case .bunny: return CGSize(width: 88, height: 76)
-        case .toast: return CGSize(width: 86, height: 84)
-        case .onigiri: return CGSize(width: 102, height: 94)
-        case .cactus: return CGSize(width: 60, height: 92)
-        default: return CGSize(width: 90, height: 80)
+        case .mochi: return CGSize(width: 86, height: 86)
+        case .bunny: return CGSize(width: 86, height: 76)
+        case .toast: return CGSize(width: 84, height: 84)
+        case .onigiri: return CGSize(width: 100, height: 92)
+        case .cactus: return CGSize(width: 58, height: 92)
+        default: return CGSize(width: 88, height: 80)
         }
     }
 
     var look: Look {
         switch self {
         case .mochi:
-            return Look(top: Palette.bodyTop, bottom: Palette.bodyBottom, limb: Palette.limb, outline: Palette.outline)
+            return Look(body: Color(hex: 0xEDB892), limb: Color(hex: 0xD49A73), belly: Color(hex: 0xF5D2B6))
         case .cat:
-            return Look(top: Color(hex: 0xF2F1F6), bottom: Color(hex: 0xCDCCDA), limb: Color(hex: 0xDEDDE8),
-                        outline: Color(hex: 0x54506A), ink: Color(hex: 0x2C2938), eyeHeight: 0.52, mouthOffset: 11)
+            return Look(body: Color(hex: 0x9198A6), limb: Color(hex: 0x767D8B), belly: Color(hex: 0xB7BCC6),
+                        eyeHeight: 0.52, mouthOffset: 10)
         case .panda:
-            return Look(top: .white, bottom: Color(hex: 0xE9E9EE), limb: Color(hex: 0x3A3A44),
-                        outline: Color(hex: 0x3A3A44), ink: Color(hex: 0x26262C), eye: .white,
-                        eyeHighlight: Color(hex: 0x3A3A44), eyeHeight: 0.52)
+            return Look(body: Color(hex: 0xF2EEE7), limb: Color(hex: 0x3B3B40), edge: Color(hex: 0xD9D3C8),
+                        eye: Color(hex: 0xF2EEE7), eyeHeight: 0.52)
         case .bunny:
-            return Look(top: Color(hex: 0xFFF8FA), bottom: Color(hex: 0xFFD6E0), limb: Color(hex: 0xFFE4EB),
-                        outline: Color(hex: 0x8A5866), ink: Color(hex: 0x3A2229), eyeHeight: 0.52)
+            return Look(body: Color(hex: 0xE9D3C8), limb: Color(hex: 0xD3B9AC), belly: Color(hex: 0xF3E6DF),
+                        eyeHeight: 0.52)
         case .frog:
-            return Look(top: Color(hex: 0xC8EC9E), bottom: Color(hex: 0x8FCC66), limb: Color(hex: 0xA9DB80),
-                        outline: Color(hex: 0x3E6A2D), ink: Color(hex: 0x22351A),
-                        eyeHeight: 0.97, eyeSpacing: 19, blushSpacing: 28, mouthOffset: 27, blushOffset: 22)
+            return Look(body: Color(hex: 0x8DB57F), limb: Color(hex: 0x739D66), belly: Color(hex: 0xB9D4AA),
+                        eyeHeight: 0.97, eyeSpacing: 18, mouthOffset: 26)
         case .penguin:
-            return Look(top: Color(hex: 0x4E5C7E), bottom: Color(hex: 0x33405C), limb: Color(hex: 0x3A4766),
-                        foot: Color(hex: 0xFFA94D), outline: Color(hex: 0x1F2536), ink: Color(hex: 0x1F2433),
-                        eyeHeight: 0.55, beak: Color(hex: 0xFFA94D))
+            return Look(body: Color(hex: 0x3F4B62), limb: Color(hex: 0x323D52), belly: Color(hex: 0xF2EEE7),
+                        foot: Color(hex: 0xE5A03C), eyeHeight: 0.55, beak: Color(hex: 0xE5A03C))
         case .chick:
-            return Look(top: Color(hex: 0xFFF2A6), bottom: Color(hex: 0xFFD65A), limb: Color(hex: 0xFFE07C),
-                        foot: Color(hex: 0xFFA34D), outline: Color(hex: 0x9C6B1F), ink: Color(hex: 0x3B2A12),
-                        eyeHeight: 0.52, beak: Color(hex: 0xFF9F43))
+            return Look(body: Color(hex: 0xF0C153), limb: Color(hex: 0xDCA83A), belly: Color(hex: 0xF6D688),
+                        foot: Color(hex: 0xDE7D43), eyeHeight: 0.52, beak: Color(hex: 0xDE7D43))
         case .toast:
-            return Look(top: Color(hex: 0xF3B56E), bottom: Color(hex: 0xDE904B), limb: Color(hex: 0xF6D29A),
-                        outline: Color(hex: 0x7A4A26), ink: Color(hex: 0x3B2416), shine: false,
-                        eyeHeight: 0.50, shoulderY: 0.45)
+            return Look(body: Color(hex: 0xCF8A50), limb: Color(hex: 0xBB7642), eyeHeight: 0.50, shoulderY: 0.45)
         case .onigiri:
-            return Look(top: .white, bottom: Color(hex: 0xF1ECE2), limb: Color(hex: 0xFFFDF8),
-                        outline: Color(hex: 0x5B5348), ink: Color(hex: 0x2E2A25), shine: false,
-                        eyeHeight: 0.42, eyeSpacing: 12, blushSpacing: 21, shoulderX: 0.31, shoulderY: 0.30)
+            return Look(body: Color(hex: 0xF3F0E9), limb: Color(hex: 0xCFC6B6), edge: Color(hex: 0xD6CEC0),
+                        eyeHeight: 0.42, eyeSpacing: 11, shoulderX: 0.31, shoulderY: 0.30)
         case .cactus:
-            return Look(top: Color(hex: 0xADE29B), bottom: Color(hex: 0x6DBD72), limb: Color(hex: 0x8CD18A),
-                        outline: Color(hex: 0x2E6A3A), ink: Color(hex: 0x1F3A22),
-                        eyeHeight: 0.62, eyeSpacing: 12, blushSpacing: 20, shoulderX: 0.46, shoulderY: 0.48)
+            return Look(body: Color(hex: 0x82AF80), limb: Color(hex: 0x6C9A6B),
+                        eyeHeight: 0.62, eyeSpacing: 11, shoulderX: 0.46, shoulderY: 0.48)
         }
     }
 
@@ -149,56 +142,50 @@ enum Buddy: String, CaseIterable, Identifiable {
             s.rotate(by: .degrees(f.pose.sproutSway - f.pose.tilt * 0.6))
             var stem = Path()
             stem.move(to: .zero)
-            stem.addQuadCurve(to: CGPoint(x: 1, y: -15), control: CGPoint(x: -3, y: -8))
-            s.stroke(stem, with: .color(Palette.leafDark), style: StrokeStyle(lineWidth: 2.6, lineCap: .round))
-            for dir in [-1.0, 1.0] {
+            stem.addQuadCurve(to: CGPoint(x: 1, y: -14), control: CGPoint(x: -3, y: -7))
+            s.stroke(stem, with: .color(Color(hex: 0x6E9468)), style: StrokeStyle(lineWidth: 2.2, lineCap: .round))
+            for (dir, color) in [(-1.0, 0x86AE7E), (1.0, 0x9CC093)] as [(Double, UInt32)] {
                 var l = s
-                l.translateBy(x: 1, y: -15)
-                l.rotate(by: .degrees(dir * 52))
+                l.translateBy(x: 1, y: -14)
+                l.rotate(by: .degrees(dir * 55))
                 var leaf = Path()
                 leaf.move(to: .zero)
-                leaf.addQuadCurve(to: CGPoint(x: 0, y: -14), control: CGPoint(x: 7, y: -7))
-                leaf.addQuadCurve(to: .zero, control: CGPoint(x: -7, y: -7))
-                l.fill(leaf, with: .color(Palette.leaf))
-                l.stroke(leaf, with: .color(Palette.leafDark), style: StrokeStyle(lineWidth: 1.8, lineJoin: .round))
+                leaf.addQuadCurve(to: CGPoint(x: 0, y: -13), control: CGPoint(x: 6.5, y: -6.5))
+                leaf.addQuadCurve(to: .zero, control: CGPoint(x: -6.5, y: -6.5))
+                l.fill(leaf, with: .color(Color(hex: color)))
             }
         case .cat:
             for side: CGFloat in [-1, 1] {
                 var ear = Path()
                 ear.move(to: CGPoint(x: side * 8, y: -h + 6))
-                ear.addLine(to: CGPoint(x: side * 33, y: -h - 15))
-                ear.addLine(to: CGPoint(x: side * 41, y: -h + 20))
+                ear.addLine(to: CGPoint(x: side * 32, y: -h - 14))
+                ear.addLine(to: CGPoint(x: side * 40, y: -h + 20))
                 ear.closeSubpath()
-                b.fill(ear, with: .color(look.top))
-                b.stroke(ear, with: .color(look.outline), style: f.line)
+                b.fill(ear, with: .color(look.body))
                 var inner = Path()
-                inner.move(to: CGPoint(x: side * 15, y: -h + 4))
-                inner.addLine(to: CGPoint(x: side * 31, y: -h - 7))
-                inner.addLine(to: CGPoint(x: side * 36, y: -h + 13))
+                inner.move(to: CGPoint(x: side * 16, y: -h + 4))
+                inner.addLine(to: CGPoint(x: side * 30, y: -h - 6))
+                inner.addLine(to: CGPoint(x: side * 35, y: -h + 12))
                 inner.closeSubpath()
-                b.fill(inner, with: .color(Color(hex: 0xFFB8C8)))
+                b.fill(inner, with: .color(Color(hex: 0xD6A596)))
             }
         case .panda:
             for side: CGFloat in [-1, 1] {
-                let ear = Path(ellipseIn: CGRect(x: side * 30 - 12, y: -h - 4, width: 24, height: 24))
-                b.fill(ear, with: .color(look.limb))
+                b.fill(Path(ellipseIn: CGRect(x: side * 29 - 11.5, y: -h - 3, width: 23, height: 23)), with: .color(look.limb))
             }
         case .bunny:
             for side: CGFloat in [-1, 1] {
                 var e = b
                 e.translateBy(x: side * 15, y: -h + 8)
                 e.rotate(by: .degrees(Double(side) * 9 + f.pose.sproutSway * 0.6))
-                let outer = Path(roundedRect: CGRect(x: -8, y: -36, width: 16, height: 40), cornerRadius: 8)
-                e.fill(outer, with: .color(look.top))
-                e.stroke(outer, with: .color(look.outline), style: f.line)
-                e.fill(Path(roundedRect: CGRect(x: -4, y: -30, width: 8, height: 26), cornerRadius: 4),
-                       with: .color(Color(hex: 0xFFB3C7)))
+                e.fill(Path(roundedRect: CGRect(x: -8, y: -36, width: 16, height: 40), cornerRadius: 8), with: .color(look.body))
+                e.fill(Path(roundedRect: CGRect(x: -3.5, y: -30, width: 7, height: 26), cornerRadius: 3.5),
+                       with: .color(Color(hex: 0xD7A493)))
             }
         case .frog:
             for side: CGFloat in [-1, 1] {
-                let bump = Path(ellipseIn: CGRect(x: side * look.eyeSpacing - 14, y: -h * look.eyeHeight - 13, width: 28, height: 26))
-                b.fill(bump, with: .color(look.top))
-                b.stroke(bump, with: .color(look.outline), style: f.line)
+                b.fill(Path(ellipseIn: CGRect(x: side * look.eyeSpacing - 13, y: f.eyeY - 12, width: 26, height: 24)),
+                       with: .color(look.body))
             }
         default:
             break
@@ -209,113 +196,96 @@ enum Buddy: String, CaseIterable, Identifiable {
     func drawOnBody(_ b: inout GraphicsContext, _ f: BuddyFrame) {
         let w = f.w, h = f.h, look = f.look
         let fx = CGFloat(f.pose.faceShiftX)
+        if let belly = look.belly, self != .penguin {
+            b.fill(Path(ellipseIn: CGRect(x: -w * 0.27, y: -h * 0.36, width: w * 0.54, height: h * 0.30)), with: .color(belly))
+        }
         switch self {
-        case .mochi:
-            b.fill(Path(ellipseIn: CGRect(x: -22, y: -30, width: 44, height: 24)), with: .color(.white.opacity(0.28)))
-        case .cat, .bunny, .chick:
-            b.fill(Path(ellipseIn: CGRect(x: -21, y: -28, width: 42, height: 22)), with: .color(.white.opacity(0.4)))
-            if self == .cat {
-                for x: CGFloat in [-7, 0, 7] {
-                    var stripe = Path()
-                    stripe.move(to: CGPoint(x: x + fx * 0.5, y: -h + 2))
-                    stripe.addLine(to: CGPoint(x: x + fx * 0.5, y: -h + (x == 0 ? 13 : 10)))
-                    b.stroke(stripe, with: .color(look.outline.opacity(0.45)), style: StrokeStyle(lineWidth: 2.4, lineCap: .round))
-                }
+        case .cat:
+            for x: CGFloat in [-7, 0, 7] {
+                var stripe = Path()
+                stripe.move(to: CGPoint(x: x + fx * 0.5, y: -h + 1))
+                stripe.addLine(to: CGPoint(x: x + fx * 0.5, y: -h + (x == 0 ? 12 : 9)))
+                b.stroke(stripe, with: .color(look.limb), style: StrokeStyle(lineWidth: 2.4, lineCap: .round))
             }
         case .panda:
             for side: CGFloat in [-1, 1] {
                 var patch = b
                 patch.translateBy(x: side * look.eyeSpacing + fx, y: f.eyeY + 1)
-                patch.rotate(by: .degrees(Double(side) * -24))
-                patch.fill(Path(ellipseIn: CGRect(x: -8.5, y: -11, width: 17, height: 22)), with: .color(look.limb))
+                patch.rotate(by: .degrees(Double(side) * -22))
+                patch.fill(Path(ellipseIn: CGRect(x: -8, y: -10.5, width: 16, height: 21)), with: .color(look.limb))
             }
-        case .frog:
-            b.fill(Path(ellipseIn: CGRect(x: -25, y: -30, width: 50, height: 26)), with: .color(Color(hex: 0xF1FAD9).opacity(0.75)))
         case .penguin:
-            b.fill(Path(ellipseIn: CGRect(x: -31 + fx * 0.5, y: -h * 0.80, width: 62, height: h * 0.80 - 3)), with: .color(.white))
+            b.fill(Path(ellipseIn: CGRect(x: -30 + fx * 0.5, y: -h * 0.80, width: 60, height: h * 0.80 - 3)),
+                   with: .color(look.belly ?? .white))
         case .toast:
             let crumb = bodyPath(w: w, h: h).applying(
                 CGAffineTransform(translationX: 0, y: -h / 2).scaledBy(x: 0.8, y: 0.8).translatedBy(x: 0, y: h / 2))
-            b.fill(crumb, with: .linearGradient(Gradient(colors: [Color(hex: 0xFFEDC8), Color(hex: 0xFFDDA2)]),
-                                                startPoint: CGPoint(x: 0, y: -h), endPoint: .zero))
+            b.fill(crumb, with: .color(Color(hex: 0xF3D6A5)))
         case .onigiri:
-            b.fill(Path(roundedRect: CGRect(x: -19, y: -21, width: 38, height: 24), cornerRadius: 3), with: .color(Color(hex: 0x2C3A33)))
-            b.fill(Path(roundedRect: CGRect(x: -14, y: -17, width: 9, height: 2), cornerRadius: 1), with: .color(.white.opacity(0.18)))
+            b.fill(Path(roundedRect: CGRect(x: -18, y: -20, width: 36, height: 23), cornerRadius: 2.5), with: .color(Color(hex: 0x2F3532)))
         case .cactus:
-            for x: CGFloat in [-12, 12] {
+            for x: CGFloat in [-11, 11] {
                 var rib = Path()
                 rib.move(to: CGPoint(x: x, y: -h + 20))
                 rib.addLine(to: CGPoint(x: x, y: -8))
-                b.stroke(rib, with: .color(look.outline.opacity(0.16)), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                b.stroke(rib, with: .color(look.limb.opacity(0.55)), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
             }
+        default:
+            break
         }
+        // One soft form shadow on the right-hand side gives the flat shapes some volume.
+        var shade = b
+        shade.addFilter(.blur(radius: 9))
+        shade.fill(Path(ellipseIn: CGRect(x: w * 0.18, y: -h * 1.1, width: w * 0.9, height: h * 1.3)), with: .color(.black.opacity(0.08)))
     }
 
-    /// Drawn on top of the body, not clipped: whiskers, tufts, flowers, spikes.
+    /// Drawn on top of the body, not clipped: noses, tufts, flowers, spikes.
     func drawFront(_ b: inout GraphicsContext, _ f: BuddyFrame) {
         let h = f.h, look = f.look
         let fx = CGFloat(f.pose.faceShiftX)
         switch self {
         case .cat:
-            for side: CGFloat in [-1, 1] {
-                for (dy0, dy1) in [(11.0, 8.0), (14.0, 16.0)] {
-                    var whisker = Path()
-                    whisker.move(to: CGPoint(x: side * 23 + fx, y: f.eyeY + dy0))
-                    whisker.addLine(to: CGPoint(x: side * 41 + fx, y: f.eyeY + dy1))
-                    b.stroke(whisker, with: .color(look.outline.opacity(0.7)), style: StrokeStyle(lineWidth: 1.4, lineCap: .round))
-                }
-            }
-            b.fill(Path(ellipseIn: CGRect(x: fx - 3, y: f.eyeY + 5, width: 6, height: 4)), with: .color(Color(hex: 0xFF9AAE)))
+            b.fill(Path(ellipseIn: CGRect(x: fx - 2.5, y: f.eyeY + 5, width: 5, height: 3.5)), with: .color(Color(hex: 0xC98E80)))
         case .chick:
-            for (x0, x1, y1) in [(-3.0, -7.0, -9.0), (0.0, 1.0, -12.0), (3.0, 8.0, -8.0)] {
+            for (x0, x1, y1) in [(-3.0, -6.0, -8.0), (0.0, 1.0, -11.0), (3.0, 7.0, -7.0)] {
                 var tuft = Path()
                 tuft.move(to: CGPoint(x: x0, y: -h + 2))
                 tuft.addQuadCurve(to: CGPoint(x: x1, y: -h + y1), control: CGPoint(x: (x0 + x1) / 2 + 3, y: -h + y1 / 2))
-                b.stroke(tuft, with: .color(look.outline), style: StrokeStyle(lineWidth: 2.4, lineCap: .round))
+                b.stroke(tuft, with: .color(look.limb), style: StrokeStyle(lineWidth: 2.4, lineCap: .round))
             }
         case .cactus:
-            for (x, y) in [(-17.0, -72.0), (16.0, -62.0), (-18.0, -34.0), (19.0, -24.0), (-4.0, -14.0)] {
-                var spike = Path()
-                spike.move(to: CGPoint(x: x - 2.5, y: y + 2))
-                spike.addLine(to: CGPoint(x: x, y: y - 1.5))
-                spike.addLine(to: CGPoint(x: x + 2.5, y: y + 2))
-                b.stroke(spike, with: .color(look.outline.opacity(0.55)), style: StrokeStyle(lineWidth: 1.4, lineCap: .round, lineJoin: .round))
+            for (x, y) in [(-16.0, -70.0), (15.0, -60.0), (-17.0, -34.0), (18.0, -24.0), (-2.0, -14.0)] {
+                b.fill(Path(ellipseIn: CGRect(x: x - 1.3, y: y - 1.3, width: 2.6, height: 2.6)), with: .color(Color(hex: 0xC7DFC2)))
             }
             var flower = b
             flower.translateBy(x: 4, y: -h + 1)
             flower.rotate(by: .degrees(f.pose.sproutSway * 1.5))
             for k in 0..<5 {
                 let angle = Double(k) / 5 * 2 * .pi
-                let petal = Path(ellipseIn: CGRect(x: cos(angle) * 5.5 - 4.5, y: sin(angle) * 5.5 - 4.5, width: 9, height: 9))
-                flower.fill(petal, with: .color(Color(hex: 0xFF8FB1)))
-                flower.stroke(petal, with: .color(Color(hex: 0xC2557A)), style: StrokeStyle(lineWidth: 1.2))
+                flower.fill(Path(ellipseIn: CGRect(x: cos(angle) * 5 - 4.2, y: sin(angle) * 5 - 4.2, width: 8.4, height: 8.4)),
+                            with: .color(Color(hex: 0xDE7B5E)))
             }
-            flower.fill(Path(ellipseIn: CGRect(x: -3.5, y: -3.5, width: 7, height: 7)), with: .color(Color(hex: 0xFFD54F)))
+            flower.fill(Path(ellipseIn: CGRect(x: -3, y: -3, width: 6, height: 6)), with: .color(Color(hex: 0xF0C153)))
         default:
             break
         }
     }
 }
 
-/// Colours and face layout for one buddy.
+/// Colours and face layout for one member of the crew.
 struct Look {
-    var top: Color
-    var bottom: Color
-    var limb: Color
+    var body: Color
+    var limb: Color                 // arms, feet and ears: a shade darker than the body
+    var belly: Color? = nil
     var foot: Color? = nil
-    var outline: Color
-    var ink = Palette.ink
+    var edge: Color? = nil          // a hairline in the body's own tone, for pale bodies on pale backgrounds
+    var ink = Color(hex: 0x2A2A2E)
     var eye: Color? = nil
-    var eyeHighlight = Color.white
-    var blush = 1.0
-    var shine = true
     var eyeHeight: CGFloat = 0.56   // fraction of the body height, from the bottom
-    var eyeSpacing: CGFloat = 15
-    var blushSpacing: CGFloat = 27
+    var eyeSpacing: CGFloat = 13
     var shoulderX: CGFloat = 0.42   // fraction of the body width
     var shoulderY: CGFloat = 0.50   // fraction of the body height
     var mouthOffset: CGFloat = 9
-    var blushOffset: CGFloat = 8
     var beak: Color? = nil
 }
 
@@ -325,6 +295,5 @@ struct BuddyFrame {
     let h: CGFloat
     let pose: Pose
     let look: Look
-    let line: StrokeStyle
     var eyeY: CGFloat { -h * look.eyeHeight }
 }

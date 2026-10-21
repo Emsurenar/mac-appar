@@ -45,6 +45,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         WindowManager.shared.onTestBreak = { [weak self] in self?.scheduler.showBreakNow() }
         scheduler.onChange = { [weak self] in self?.updateStatusItem() }
         scheduler.start()
+        // Switch language straight away: menus and the settings window are rebuilt with the new strings.
+        prefs.$language
+            .dropFirst()
+            .removeDuplicates()
+            .receive(on: RunLoop.main)
+            .sink { _ in
+                MainMenu.install()
+                WindowManager.shared.reloadForLanguageChange()
+            }
+            .store(in: &cancellables)
         prefs.$intervalMinutes
             .dropFirst()
             .removeDuplicates()
@@ -168,6 +178,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private static func format(_ date: Date) -> String {
         let f = DateFormatter()
+        f.locale = Localizer.locale
         if Calendar.current.isDateInToday(date) {
             f.timeStyle = .short
         } else {

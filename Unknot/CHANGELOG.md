@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.0 – 2026-10-21
+
+- **A new look for the crew**: a flat, calmer illustration style with no outlines, small features, soft shading
+  and a muted palette. The app icon follows.
+- "Buddies" is now the **Stretch Crew**.
+- **Choose the app's language** in Settings → General: follow the system, English or Svenska. It switches
+  right away.
+- Hover over the menu bar icon to see when the next break is.
+
 ## 1.3.1 – 2026-10-21
 
 - Updating could leave Unknot closed: the new copy saw the old one, which was still quitting, and stepped aside.

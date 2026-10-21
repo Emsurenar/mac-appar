@@ -7,7 +7,7 @@ enum SettingsTab: Int, CaseIterable {
     var title: String {
         switch self {
         case .general: return L("General")
-        case .buddies: return L("Buddies")
+        case .buddies: return L("Stretch Crew")
         case .exercises: return L("Exercises")
         case .schedule: return L("Schedule")
         case .activity: return L("Activity")
@@ -29,8 +29,8 @@ enum SettingsTab: Int, CaseIterable {
     /// Each tab gets a window height that fits its content.
     var contentSize: NSSize {
         switch self {
-        case .general: return NSSize(width: 580, height: 655)
-        case .buddies: return NSSize(width: 580, height: 372)
+        case .general: return NSSize(width: 580, height: 695)
+        case .buddies: return NSSize(width: 580, height: 398)
         case .exercises: return NSSize(width: 580, height: 640)
         case .schedule: return NSSize(width: 580, height: 450)
         case .activity: return NSSize(width: 580, height: 440)
@@ -40,6 +40,11 @@ enum SettingsTab: Int, CaseIterable {
 
     @MainActor
     func makeView(onTestBreak: @escaping () -> Void) -> AnyView {
+        AnyView(content(onTestBreak: onTestBreak).environment(\.locale, Localizer.locale))
+    }
+
+    @MainActor
+    private func content(onTestBreak: @escaping () -> Void) -> AnyView {
         switch self {
         case .general: return AnyView(GeneralSettingsView(onTestBreak: onTestBreak))
         case .buddies: return AnyView(BuddiesSettingsView())
@@ -78,6 +83,9 @@ struct GeneralSettingsView: View {
             }
 
             Section(L("Appearance")) {
+                Picker(L("Language"), selection: $prefs.language) {
+                    ForEach(AppLanguage.allCases) { Text($0.title).tag($0) }
+                }
                 Picker(L("Position on screen"), selection: $prefs.position) {
                     ForEach(ReminderPosition.allCases) { Text($0.title).tag($0) }
                 }
@@ -125,7 +133,7 @@ struct BuddiesSettingsView: View {
                 }
                 .padding(.vertical, 6)
             } header: {
-                Text(L("Pick who can visit you. With more than one, a random buddy shows up for each break."))
+                Text(L("Choose who's on your Stretch Crew. With more than one, a random member leads each break."))
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .textCase(nil)
@@ -174,9 +182,9 @@ struct BuddyCard: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
             .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(isOn ? accent.opacity(0.09) : Color.primary.opacity(0.03)))
+                .fill(isOn ? accent.opacity(0.06) : Color.primary.opacity(0.03)))
             .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(isOn ? accent.opacity(0.75) : Color.primary.opacity(0.08), lineWidth: isOn ? 1.5 : 1))
+                .strokeBorder(isOn ? accent.opacity(0.55) : Color.primary.opacity(0.08), lineWidth: isOn ? 1.5 : 1))
             .overlay(alignment: .topTrailing) {
                 Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 13))
@@ -187,7 +195,7 @@ struct BuddyCard: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
-        .help(isLocked ? L("At least one buddy has to stay.") : "")
+        .help(isLocked ? L("Your crew needs at least one member.") : "")
         .accessibilityLabel(buddy.name)
         .accessibilityAddTraits(isOn ? .isSelected : [])
     }

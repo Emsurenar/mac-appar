@@ -50,7 +50,7 @@ final class ReminderPanel {
         glass.state = .active
         glass.maskImage = .roundedMask(radius: ReminderView.cornerRadius)
 
-        let host = FirstMouseHostingView(rootView: ReminderView(s: session))
+        let host = FirstMouseHostingView(rootView: ReminderView(s: session).environment(\.locale, Localizer.locale))
         host.frame = glass.bounds
         host.autoresizingMask = [.width, .height]
         glass.addSubview(host)

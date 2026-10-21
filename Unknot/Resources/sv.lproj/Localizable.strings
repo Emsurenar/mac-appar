@@ -37,9 +37,9 @@
 "Toast" = "Rostbröd";
 "Onigiri" = "Onigiri";
 "Cactus" = "Kaktus";
-"Buddies" = "Kompisar";
-"Pick who can visit you. With more than one, a random buddy shows up for each break." = "Välj vilka som får hälsa på. Väljer du fler än en dyker en slumpad kompis upp vid varje paus.";
-"At least one buddy has to stay." = "Minst en kompis måste vara kvar.";
+"Stretch Crew" = "Stretch Crew";
+"Choose who's on your Stretch Crew. With more than one, a random member leads each break." = "Välj vilka som är med i ditt Stretch Crew. Väljer du fler än en leder en slumpad medlem varje paus.";
+"Your crew needs at least one member." = "Ditt crew behöver minst en medlem.";
 
 /* Beröm efter en paus */
 "Nice work" = "Bra jobbat";
@@ -109,6 +109,8 @@
 "Try it out" = "Testa";
 "Show a break now" = "Visa en paus nu";
 "Appearance" = "Utseende";
+"Language" = "Språk";
+"System default" = "Systemets språk";
 "Position on screen" = "Placering på skärmen";
 "Bottom right" = "Nere till höger";
 "Top right" = "Uppe till höger";

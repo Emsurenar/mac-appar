@@ -5,7 +5,7 @@
 <h1 align="center">Unknot</h1>
 
 <p align="center">
-  Stretch breaks for your Mac that drop out of the camera notch.
+  <strong>Stretch breaks for your Mac that drop out of the camera notch.</strong>
 </p>
 
 <p align="center">
@@ -16,60 +16,107 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Emsurenar/unknot/releases/latest"><strong>Download for macOS</strong></a>
-  &nbsp;·&nbsp; <a href="https://emsurenar.github.io/unknot/">Website</a>
-  &nbsp;·&nbsp; macOS 14 or later &nbsp;·&nbsp; Apple silicon and Intel &nbsp;·&nbsp; Free and open source
+  <a href="https://github.com/Emsurenar/unknot/releases/latest"><strong>Download</strong></a>
+  &nbsp;·&nbsp;
+  <a href="https://emsurenar.github.io/unknot/">Website</a>
+  &nbsp;·&nbsp;
+  <a href="CHANGELOG.md">Changelog</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/Emsurenar/unknot/issues">Report an issue</a>
 </p>
 
 <p align="center">
   <img src="docs/demo.gif" width="720" alt="A break drops out of the camera notch, shows three stretches, cheers and goes back into the notch">
 </p>
 
-Every 20 minutes a small panel drops out of the notch at the top of your screen. A member of the Stretch Crew
-shows you three quick stretches, a bar fills up, and after 30 seconds the panel goes back where it came from.
-It never takes focus, so you can finish your sentence first.
+Unknot is a small menu bar app that reminds you to move. Every 20 minutes a panel drops out of the notch at the
+top of your screen, a member of the Stretch Crew demonstrates three short exercises, and after 30 seconds the
+panel slides back. It never takes focus, so it doesn't interrupt your typing.
 
-Unknot lives in the menu bar as a small frog. It's a 2 MB download, written in Swift, and has no account,
-no tracking and no ads.
+## Highlights
 
-## Install
+- **Designed for the notch.** Breaks emerge from the camera housing and return to it. On displays without a
+  notch they unfold from beneath the menu bar.
+- **Fourteen animated exercises** for the neck, shoulders, back, wrists, legs and eyes, each choreographed to
+  match the real movement, with live cues such as *Breathe in · 3* and *Switch sides*.
+- **Context-aware timing.** Time away counts as a break, sleep resets the countdown, and breaks wait while
+  you're on a call or presenting.
+- **The Stretch Crew.** Fifteen hand-engraved characters lead the breaks; keep the ones you like.
+- **Native and lightweight.** Written in Swift and SwiftUI, a 2 MB download, under 1.5 ms per animation frame.
+- **Private by design.** No account, no analytics, no ads. Settings and statistics never leave your Mac.
 
-Paste this into Terminal. It downloads the latest release into Applications and opens it:
+## Contents
+
+- [Installation](#installation)
+- [Using Unknot](#using-unknot)
+- [Exercises](#exercises)
+- [The Stretch Crew](#the-stretch-crew)
+- [Settings](#settings)
+- [Privacy and security](#privacy-and-security)
+- [FAQ](#faq)
+- [Building from source](#building-from-source)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Installation
+
+| Requirement | |
+| --- | --- |
+| macOS | 14 Sonoma or later |
+| Hardware | Apple silicon or Intel |
+| Download size | About 2 MB |
+
+**Terminal (recommended).** Downloads the latest release into `/Applications` and opens it:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Emsurenar/unknot/main/install.sh | bash
 ```
 
-Or download it yourself:
+**Manual.** Download `Unknot.zip` from the [latest release](https://github.com/Emsurenar/unknot/releases/latest),
+unzip it and move **Unknot** to **Applications**.
 
-1. Download `Unknot.zip` from the [latest release](https://github.com/Emsurenar/unknot/releases/latest), unzip it
-   and drag **Unknot** into **Applications**.
-2. Open it. macOS will say it can't verify the developer, because Unknot isn't signed with a paid Apple
-   Developer ID. Click **Done**, go to **System Settings → Privacy & Security**, scroll down and click
-   **Open Anyway**. You only do this once.
+> [!NOTE]
+> Unknot is not signed with a paid Apple Developer ID, so on first launch of a manual download macOS reports
+> that it can't verify the developer. Click **Done**, open **System Settings → Privacy & Security** and click
+> **Open Anyway**. This is needed only once, and not at all with the Terminal installer.
 
-A welcome window lets you pick how often you want a break and whether Unknot should open at login. After that
-the frog in the menu bar points the way.
+## Using Unknot
 
-<p align="center">
-  <img src="docs/welcome.png" width="320" alt="The welcome window">
-</p>
-
-## A break
+On first launch a welcome window sets the break interval and whether Unknot opens at login. From then on the
+app lives in the menu bar as a small frog.
 
 <p align="center">
-  <img src="docs/break-light.png" width="420" alt="A stretch break in light mode: the frog reaching for the sky">
+  <img src="docs/break-light.png" width="420" alt="A stretch break in light mode">
   <img src="docs/break-dark.png" width="420" alt="The same break in dark mode">
 </p>
 
-Each break picks a few exercises from the ones you've switched on, each for a different part of the body and
-none from the break before, and the crew does each one the way you should: fingers laced above the head and up
-on the toes, a bend at the waist with one arm over the top, a hand resting on the far ear while the head
-leans, hands on the opposite shoulders for the back hug, heels rising while the feet stay put. Small motion
-lines show where the shoulders roll and the wrists turn. Where timing matters, the label at the top keeps time
-with it: *Breathe in · 3*, *Switch sides*.
+During a break, **Done** ends it early and counts it, and **In 5 min** postpones it. Breaks are timed around
+what you're doing:
 
-| | Exercise | What you do |
+| Situation | What Unknot does |
+| --- | --- |
+| You've been away from the computer for 5 minutes | Counts it as a break and restarts the countdown |
+| The Mac slept or the screen was locked | Restarts the countdown |
+| Another app is using the microphone or camera | Holds the break until the call ends |
+| An app is in full screen (optional) | Holds the break until you leave full screen |
+| Outside your working hours (optional) | Stays quiet until they begin |
+
+Unknot only checks whether the microphone or camera is in use, never what it records.
+
+The menu bar frog shows the state at a glance: awake, asleep while reminders are paused, smiling during a
+break. Its menu shows the next break and your streak, starts a break immediately, and pauses reminders for
+30 minutes, 1 hour, 2 hours or the rest of the day.
+
+<p align="center">
+  <img src="docs/menubar.png" width="300" alt="The menu bar frog: awake, asleep while paused, and smiling during a break">
+</p>
+
+## Exercises
+
+Each break draws exercises from different parts of the body and avoids repeating the previous break. Any
+exercise can be turned off in Settings.
+
+| Area | Exercise | Instruction |
 | --- | --- | --- |
 | **Neck and shoulders** | Neck stretch | Slowly tilt your ear toward your shoulder, right then left |
 | | Shoulder rolls | Roll your shoulders backwards in big, slow circles |
@@ -86,91 +133,83 @@ with it: *Breathe in · 3*, *Switch sides*.
 | **Eyes and breathing** | Rest your eyes | Look at something at least 6 meters away and blink |
 | | Deep breaths | In for four seconds, out for four, shoulders down |
 
-**Done** ends the break early and counts it. **In 5 min** puts it off for a while.
-
 ## The Stretch Crew
 
 <p align="center">
   <img src="docs/buddies.png" width="640" alt="The Stretch Crew: Momo the mochi, Miso the cat, Bao the panda, Juni the bunny, Otto the frog, Selma the semla, Pip the chick, Finn the crispbread, Nori the onigiri, Stefan Löfven, Jesus of Nazareth, Mahatma Gandhi, René Descartes, Alexander Bard and Kaknästornet">
 </p>
 
-Fifteen characters drawn like small engravings: one ink line, hatching for shadow and a soft wash of colour.
-Otto the frog is on the app icon, Selma is a semla, the Swedish cream bun, Finn is a Finn Crisp, a rye thin full of
-fine pores and Kaknäs is Stockholm's TV tower, dishes and all. Stefan Löfven, Jesus, Gandhi, Descartes and
-Alexander Bard are drawn from photographs and portraits, in a slightly more cartoonish style: Jesus after the
-Sinai icon, Gandhi in his round glasses, Descartes as Frans Hals painted him and Bard with his beard and
-polka-dot braces. A random member leads each break,
-except on Shrove Tuesday, when Selma leads them all. Under **Settings → Stretch Crew** you can keep only
-your favourites.
-
-## When breaks happen
-
-Unknot tries not to interrupt at the wrong moment:
-
-- Time away from the computer counts as a break. Come back after five minutes away and the countdown starts over.
-- Sleep and a locked screen also restart the countdown.
-- A break that's due waits while you're on a call, meaning another app is using the microphone or camera.
-  Unknot only checks whether they're on, never what they hear or see.
-- It can wait while an app is in full screen, for presentations and movies (off by default).
-- You can limit reminders to working hours, with or without weekends.
-
-The menu bar frog tells you what's going on. Click it to see when the next break is, stretch right away, or
-pause for 30 minutes, an hour, two hours or the rest of the day. It closes its eyes while reminders are paused.
-
-<p align="center">
-  <img src="docs/menubar.png" width="300" alt="The menu bar frog: awake, asleep while paused, and smiling during a break">
-</p>
+Every character is drawn in code in the style of a small engraving: a single ink line, hatching for shadow and
+a soft wash of colour. The historical and public figures are based on photographs and portraits. A random
+member leads each break, except on Shrove Tuesday, when Selma the semla leads them all.
 
 ## Settings
 
+Open Settings from the menu bar, or by opening Unknot again from Finder or Spotlight.
+
 | General | Stretch Crew |
 | --- | --- |
-| <img src="docs/settings-general.png" alt="General settings: interval, break length, snooze, language, position, sound"> | <img src="docs/settings-buddies.png" alt="Pick who's on your Stretch Crew"> |
+| <img src="docs/settings-general.png" alt="General settings: interval, break length, snooze, language, position, sound"> | <img src="docs/settings-buddies.png" alt="Choose who's on your Stretch Crew"> |
 
 | Exercises | Activity |
 | --- | --- |
-| <img src="docs/settings-exercises.png" alt="Switch exercises on and off"> | <img src="docs/settings-activity.png" alt="Breaks today, this week, days in a row and a chart of the last 7 days"> |
+| <img src="docs/settings-exercises.png" alt="Turn exercises on and off"> | <img src="docs/settings-activity.png" alt="Breaks today, this week, days in a row and a chart of the last 7 days"> |
 
-Settings are under the menu bar frog, or open Unknot again from Finder or Spotlight. Besides the interval
-you can change the length of a break, the number of exercises, the snooze time, where the panel appears
-(top center or one of the corners, picked on a little map of the screen), the sound and the language
-(English or Swedish). **Activity** shows your breaks today, this week, your streak and a chart of the last
-seven days.
+| Tab | Options |
+| --- | --- |
+| General | Interval, break length, exercises per break, snooze length, language (English or Swedish), panel position, sound, open at login, automatic updates |
+| Stretch Crew | Which characters can lead a break |
+| Exercises | Which exercises can come up, grouped by body area |
+| Schedule | Working hours, time away, waiting for calls and full screen |
+| Activity | Breaks today, this week and in total, your streak, and the last seven days |
 
-## Privacy
+## Privacy and security
 
-Unknot doesn't collect anything. Settings and statistics stay on your Mac. The only network request is an
-optional check of GitHub's releases API, at most once a day, to see if there's a new version. If there is and
-you click **Install and Restart**, Unknot downloads it from this repository's releases, checks its SHA-256
-checksum and replaces itself. You can turn the check off under **Settings → General**. [SECURITY.md](SECURITY.md)
-has the details, and how to report a security issue.
+Unknot collects no data. The only network traffic is an optional check of GitHub's releases API, at most once
+a day. Updates are installed only when you choose **Install and Restart**; the download is verified against its
+SHA-256 checksum and code signature before it replaces the app. The check can be turned off in
+**Settings → General**. See [SECURITY.md](SECURITY.md) for details and for reporting vulnerabilities.
 
-## Questions
+## FAQ
 
-**The menu bar icon is missing.** On a MacBook with a notch, icons that don't fit are hidden behind it.
-Open Unknot again from Finder or Spotlight to get to the settings, or quit a few other menu bar apps.
+<details>
+<summary><strong>The menu bar icon is missing</strong></summary>
 
-**My Mac has no notch.** The panel drops down from under the menu bar instead. The same goes for external
-displays.
+On MacBooks with a notch, menu bar icons that don't fit are hidden behind it. Open Unknot again from Finder or
+Spotlight to reach Settings, or remove a few other menu bar items.
+</details>
 
-**Can I move the panel?** Pick a corner under **Settings → General → Position on screen**.
+<details>
+<summary><strong>My Mac has no notch</strong></summary>
 
-**How do I update?** Unknot tells you in the menu when a new version is out, and installs it with one click.
-Running the install command again works too.
+The panel unfolds from beneath the menu bar instead. The same applies to external displays. You can also move
+it to a corner in **Settings → General → Position on screen**.
+</details>
 
-**How do I uninstall it?** This removes the app, its login item, settings and statistics:
+<details>
+<summary><strong>How do I update?</strong></summary>
+
+Unknot announces new versions in its menu and installs them with one click. Running the install command again
+works as well.
+</details>
+
+<details>
+<summary><strong>How do I uninstall it?</strong></summary>
+
+This removes the app, its login item, settings and statistics:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Emsurenar/unknot/main/install.sh | bash -s -- --uninstall
 ```
 
-Or by hand: turn off **Open at login** under Settings, choose **Quit Unknot** in the menu, drag the app to the
-Trash and run `defaults delete io.github.emsurenar.unknot`.
+To do it by hand, turn off **Open at login**, quit Unknot, move it to the Trash and run
+`defaults delete io.github.emsurenar.unknot`.
+</details>
 
-## Build from source
+## Building from source
 
-You need the Xcode Command Line Tools (`xcode-select --install`). There are no dependencies and no Xcode
-project.
+The only requirement is the Xcode Command Line Tools (`xcode-select --install`). There are no dependencies and
+no Xcode project.
 
 ```bash
 git clone https://github.com/Emsurenar/unknot.git
@@ -178,10 +217,15 @@ cd unknot
 ./build.sh && open build/Unknot.app
 ```
 
-[CONTRIBUTING.md](CONTRIBUTING.md) explains how the code is laid out, how to add a crew member or a
-translation, and how releases are made. Bug reports and ideas are welcome in
-[Issues](https://github.com/Emsurenar/unknot/issues).
+`./build.sh --release` produces a universal binary and `dist/Unknot.zip`. Every build checks the translations
+and runs the self-test.
+
+## Contributing
+
+Bug reports, ideas and pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the code layout,
+the command-line tools for checking drawings and animations, adding a character or a translation, and the
+release process.
 
 ## License
 
-[MIT](LICENSE) © 2026 Emre Sunar
+Released under the [MIT License](LICENSE). © 2026 Emre Sunar.

@@ -173,7 +173,7 @@ enum Snapshot {
 
     /// The whole Stretch Crew waving, with their names, for the README.
     static func buddiesImage(to path: String) {
-        let rows = [Array(Buddy.allCases.prefix(5)), Array(Buddy.allCases.dropFirst(5))]
+        let rows = stride(from: 0, to: Buddy.allCases.count, by: 5).map { Array(Buddy.allCases[$0..<min($0 + 5, Buddy.allCases.count)]) }
         let image = VStack(spacing: 6) {
             ForEach(rows.indices, id: \.self) { r in
                 HStack(spacing: 6) {

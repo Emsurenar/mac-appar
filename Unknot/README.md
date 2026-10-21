@@ -89,11 +89,13 @@ it: *Breathe in · 3*, *Switch sides*.
 ## The Stretch Crew
 
 <p align="center">
-  <img src="docs/buddies.png" width="640" alt="The Stretch Crew: Momo the mochi, Miso the cat, Bao the panda, Juni the bunny, Otto the frog, Selma the semla, Pip the chick, Toby the toast, Nori the onigiri and Stefan Löfven">
+  <img src="docs/buddies.png" width="640" alt="The Stretch Crew: Momo the mochi, Miso the cat, Bao the panda, Juni the bunny, Otto the frog, Selma the semla, Pip the chick, Toby the toast, Nori the onigiri, Stefan Löfven, Jesus of Nazareth, Mahatma Gandhi, Barack Obama and René Descartes">
 </p>
 
-Ten characters drawn like small engravings: one ink line, hatching for shadow and a soft wash of colour.
-Otto the frog is on the app icon; Selma is a semla, the Swedish cream bun. A random member leads each break,
+Fourteen characters drawn like small engravings: one ink line, hatching for shadow and a soft wash of colour.
+Otto the frog is on the app icon and Selma is a semla, the Swedish cream bun. The last row is drawn in more
+detail: Jesus with his halo, Gandhi in his round glasses, Obama with a flag pin and Descartes in the collar
+from his portrait. A random member leads each break,
 and under **Settings → Stretch Crew** you can keep only your favourites.
 
 ## When breaks happen

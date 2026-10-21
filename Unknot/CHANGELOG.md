@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.13.0 – 2026-10-21
+
+- **Four new members of the Stretch Crew**, drawn in more detail than the rest:
+  - **Jesus of Nazareth**: long hair parted in the middle, a beard, a white tunic with a red mantle, sandals
+    and a fine gold halo.
+  - **Mahatma Gandhi**: round wire glasses, a white moustache, a khadi shawl with a woven border, a dhoti and
+    sandals.
+  - **Barack Obama**: close-cropped hair going grey at the temples, his wide smile, a charcoal suit, a blue
+    tie, a flag pin and a pocket square.
+  - **René Descartes**, as Frans Hals painted him: long dark hair, a thin moustache, a black doublet engraved
+    all over and a wide white collar.
+- The Stretch Crew settings and the README picture have room for all fourteen.
+
 ## 1.12.0 – 2026-10-21
 
 - **Stefan Löfven joins the Stretch Crew** in place of Sol the cactus: a dark suit, a red tie, a shiny crown

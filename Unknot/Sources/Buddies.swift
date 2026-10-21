@@ -2,7 +2,7 @@ import SwiftUI
 
 /// The Stretch Crew. Every member can do every move; how each one is drawn lives in Crew.swift.
 enum Buddy: String, CaseIterable, Identifiable {
-    case mochi, cat, panda, bunny, frog, semla, chick, toast, onigiri, stefan
+    case mochi, cat, panda, bunny, frog, semla, chick, toast, onigiri, stefan, jesus, gandhi, obama, descartes
 
     var id: String { rawValue }
 
@@ -19,10 +19,14 @@ enum Buddy: String, CaseIterable, Identifiable {
         case .toast: return "Toby"
         case .onigiri: return "Nori"
         case .stefan: return "Stefan"
+        case .jesus: return "Jesus"
+        case .gandhi: return "Mahatma"
+        case .obama: return "Barack"
+        case .descartes: return "René"
         }
     }
 
-    /// What they are (or, for Stefan, his surname).
+    /// What they are, or for the people among them, the rest of their name.
     var kind: String {
         switch self {
         case .mochi: return L("Mochi")
@@ -35,6 +39,10 @@ enum Buddy: String, CaseIterable, Identifiable {
         case .toast: return L("Toast")
         case .onigiri: return L("Onigiri")
         case .stefan: return "Löfven"
+        case .jesus: return L("of Nazareth")
+        case .gandhi: return "Gandhi"
+        case .obama: return "Obama"
+        case .descartes: return "Descartes"
         }
     }
 
@@ -51,6 +59,10 @@ enum Buddy: String, CaseIterable, Identifiable {
         case .toast: return L("Toby the toast")
         case .onigiri: return L("Nori the onigiri")
         case .stefan: return "Stefan Löfven"
+        case .jesus: return L("Jesus of Nazareth")
+        case .gandhi: return "Mahatma Gandhi"
+        case .obama: return "Barack Obama"
+        case .descartes: return "René Descartes"
         }
     }
 }

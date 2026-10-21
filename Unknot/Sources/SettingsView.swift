@@ -30,7 +30,7 @@ enum SettingsTab: Int, CaseIterable {
     var contentSize: NSSize {
         switch self {
         case .general: return NSSize(width: 580, height: 760)
-        case .buddies: return NSSize(width: 580, height: 440)
+        case .buddies: return NSSize(width: 580, height: 572)
         case .exercises: return NSSize(width: 580, height: 640)
         case .schedule: return NSSize(width: 580, height: 500)
         case .activity: return NSSize(width: 580, height: 440)

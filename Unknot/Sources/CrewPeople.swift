@@ -86,52 +86,57 @@ private func printed(_ hex: UInt32) -> Color {
           blue: Double(hex & 0xFF) / 255 * 0xF0 / 255)
 }
 
-/// Cartoon eyes: big white eyeballs with small pupils that look about, upper lids that can droop, lower lids
-/// that rise when smiling, and bags underneath. Drawn in `overlay`, after the colour, so the whites stay white.
-struct ToonEyes {
+/// Eyes drawn as almond-shaped openings: an upper lid line, the white, a dark iris with a glint, a finer lower
+/// lid and the fold above. No outline all the way round, so they never read as glasses. Drawn in `overlay`,
+/// after the colour, so the whites stay white.
+struct PersonEyes {
     var centers: [CGPoint]
-    var r: CGFloat
-    var lid: CGFloat = 0          // how far the upper lids come down, 0–1
-    var squint: CGFloat = 0       // how far the lower lids come up
-    var skin: UInt32
-    var bags: CGFloat = 1         // 0 for none, 2 for a second line
+    var w: CGFloat                // half the width of each eye
+    var h: CGFloat                // how far it opens above and below the middle
+    var iris: CGFloat
+    var tilt: CGFloat = 0         // how much higher the outer corners sit
+    var irisColor = Color(hex: 0x3A2A22)
+    var lid: CGFloat = 1.8        // the weight of the upper lid line
+    var fold: CGFloat = 1         // 0 for no fold above the eye, 2 for a heavy one
 
     func draw(_ pen: Pen, _ f: CrewFrame) {
         for (i, c0) in centers.enumerated() {
             let side: CGFloat = i == 0 ? -1 : 1
             let c = pt(c0.x + f.fx, c0.y)
+            let inner = pt(c.x - side * w, c.y + 0.4)
+            let outer = pt(c.x + side * w, c.y - tilt)
             switch f.eyes {
             case .closed:
-                pen.stroke(bend(pt(c.x - r, c.y), pt(c.x, c.y + r * 0.5), pt(c.x + r, c.y)), 1.7)
+                pen.stroke(bend(inner, pt(c.x, c.y + h * 1.4), outer), lid)
             case .happy:
-                pen.stroke(bend(pt(c.x - r, c.y + r * 0.25), pt(c.x, c.y - r * 0.85), pt(c.x + r, c.y + r * 0.25)), 1.7)
+                pen.stroke(bend(inner, pt(c.x, c.y - h * 2.2), outer), lid)
             case .open:
-                let ball = oval(c.x, c.y, r * 2, r * 2)
-                pen.paper(ball)
-                let pupil = pt(c.x + f.look * 0.45 - side * r * 0.1, c.y + r * 0.08 + f.lookUp * 0.4)
-                pen.solid(oval(pupil.x, pupil.y, r * 0.5, r * 0.5))
-                if lid > 0 {
-                    let y = c.y - r + 2 * r * lid
-                    pen.solid(ball.intersection(Path(CGRect(x: c.x - r - 1, y: c.y - r - 1, width: r * 2 + 2, height: y - c.y + r + 1))), color: printed(skin))
-                    let half = sqrt(max(0, r * r - (y - c.y) * (y - c.y)))
-                    pen.stroke(bend(pt(c.x - half, y), pt(c.x, y + 0.8), pt(c.x + half, y)), 1.5)
+                let top = pt(c.x + side * w * 0.12, c.y - h * 2)
+                let bottom = pt(c.x - side * w * 0.05, c.y + h * 1.5)
+                let almond = makePath { p in
+                    p.move(to: inner); p.addQuadCurve(to: outer, control: top); p.addQuadCurve(to: inner, control: bottom); p.closeSubpath()
                 }
-                if squint > 0 {
-                    let y = c.y + r - 2 * r * squint
-                    pen.solid(ball.intersection(Path(CGRect(x: c.x - r - 1, y: y, width: r * 2 + 2, height: c.y + r - y + 1))), color: printed(skin))
-                    let half = sqrt(max(0, r * r - (y - c.y) * (y - c.y)))
-                    pen.stroke(bend(pt(c.x - half, y), pt(c.x, y - 1.2), pt(c.x + half, y)), 1.3)
-                }
-                pen.stroke(ball, 1.5)
+                pen.paper(almond)
+                let iris = pt(c.x + f.look * 0.45 + side * 0.3, c.y + h * 0.15 + f.lookUp * 0.35)
+                let inside = pen.moved { $0.clip(to: almond) }
+                inside.c.fill(oval(iris.x, iris.y, self.iris * 2, self.iris * 2), with: .color(irisColor))
+                inside.solid(oval(iris.x, iris.y, self.iris * 0.9, self.iris * 0.9))
+                inside.c.fill(oval(iris.x - self.iris * 0.35, iris.y - self.iris * 0.4, self.iris * 0.55, self.iris * 0.55), with: .color(Pen.paper))
+                pen.stroke(bend(pt(inner.x - side * 0.6, inner.y), top, pt(outer.x + side * 0.8, outer.y - 0.3)), lid)
+                pen.fine(bend(pt(inner.x + side * w * 0.35, inner.y + h * 0.45), bottom, outer))
             }
-            if bags > 0 {
-                pen.fine(bend(pt(c.x - r * 0.85, c.y + r * 1.25), pt(c.x, c.y + r * 1.7), pt(c.x + r * 0.85, c.y + r * 1.25)))
-            }
-            if bags > 1 {
-                pen.fine(bend(pt(c.x - r * 0.5, c.y + r * 1.75), pt(c.x, c.y + r * 2.05), pt(c.x + r * 0.5, c.y + r * 1.75)))
+            if fold > 0 {
+                pen.c.stroke(bend(pt(c.x - side * w * 0.6, c.y - h * 1.6), pt(c.x + side * w * 0.2, c.y - h * 2.9 - fold), pt(c.x + side * w * 1.05, c.y - h * 1.2)),
+                             with: .color(Pen.ink.opacity(0.75)), style: StrokeStyle(lineWidth: 0.9 + fold * 0.25, lineCap: .round))
             }
         }
     }
+}
+
+/// The shadow side of a face: a narrow band down its right edge. The usual crescent also runs under the jaw,
+/// where it reads as stubble.
+private func faceShadow(_ face: Path) -> Hatch {
+    Hatch(face.subtracting(face.applying(CGAffineTransform(translationX: -4.5, y: 0.6))), spacing: 3)
 }
 
 /// A small lapel pin: a flag of two colours with a cross or stripes, drawn as a tiny print.
@@ -197,12 +202,13 @@ struct Suit {
 
 // MARK: - Stefan Löfven
 
-/// Stefan Löfven, from a photograph: thin swept-back hair with a high forehead, bushy pale brows over smiling,
-/// narrowed eyes, a broad nose with a round tip, a closed-mouth smile with deep lines, a strong chin,
-/// a dark suit, a red tie and a Swedish flag pin.
+/// Stefan Löfven, from two photographs: a long face with a broad jaw, light brown greying hair with a side
+/// parting, combed smoothly across the top; narrowed, smiling eyes with laughter lines, light brows that slope
+/// down at the ends, a broad nose with a round tip, a thin closed smile pulled up at one corner, a strong
+/// chin, a dark suit, a red tie and a Swedish flag pin.
 struct StefanArt: CrewArt {
-    let accent = Color(hex: 0x3E4658)
-    let detailColor = Color(hex: 0xC8424A)
+    let accent = Color(hex: 0x3A4256)
+    let detailColor = Color(hex: 0xCC4448)
     let body: Path
     let wash: Path
     let hatches: [Hatch]
@@ -211,69 +217,63 @@ struct StefanArt: CrewArt {
     let headHatch: Hatch
     let hair: Path
     let hairLines: Path
-    let brows: [Path]
     let skin: Path
-    let eyes = ToonEyes(centers: [pt(89, 92), pt(111, 92)], r: 5.2, lid: 0.42, squint: 0.24, skin: 0xEDB9A2)
-    let shoulders = [pt(71, 128), pt(129, 128)]
+    let eyes = PersonEyes(centers: [pt(89.5, 93), pt(110.5, 93)], w: 5.6, h: 1.6, iris: 2.1, tilt: -0.6,
+                          irisColor: Color(hex: 0x5E7896), lid: 1.9, fold: 0.6)
+    let shoulders = [pt(71, 129), pt(129, 129)]
     let arm = ArmStyle.noodle(length: 26, hand: .loop)
     let armOffset = -12.0
     let brow: CGPoint? = pt(113, 86)
     let reachExtra: CGFloat = 30
     let groundWidth: CGFloat = 86
     var headBox: CGRect { head.boundingRect }
-    let headPivot: CGPoint? = pt(100, 118)
-    var waist: CGPoint { pt(100, 150) }
+    let headPivot: CGPoint? = pt(100, 119)
 
     init() {
-        suit = Suit(left: 70, right: 130, top: 117)
+        suit = Suit(left: 70, right: 130, top: 119)
         body = suit.body
         wash = suit.body.subtracting(suit.shirt)
         hatches = [Hatch.shadow(of: suit.body, shift: 12)]
+        // Long, with wide cheeks and a broad jaw ending in a big rounded chin
         let face = makePath { p in
-            p.move(to: pt(100, 60))
-            p.addCurve(to: pt(126, 84), control1: pt(115, 60), control2: pt(126, 70))
-            p.addCurve(to: pt(124, 108), control1: pt(127, 94), control2: pt(126, 101))
-            p.addCurve(to: pt(100, 124), control1: pt(121, 118), control2: pt(112, 124))
-            p.addCurve(to: pt(76, 108), control1: pt(88, 124), control2: pt(79, 118))
-            p.addCurve(to: pt(74, 84), control1: pt(74, 101), control2: pt(73, 94))
-            p.addCurve(to: pt(100, 60), control1: pt(74, 70), control2: pt(85, 60))
+            p.move(to: pt(100, 59))
+            p.addCurve(to: pt(123.5, 80), control1: pt(114, 59), control2: pt(122.5, 68))
+            p.addCurve(to: pt(125, 104), control1: pt(125, 90), control2: pt(126, 97))
+            p.addCurve(to: pt(115, 121.5), control1: pt(124, 113), control2: pt(120, 118))
+            p.addCurve(to: pt(100, 127), control1: pt(110, 125), control2: pt(105, 127))
+            p.addCurve(to: pt(85, 121.5), control1: pt(95, 127), control2: pt(90, 125))
+            p.addCurve(to: pt(75, 104), control1: pt(80, 118), control2: pt(76, 113))
+            p.addCurve(to: pt(76.5, 80), control1: pt(74, 97), control2: pt(75, 90))
+            p.addCurve(to: pt(100, 59), control1: pt(77.5, 68), control2: pt(86, 59))
         }
         head = face
-        headHatch = Hatch.shadow(of: face, shift: 5, spacing: 2.9)
-        // The hairline has gone back at the temples, leaving a little forelock; it's all combed straight back
-        let above = makePath { p in
-            p.move(to: pt(68, 50)); p.addLine(to: pt(132, 50)); p.addLine(to: pt(132, 94)); p.addLine(to: pt(125, 94))
-            p.addCurve(to: pt(117, 77), control1: pt(124, 86), control2: pt(121, 79))
-            p.addCurve(to: pt(104, 72), control1: pt(113, 74), control2: pt(108, 73))
-            p.addQuadCurve(to: pt(96, 72.5), control: pt(100, 74.5))
-            p.addCurve(to: pt(83, 77), control1: pt(92, 73), control2: pt(87, 74))
-            p.addCurve(to: pt(75, 94), control1: pt(79, 79), control2: pt(76, 86))
-            p.addLine(to: pt(68, 94)); p.closeSubpath()
+        headHatch = faceShadow(face)
+        // Parted on his right and combed across: the forehead is high on the parted side, and the hair comes
+        // down over the other temple. It sits a little above the skull where it's swept.
+        let hairShape = makePath { p in
+            p.move(to: pt(76, 88))
+            p.addCurve(to: pt(87, 70), control1: pt(76.5, 79), control2: pt(81, 72))
+            p.addCurve(to: pt(112, 72.5), control1: pt(94, 69.5), control2: pt(105, 70))
+            p.addCurve(to: pt(124.5, 90), control1: pt(119, 75), control2: pt(123, 82))
+            p.addLine(to: pt(126.5, 82))
+            p.addCurve(to: pt(101, 56.5), control1: pt(126, 66), control2: pt(115, 56))
+            p.addCurve(to: pt(75.5, 79), control1: pt(87, 57), control2: pt(76.5, 66))
+            p.closeSubpath()
         }
-        hair = face.intersection(above)
+        hair = hairShape
         hairLines = makePath { p in
-            for k in 0..<6 {
-                let x = 87 + CGFloat(k) * 5.2
-                let y = 73.5 + pow((x - 100) / 15, 2) * 3
-                p.move(to: pt(x, y))
-                p.addQuadCurve(to: pt(100 + (x - 100) * 1.5, 58), control: pt(100 + (x - 100) * 0.9, y - 8))
+            p.move(to: pt(87.5, 69.5)); p.addQuadCurve(to: pt(91, 58.5), control: pt(88.5, 63))      // the parting
+            for k in 0..<5 {
+                let start = pt(90 + CGFloat(k) * 2.5, 60 + CGFloat(k) * 1.6)
+                p.move(to: start)
+                p.addCurve(to: pt(119 + CGFloat(k) * 1.2, 76 + CGFloat(k) * 2.6),
+                           control1: pt(start.x + 14, start.y - 2), control2: pt(116 + CGFloat(k), 66 + CGFloat(k) * 2))
             }
-            for s: CGFloat in [-1, 1] {
-                for k in 0..<3 {
-                    let y = 82 + CGFloat(k) * 3.5
-                    p.move(to: pt(100 + s * 24.5, y)); p.addLine(to: pt(100 + s * 21.5, y - 2.5))
-                }
+            for k in 0..<2 {
+                p.move(to: pt(86 - CGFloat(k) * 3, 64 + CGFloat(k) * 4)); p.addQuadCurve(to: pt(78 - CGFloat(k), 80 + CGFloat(k) * 2), control: pt(80 - CGFloat(k) * 2, 69))
             }
         }
-        brows = [CGFloat(-1), 1].map { s in
-            makePath { p in
-                p.move(to: pt(100 + s * 4, 84.5))
-                p.addQuadCurve(to: pt(100 + s * 19, 85.5), control: pt(100 + s * 12, 79.5))
-                p.addQuadCurve(to: pt(100 + s * 4, 84.5), control: pt(100 + s * 12, 84))
-                p.closeSubpath()
-            }
-        }
-        skin = face.subtracting(hair)
+        skin = face.subtracting(hairShape)
     }
 
     func feet(_ pen: Pen, _ f: CrewFrame) {
@@ -282,50 +282,55 @@ struct StefanArt: CrewArt {
 
     func onBody(_ pen: Pen, _ f: CrewFrame) {
         suit.draw(pen)
-        drawFlagPin(pen, at: pt(110.5, 127), swedish: true)
+        drawFlagPin(pen, at: pt(110.5, 129), swedish: true)
     }
 
     func headParts(_ pen: Pen, _ f: CrewFrame) {
-        drawEars(pen, at: [73, 127], y: 96, w: 8.5, h: 15)
+        drawEars(pen, at: [74.5, 125.5], y: 97, w: 7, h: 13.5)
         pen.shape(head)
         pen.hatch(headHatch)
-        pen.fine(hair)
-        let combed = pen.moved { $0.clip(to: hair) }
-        combed.c.stroke(hairLines, with: .color(Pen.ink.opacity(0.45)), style: StrokeStyle(lineWidth: 0.8, lineCap: .round))
+        pen.paper(hair)
+        pen.stroke(hair, 1.6)
+        pen.c.stroke(hairLines, with: .color(Pen.ink.opacity(0.55)), style: StrokeStyle(lineWidth: 0.85, lineCap: .round))
     }
 
     func face(_ pen: Pen, _ f: CrewFrame) {
         let x = f.fx
-        // Pale, bushy brows
-        let b = pen.moved { $0.translateBy(x: x, y: 0) }
-        for brow in brows {
-            b.paper(brow)
-            b.c.stroke(brow, with: .color(Pen.ink), lineWidth: 1.1)
-        }
+        // Light brows sloping down at the outer ends
+        pen.stroke(bend(pt(83 + x, 86.5), pt(89 + x, 84.2), pt(95.5 + x, 85.6)), 1.5)
+        pen.stroke(bend(pt(104.5 + x, 85.6), pt(111 + x, 84.2), pt(117 + x, 86.5)), 1.5)
+        // Laughter lines, and the soft bags under the eyes
         for s: CGFloat in [-1, 1] {
-            pen.fine(line(pt(100 + s * 17.5 + x, 91.5), pt(100 + s * 21.5 + x, 90)))
+            let ex = 100 + s * 17 + x
+            pen.fine(line(pt(ex, 92), pt(ex + s * 3.8, 90.5)))
+            pen.fine(line(pt(ex + s * 0.3, 94.3), pt(ex + s * 4, 95.6)))
+            pen.c.stroke(bend(pt(100 + s * 7 + x, 97.5), pt(100 + s * 11 + x, 99), pt(100 + s * 15 + x, 97)),
+                         with: .color(Pen.ink.opacity(0.5)), lineWidth: 0.9)
         }
+        // The broad nose with its round tip
         pen.stroke(makePath { p in
-            p.move(to: pt(98.5 + x, 94)); p.addQuadCurve(to: pt(95 + x, 104.5), control: pt(96 + x, 99))
-            p.addQuadCurve(to: pt(100 + x, 107.5), control: pt(95.5 + x, 108))
-            p.addQuadCurve(to: pt(105.5 + x, 104.5), control: pt(105 + x, 108))
+            p.move(to: pt(99 + x, 95)); p.addQuadCurve(to: pt(96.5 + x, 104), control: pt(97 + x, 99.5))
+            p.addCurve(to: pt(100.5 + x, 109), control1: pt(93 + x, 106.5), control2: pt(96.5 + x, 109.5))
+            p.addCurve(to: pt(105 + x, 105), control1: pt(104 + x, 108.8), control2: pt(106.5 + x, 107))
         }, 1.6)
-        pen.fine(bend(pt(90 + x, 103), pt(87 + x, 108.5), pt(90 + x, 114)))
-        pen.fine(bend(pt(110 + x, 103), pt(113 + x, 108.5), pt(110 + x, 114)))
+        pen.fine(bend(pt(95.5 + x, 104.5), pt(94 + x, 106.5), pt(96 + x, 108)))
+        pen.fine(bend(pt(90 + x, 104), pt(87.5 + x, 110), pt(90.5 + x, 116)))
+        pen.fine(bend(pt(110 + x, 104), pt(112.5 + x, 110), pt(109.5 + x, 116)))
         switch f.pose.mouth {
         case .smile:
-            // The closed, slightly crooked smile
-            pen.stroke(bend(pt(92 + x, 112.5), pt(100 + x, 115.5), pt(108.5 + x, 111.5)), 1.8)
-            pen.fine(line(pt(108.5 + x, 111.5), pt(110 + x, 110)))
+            // Thin, closed, pulled up more at one corner
+            pen.stroke(bend(pt(92.5 + x, 114), pt(100 + x, 116.5), pt(108.5 + x, 112.5)), 1.8)
+            pen.fine(bend(pt(108.5 + x, 112.5), pt(110 + x, 112.3), pt(110.6 + x, 111)))
+            pen.fine(bend(pt(96 + x, 118.5), pt(100 + x, 119.3), pt(104 + x, 118.3)))
         case .open:
             pen.solid(makePath { p in
-                p.move(to: pt(92 + x, 112)); p.addQuadCurve(to: pt(108 + x, 112), control: pt(100 + x, 113.5))
-                p.addQuadCurve(to: pt(92 + x, 112), control: pt(100 + x, 121))
+                p.move(to: pt(92 + x, 113.5)); p.addQuadCurve(to: pt(108 + x, 113), control: pt(100 + x, 115))
+                p.addQuadCurve(to: pt(92 + x, 113.5), control: pt(100 + x, 122))
             })
         case .o:
-            pen.stroke(oval(100 + x, 114, 5, 5.5), 1.6)
+            pen.stroke(oval(100 + x, 116, 5, 5.5), 1.6)
         }
-        pen.fine(bend(pt(95 + x, 119.5), pt(100 + x, 121), pt(105 + x, 119.5)))
+        pen.fine(bend(pt(95.5 + x, 122.5), pt(100 + x, 124), pt(104.5 + x, 122.5)))
     }
 
     func overlay(_ pen: Pen, _ f: CrewFrame) { eyes.draw(pen, f) }
@@ -333,10 +338,9 @@ struct StefanArt: CrewArt {
     func detail(_ f: CrewFrame) -> Path { suit.tie }
 
     func headTints(_ f: CrewFrame) -> [(Path, Color)] {
-        [(skin.subtracting(brows[0].union(brows[1]).applying(CGAffineTransform(translationX: f.fx, y: 0))), Color(hex: 0xEDB9A2)),
-         (hair, Color(hex: 0xCDBBA1)), (brows[0].union(brows[1]).applying(CGAffineTransform(translationX: f.fx, y: 0)), Color(hex: 0xC2AE93)),
-         (oval(86 + f.fx, 104, 10, 5.5).union(oval(114 + f.fx, 104, 10, 5.5)), Color(hex: 0xE59886).opacity(0.45)),
-         (oval(73, 96, 8.5, 15).union(oval(127, 96, 8.5, 15)).subtracting(head), Color(hex: 0xE6AE97))]
+        [(skin, Color(hex: 0xEDB8A0)), (hair, Color(hex: 0xB9A285)),
+         (oval(86.5 + f.fx, 104, 10, 5).union(oval(113.5 + f.fx, 104, 10, 5)), Color(hex: 0xE5947F).opacity(0.4)),
+         (oval(74.5, 97, 7, 13.5).union(oval(125.5, 97, 7, 13.5)).subtracting(head), Color(hex: 0xE6AE97))]
     }
 }
 
@@ -365,7 +369,8 @@ struct JesusArt: CrewArt {
     let beard: Path
     let beardLines: Path
     let skin: Path
-    let eyes = ToonEyes(centers: [pt(91, 92), pt(109, 92)], r: 4.8, lid: 0.32, skin: 0xE9C3A2)
+    let eyes = PersonEyes(centers: [pt(91, 92.5), pt(109, 92.5)], w: 5, h: 2.3, iris: 2.3, tilt: 0.4,
+                          irisColor: Color(hex: 0x4A3324), lid: 1.8, fold: 0.8)
     let shoulders = [pt(75, 128), pt(125, 128)]
     let arm = ArmStyle.noodle(length: 26, hand: .loop)
     let armOffset = -12.0
@@ -419,7 +424,7 @@ struct JesusArt: CrewArt {
             p.addCurve(to: pt(100, 62), control1: pt(80, 72), control2: pt(87, 62))
         }
         face = head
-        faceHatch = Hatch.shadow(of: head, shift: 5, spacing: 2.9)
+        faceHatch = faceShadow(head)
         hairBack = oval(100, 82, 50, 46)
             .union(lock(side: -1, outer: 75, inner: 86, top: 84, bottom: 136, waves: 2))
             .union(lock(side: 1, outer: 75, inner: 86, top: 84, bottom: 136, waves: 2))
@@ -558,7 +563,8 @@ struct GandhiArt: CrewArt {
     let skin: Path
     let moustache: Path
     let moustacheLines: Path
-    let eyes = ToonEyes(centers: [pt(90, 92), pt(110, 92)], r: 3.8, lid: 0.3, squint: 0.3, skin: 0xA8785A, bags: 0)
+    let eyes = PersonEyes(centers: [pt(90, 92.3), pt(110, 92.3)], w: 3.8, h: 1.5, iris: 1.6, tilt: -0.3,
+                          irisColor: Color(hex: 0x2C1E18), lid: 1.5, fold: 0)
     let shoulders = [pt(73, 130), pt(127, 130)]
     let arm = ArmStyle.noodle(length: 25, hand: .loop)
     let armOffset = -12.0
@@ -605,7 +611,7 @@ struct GandhiArt: CrewArt {
             p.addCurve(to: pt(100, 58), control1: pt(76, 70), control2: pt(85, 58))
         }
         head = face
-        headHatch = Hatch.shadow(of: face, shift: 5, spacing: 2.9)
+        headHatch = faceShadow(face)
         var r = SeededRandom(state: 19)
         stubble = makePath { p in
             var placed = 0
@@ -729,9 +735,9 @@ struct GandhiArt: CrewArt {
 
 // MARK: - Obama
 
-/// Barack Obama, from his official portrait: close-cropped greying hair, ears that stand out, angled brows,
-/// a long face with a strong chin, a broad toothy smile, a navy suit, a light blue shirt, a blue patterned tie
-/// and a flag pin.
+/// Barack Obama, from his official portraits: a long, slim face with high cheekbones and a rounded chin,
+/// close-cropped hair with a straight hairline going grey, ears that stand out a little, straight dark brows,
+/// almond eyes, a broad nose and a wide smile; a navy suit, a light blue shirt, a striped blue tie, a flag pin.
 struct ObamaArt: CrewArt {
     let accent = Color(hex: 0x2F3B58)
     let detailColor = Color(hex: 0x3F64A8)
@@ -745,49 +751,54 @@ struct ObamaArt: CrewArt {
     let hairDots: Path
     let temples: Path
     let skin: Path
-    let eyes = ToonEyes(centers: [pt(90, 92.5), pt(110, 92.5)], r: 5, lid: 0.18, squint: 0.36, skin: 0xA87457)
-    let shoulders = [pt(71, 128), pt(129, 128)]
+    let eyes = PersonEyes(centers: [pt(90.5, 93), pt(109.5, 93)], w: 5.2, h: 2.1, iris: 2.3, tilt: 0.3,
+                          irisColor: Color(hex: 0x2C1E18), lid: 2, fold: 0.5)
+    let shoulders = [pt(72, 130), pt(128, 130)]
     let arm = ArmStyle.noodle(length: 26, hand: .loop)
     let armOffset = -12.0
     let brow: CGPoint? = pt(112, 86)
     let reachExtra: CGFloat = 30
     let groundWidth: CGFloat = 86
     var headBox: CGRect { head.boundingRect }
-    let headPivot: CGPoint? = pt(100, 118)
-    var waist: CGPoint { pt(100, 150) }
+    let headPivot: CGPoint? = pt(100, 120)
 
     init() {
-        suit = Suit(left: 71, right: 129, top: 118)
+        suit = Suit(left: 72, right: 128, top: 120)
         body = suit.body
         wash = suit.body.subtracting(suit.shirt)
         hatches = [Hatch.shadow(of: suit.body, shift: 12)]
+        // Long and slim: a flattish crown, high cheekbones, hollows under them, a narrow jaw and a rounded chin
         let face = makePath { p in
-            p.move(to: pt(100, 59))
-            p.addCurve(to: pt(123, 82), control1: pt(114, 59), control2: pt(123, 69))
-            p.addCurve(to: pt(120, 110), control1: pt(124, 95), control2: pt(123, 103))
-            p.addCurve(to: pt(100, 127), control1: pt(116, 122), control2: pt(108, 127))
-            p.addCurve(to: pt(80, 110), control1: pt(92, 127), control2: pt(84, 122))
-            p.addCurve(to: pt(77, 82), control1: pt(77, 103), control2: pt(76, 95))
-            p.addCurve(to: pt(100, 59), control1: pt(77, 69), control2: pt(86, 59))
+            p.move(to: pt(100, 58))
+            p.addCurve(to: pt(120.5, 74), control1: pt(112, 58), control2: pt(119.5, 63))
+            p.addCurve(to: pt(122.5, 98), control1: pt(121.5, 84), control2: pt(123, 91))
+            p.addCurve(to: pt(115, 118), control1: pt(122, 106), control2: pt(119, 113))
+            p.addCurve(to: pt(100, 128), control1: pt(111, 123.5), control2: pt(106, 128))
+            p.addCurve(to: pt(85, 118), control1: pt(94, 128), control2: pt(89, 123.5))
+            p.addCurve(to: pt(77.5, 98), control1: pt(81, 113), control2: pt(78, 106))
+            p.addCurve(to: pt(79.5, 74), control1: pt(77, 91), control2: pt(78.5, 84))
+            p.addCurve(to: pt(100, 58), control1: pt(80.5, 63), control2: pt(88, 58))
         }
         head = face
-        headHatch = Hatch.shadow(of: face, shift: 5, spacing: 2.9)
+        headHatch = faceShadow(face)
+        // Cropped close, with a high straight hairline and sharp corners at the temples
         let above = makePath { p in
-            p.move(to: pt(70, 50)); p.addLine(to: pt(130, 50)); p.addLine(to: pt(130, 88)); p.addLine(to: pt(122, 88))
-            p.addCurve(to: pt(100, 70.5), control1: pt(121, 75), control2: pt(110, 70.5))
-            p.addCurve(to: pt(78, 88), control1: pt(90, 70.5), control2: pt(79, 75))
-            p.addLine(to: pt(70, 88)); p.closeSubpath()
+            p.move(to: pt(70, 50)); p.addLine(to: pt(130, 50)); p.addLine(to: pt(130, 90)); p.addLine(to: pt(121, 90))
+            p.addLine(to: pt(120, 80)); p.addLine(to: pt(115.5, 76.5))
+            p.addQuadCurve(to: pt(84.5, 76.5), control: pt(100, 70.5))
+            p.addLine(to: pt(80, 80)); p.addLine(to: pt(79, 90))
+            p.addLine(to: pt(70, 90)); p.closeSubpath()
         }
         let cap = face.intersection(above)
         hair = cap
-        temples = cap.intersection(oval(79, 84, 9, 14)).union(cap.intersection(oval(121, 84, 9, 14)))
+        temples = oval(80, 84, 8, 13).union(oval(120, 84, 8, 13))
         var r = SeededRandom(state: 31)
         hairDots = makePath { p in
             var placed = 0
-            while placed < 170 {
-                let q = pt(77 + r.next() * 46, 59 + r.next() * 30)
+            while placed < 190 {
+                let q = pt(78 + r.next() * 44, 58 + r.next() * 32)
                 if cap.contains(q) {
-                    let s = 0.3 + r.next() * 0.35
+                    let s = 0.3 + r.next() * 0.3
                     p.addEllipse(in: CGRect(x: q.x - s, y: q.y - s, width: s * 2, height: s * 2))
                     placed += 1
                 }
@@ -802,58 +813,69 @@ struct ObamaArt: CrewArt {
 
     func onBody(_ pen: Pen, _ f: CrewFrame) {
         suit.draw(pen)
-        pen.paper(suit.tiePattern)
-        drawFlagPin(pen, at: pt(110.5, 128), swedish: false)
+        drawFlagPin(pen, at: pt(110.5, 130), swedish: false)
     }
 
     func headParts(_ pen: Pen, _ f: CrewFrame) {
-        // Ears that stand out
-        drawEars(pen, at: [72.5, 127.5], y: 93, w: 12, h: 18)
+        // His ears stand out a little; no more than that
+        drawEars(pen, at: [77, 123], y: 96, w: 8, h: 13.5)
         pen.shape(head)
         pen.hatch(headHatch)
         pen.fine(hair)
-        pen.c.fill(hairDots, with: .color(Pen.ink.opacity(0.55)))
+        let onHair = pen.moved { $0.clip(to: hair) }
+        onHair.tint(temples, Color(hex: 0xC9C4BF))
+        pen.c.fill(hairDots, with: .color(Pen.ink.opacity(0.5)))
     }
 
     func face(_ pen: Pen, _ f: CrewFrame) {
         let x = f.fx
-        pen.stroke(bend(pt(83 + x, 86), pt(89 + x, 82.5), pt(96 + x, 84.5)), 2.3)
-        pen.stroke(bend(pt(104 + x, 84.5), pt(111 + x, 82.5), pt(117 + x, 86)), 2.3)
+        // Straight, dark brows, a little lower towards the nose
+        pen.stroke(bend(pt(83.5 + x, 86.5), pt(89.5 + x, 85), pt(96 + x, 86.6)), 2.2)
+        pen.stroke(bend(pt(104 + x, 86.6), pt(110.5 + x, 85), pt(116.5 + x, 86.5)), 2.2)
         pen.stroke(makePath { p in
-            p.move(to: pt(99 + x, 95)); p.addQuadCurve(to: pt(96 + x, 103.5), control: pt(97 + x, 99))
-            p.addQuadCurve(to: pt(100 + x, 106), control: pt(95.5 + x, 106.5))
-            p.addQuadCurve(to: pt(104.5 + x, 103.5), control: pt(104.5 + x, 106.5))
+            p.move(to: pt(99 + x, 95)); p.addLine(to: pt(97.8 + x, 103.5))
+            p.addQuadCurve(to: pt(100 + x, 106.5), control: pt(95 + x, 106.5))
+            p.addQuadCurve(to: pt(104.5 + x, 104), control: pt(104 + x, 106.8))
         }, 1.6)
-        pen.fine(bend(pt(94.5 + x, 102.5), pt(93.5 + x, 104.5), pt(95.5 + x, 105.5)))
-        pen.fine(bend(pt(105.5 + x, 102.5), pt(106.5 + x, 104.5), pt(104.5 + x, 105.5)))
-        // Smile lines and cheekbones
-        pen.fine(bend(pt(92 + x, 101.5), pt(86 + x, 107), pt(88 + x, 114)))
-        pen.fine(bend(pt(108 + x, 101.5), pt(114 + x, 107), pt(112 + x, 114)))
-        pen.fine(bend(pt(82 + x, 99), pt(85 + x, 100.5), pt(88 + x, 99)))
-        pen.fine(bend(pt(112 + x, 99), pt(115 + x, 100.5), pt(118 + x, 99)))
-        pen.fine(bend(pt(95 + x, 123), pt(100 + x, 124.5), pt(105 + x, 123)))
+        pen.fine(bend(pt(95 + x, 103), pt(93.8 + x, 105), pt(96 + x, 106.2)))
+        pen.fine(bend(pt(105 + x, 103), pt(106.2 + x, 105), pt(104 + x, 106.2)))
+        // Cheekbones and the long lines that frame the smile
+        pen.c.stroke(bend(pt(82 + x, 100), pt(85 + x, 101.5), pt(88.5 + x, 100.5)), with: .color(Pen.ink.opacity(0.5)), lineWidth: 0.9)
+        pen.c.stroke(bend(pt(111.5 + x, 100.5), pt(115 + x, 101.5), pt(118 + x, 100)), with: .color(Pen.ink.opacity(0.5)), lineWidth: 0.9)
+        pen.fine(bend(pt(93 + x, 102.5), pt(87.5 + x, 108), pt(89 + x, 115.5)))
+        pen.fine(bend(pt(107 + x, 102.5), pt(112.5 + x, 108), pt(111 + x, 115.5)))
+        pen.fine(bend(pt(96 + x, 124), pt(100 + x, 125.3), pt(104 + x, 124)))
+        if f.pose.mouth == .smile {
+            // A wide, closed smile with full lips
+            pen.stroke(bend(pt(91 + x, 112), pt(100 + x, 115), pt(109 + x, 112)), 1.8)
+            pen.fine(bend(pt(94 + x, 111.2), pt(100 + x, 110.2), pt(106 + x, 111.2)))
+            pen.fine(bend(pt(94.5 + x, 116.3), pt(100 + x, 118.6), pt(105.5 + x, 116.3)))
+        }
     }
 
     func overlay(_ pen: Pen, _ f: CrewFrame) {
         eyes.draw(pen, f)
         let x = f.fx
-        if f.pose.mouth == .o {
-            pen.solid(oval(100 + x, 114, 6, 7))
+        switch f.pose.mouth {
+        case .smile:
             return
+        case .o:
+            pen.solid(oval(100 + x, 114.5, 5.5, 6.5))
+        case .open:
+            // The big grin, top teeth showing
+            let mouth = makePath { p in
+                p.move(to: pt(89.5 + x, 111))
+                p.addQuadCurve(to: pt(110.5 + x, 111), control: pt(100 + x, 112))
+                p.addQuadCurve(to: pt(89.5 + x, 111), control: pt(100 + x, 123))
+                p.closeSubpath()
+            }
+            pen.solid(mouth)
+            pen.paper(mouth.intersection(Path(CGRect(x: 87 + x, y: 109, width: 26, height: 6))))
+            for tx in [95.5, 100.0, 104.5] {
+                pen.c.stroke(line(pt(tx + x, 112), pt(tx + x, 114.6)), with: .color(Pen.ink.opacity(0.35)), lineWidth: 0.6)
+            }
+            pen.stroke(mouth, 1.6)
         }
-        // The broad smile, top teeth showing
-        let open: CGFloat = f.pose.mouth == .open ? 3 : 0
-        let mouth = makePath { p in
-            p.move(to: pt(88.5 + x, 110))
-            p.addQuadCurve(to: pt(111.5 + x, 110), control: pt(100 + x, 111.5))
-            p.addQuadCurve(to: pt(88.5 + x, 110), control: pt(100 + x, 121 + open))
-            p.closeSubpath()
-        }
-        pen.solid(mouth)
-        let teeth = mouth.intersection(Path(CGRect(x: 86 + x, y: 108, width: 28, height: 6.2)))
-        pen.paper(teeth)
-        for tx in [95.0, 100.0, 105.0] { pen.c.stroke(line(pt(tx + x, 111), pt(tx + x, 114)), with: .color(Pen.ink.opacity(0.4)), lineWidth: 0.6) }
-        pen.stroke(mouth, 1.6)
     }
 
     func detail(_ f: CrewFrame) -> Path { suit.tie }
@@ -861,9 +883,9 @@ struct ObamaArt: CrewArt {
     func extras(_ f: CrewFrame) -> [(Path, Color)] { [(suit.shirt, Color(hex: 0xD6E4F3))] }
 
     func headTints(_ f: CrewFrame) -> [(Path, Color)] {
-        [(skin, Color(hex: 0xA87457)),
-         (oval(72.5, 93, 12, 18).union(oval(127.5, 93, 12, 18)).subtracting(head), Color(hex: 0x9C6A4F)),
-         (hair.subtracting(temples), Color(hex: 0x7C746E)), (temples, Color(hex: 0xB3AEA9))]
+        [(skin, Color(hex: 0xA47255)),
+         (oval(77, 96, 8, 13.5).union(oval(123, 96, 8, 13.5)).subtracting(head), Color(hex: 0x996850)),
+         (hair, Color(hex: 0x5E5752))]
     }
 }
 
@@ -888,7 +910,8 @@ struct DescartesArt: CrewArt {
     let face: Path
     let faceHatch: Hatch
     let skin: Path
-    let eyes = ToonEyes(centers: [pt(90, 92), pt(110, 92)], r: 5.3, lid: 0.4, skin: 0xEBC2A4, bags: 2)
+    let eyes = PersonEyes(centers: [pt(90, 92.5), pt(110, 92.5)], w: 5.3, h: 2, iris: 2.4, tilt: 0,
+                          irisColor: Color(hex: 0x3B2A20), lid: 2.1, fold: 2)
     let shoulders = [pt(73, 128), pt(127, 128)]
     let arm = ArmStyle.noodle(length: 26, hand: .loop)
     let armOffset = -12.0
@@ -935,7 +958,7 @@ struct DescartesArt: CrewArt {
             p.addCurve(to: pt(100, 60), control1: pt(77, 70), control2: pt(86, 60))
         }
         face = head
-        faceHatch = Hatch.shadow(of: head, shift: 5, spacing: 2.9)
+        faceHatch = faceShadow(head)
         hairBack = oval(100, 82, 60, 52)
             .union(lock(side: -1, outer: 66, inner: 82, top: 82, bottom: 134, waves: 6))
             .union(lock(side: 1, outer: 66, inner: 82, top: 82, bottom: 134, waves: 6))

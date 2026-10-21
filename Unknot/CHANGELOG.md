@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.16.0 – 2026-10-21
+
+- **Stefan Löfven and Barack Obama, redrawn again** from more photographs:
+  - Löfven's hair is right now: light brown going grey, parted on one side and combed smoothly across the
+    top, not swept back. His face is longer, with a broad jaw, narrow smiling blue eyes and laughter lines,
+    light brows that slope down at the ends and a thin smile pulled up at one corner.
+  - Obama has a long, slim face with high cheekbones and a rounded chin, a straight hairline with sharp
+    corners, ears that stand out only a little, straight dark brows and a wide closed smile; the big grin
+    is kept for cheering.
+- **New eyes for all the people in the crew.** The big round eyeballs with thick outlines looked like
+    glasses; now they're almond-shaped openings with an upper lid, a dark iris with a glint, a finer lower lid
+    and the fold above.
+- The shadow on the people's faces runs down one side only. Under the jaw it looked like stubble.
+
 ## 1.15.0 – 2026-10-21
 
 - **The crew really does the exercises.** Every move is rechoreographed so it looks like the exercise itself:

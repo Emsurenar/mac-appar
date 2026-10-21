@@ -174,13 +174,6 @@ cd unknot
 translation, and how releases are made. Bug reports and ideas are welcome in
 [Issues](https://github.com/Emsurenar/unknot/issues).
 
-## På svenska
-
-Unknot påminner dig om att sträcka på dig. Var 20:e minut kommer en liten ruta ned ur kamerahacket högst upp
-på skärmen, och någon från Stretch Crew visar några snabba övningar. Efter 30 sekunder åker rutan tillbaka.
-Appen följer din Macs språk, eller så väljer du svenska under Inställningar. Installera med kommandot ovan
-eller ladda ned den under [Releases](https://github.com/Emsurenar/unknot/releases/latest).
-
 ## License
 
 [MIT](LICENSE) © 2026 Emre Sunar

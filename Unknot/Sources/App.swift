@@ -108,6 +108,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             button.title = title
             shownTitle = title
         }
+        let tip = statusText
+        if button.toolTip != tip { button.toolTip = tip }
     }
 
     // MARK: Menu

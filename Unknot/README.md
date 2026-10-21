@@ -9,6 +9,13 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/Emsurenar/unknot/releases/latest"><img src="https://img.shields.io/github/v/release/Emsurenar/unknot?label=release&color=de6447" alt="Latest release"></a>
+  <a href="https://github.com/Emsurenar/unknot/actions/workflows/build.yml"><img src="https://github.com/Emsurenar/unknot/actions/workflows/build.yml/badge.svg" alt="Build status"></a>
+  <img src="https://img.shields.io/badge/macOS-13%2B-555" alt="macOS 13 or later">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Emsurenar/unknot?color=555" alt="MIT license"></a>
+</p>
+
+<p align="center">
   <a href="https://github.com/Emsurenar/unknot/releases/latest"><strong>Download for macOS</strong></a>
   &nbsp;·&nbsp; macOS 13 or later &nbsp;·&nbsp; Apple silicon and Intel &nbsp;·&nbsp; Free and open source
 </p>
@@ -156,6 +163,10 @@ defaults delete io.github.emsurenar.unknot
 Unknot är en liten kompis i menyraden som påminner dig om att sträcka på dig. Var 20:e minut glider en ruta
 in i hörnet och figuren visar några snabba övningar. Appen följer din Macs språk och finns på svenska och
 engelska. Ladda ned den under [Releases](https://github.com/Emsurenar/unknot/releases/latest).
+
+## Contributing
+
+Bug reports, ideas, new buddies and translations are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

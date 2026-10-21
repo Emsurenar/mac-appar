@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.21.1 – 2026-10-21
+
+- **René Descartes, closer to Frans Hals's portrait.** His hair is parted a little off centre with the middle
+  of the forehead bare and loose locks over the temples, instead of a straight fringe. The collar is a broad
+  falling band of plain linen lying flat over the shoulders, not a bow, and the cloak reads as black.
+
 ## 1.21.0 – 2026-10-21
 
 - **Better mixes of exercises.** A break picks each exercise from a different part of the body when it can,

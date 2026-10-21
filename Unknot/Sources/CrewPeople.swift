@@ -825,6 +825,7 @@ struct DescartesArt: CrewArt {
     let faceHatch: Hatch
     let skin: Path
     let hairTint: Path
+    let cloak: Path
     let eyes = ToonEyes(centers: [pt(90, 92), pt(110, 92)], r: 5.3, lid: 0.4, skin: 0xEBC2A4, bags: 2)
     let shoulders = [pt(73, 128), pt(127, 128)]
     let arm = ArmStyle.noodle(length: 26, hand: .loop)
@@ -838,29 +839,35 @@ struct DescartesArt: CrewArt {
     init() {
         let doublet = jacket(left: 72, right: 128)
         body = doublet
-        let band = makePath { p in
-            p.move(to: pt(100, 122.5))
-            p.addQuadCurve(to: pt(80, 121), control: pt(88, 123))
-            p.addLine(to: pt(84, 138))
-            p.addQuadCurve(to: pt(99, 133), control: pt(92, 137))
-            p.addLine(to: pt(101, 133))
-            p.addQuadCurve(to: pt(116, 138), control: pt(108, 137))
-            p.addLine(to: pt(120, 121))
-            p.addQuadCurve(to: pt(100, 122.5), control: pt(112, 123))
-            p.closeSubpath()
+        // A falling band, as in the portrait: two broad flaps of plain linen that lie flat over the cloak,
+        // spreading out and down from the neck and meeting in front
+        let flaps = [CGFloat(-1), 1].map { s in
+            makePath { p in
+                p.move(to: pt(100 + s * 0.2, 122.5))
+                p.addQuadCurve(to: pt(100 + s * 20, 120.5), control: pt(100 + s * 11, 124))
+                p.addQuadCurve(to: pt(100 + s * 25, 133.5), control: pt(100 + s * 24, 126))
+                p.addQuadCurve(to: pt(100 + s * 1, 141), control: pt(100 + s * 15, 140.5))
+                p.addLine(to: pt(100 + s * 0.2, 122.5))
+                p.closeSubpath()
+            }
         }
+        let band = flaps[0].union(flaps[1])
         collar = band
         collarLines = makePath { p in
-            p.move(to: pt(100, 120)); p.addLine(to: pt(100, 133))
-            p.move(to: pt(88, 126)); p.addQuadCurve(to: pt(90, 135), control: pt(88, 131))
-            p.move(to: pt(112, 126)); p.addQuadCurve(to: pt(110, 135), control: pt(112, 131))
+            // The fold where the band turns down over the neckline, and a soft crease in each flap
+            for s: CGFloat in [-1, 1] {
+                p.move(to: pt(100 + s * 3, 125)); p.addQuadCurve(to: pt(100 + s * 19.5, 123.5), control: pt(100 + s * 11, 126.5))
+                p.move(to: pt(100 + s * 13, 128)); p.addQuadCurve(to: pt(100 + s * 11, 138.5), control: pt(100 + s * 13.5, 133))
+            }
         }
         buttons = makePath { p in
             for y in stride(from: 141.0, through: 161.0, by: 5.0) { p.addEllipse(in: CGRect(x: 98.8, y: y - 1.2, width: 2.4, height: 2.4)) }
         }
         wash = doublet.subtracting(band)
+        cloak = doublet.subtracting(band)
         hatches = [Hatch.shadow(of: doublet, shift: 12)]
-        cloth = Hatch(doublet.subtracting(band), spacing: 3.2, angle: -40)
+        // Fine diagonal lines over all of it: engraved black cloth
+        cloth = Hatch(doublet.subtracting(band), spacing: 2.6, angle: -40)
 
         let head = makePath { p in
             p.move(to: pt(100, 60))
@@ -876,22 +883,37 @@ struct DescartesArt: CrewArt {
         hairBack = oval(100, 82, 60, 52)
             .union(lock(side: -1, outer: 66, inner: 82, top: 82, bottom: 134, waves: 6))
             .union(lock(side: 1, outer: 66, inner: 82, top: 82, bottom: 134, waves: 6))
-        // Locks falling over the forehead instead of a parting
-        let tips: [(CGFloat, CGFloat)] = [(77, 92), (81, 80), (85, 84), (89, 77), (93, 82), (97, 75), (101, 80),
-                                          (105, 74), (109, 81), (113, 76), (117, 83), (121, 79), (124, 92)]
-        let fringeLine = makePath { p in
-            p.move(to: pt(70, 50)); p.addLine(to: pt(130, 50)); p.addLine(to: pt(130, 92))
-            for (i, t) in tips.reversed().enumerated() where i > 0 {
-                let prev = tips.reversed()[i - 1]
-                p.addQuadCurve(to: pt(t.0, t.1), control: pt((t.0 + prev.0) / 2, min(t.1, prev.1) - 2))
-            }
-            p.addLine(to: pt(70, 92)); p.closeSubpath()
+        // Parted a little left of centre; from the parting the hair falls away to both sides, leaving the
+        // middle of the forehead bare, and a couple of loose locks come down over each temple
+        let cap = makePath { p in
+            p.move(to: pt(70, 50)); p.addLine(to: pt(130, 50)); p.addLine(to: pt(130, 98)); p.addLine(to: pt(123.5, 98))
+            p.addCurve(to: pt(112, 77), control1: pt(122, 88), control2: pt(118, 80))
+            p.addCurve(to: pt(96.5, 70.5), control1: pt(106, 74), control2: pt(100, 71))
+            p.addCurve(to: pt(84.5, 77.5), control1: pt(92, 72), control2: pt(87.5, 74.5))
+            p.addCurve(to: pt(76.5, 98), control1: pt(80, 82), control2: pt(77.5, 89))
+            p.addLine(to: pt(70, 98)); p.closeSubpath()
         }
-        fringe = head.intersection(fringeLine)
+        let looseLocks = makePath { p in
+            // over the left temple
+            p.move(to: pt(86, 76)); p.addCurve(to: pt(83.5, 90), control1: pt(88, 81), control2: pt(87, 86))
+            p.addQuadCurve(to: pt(80.5, 84), control: pt(80.5, 88)); p.addQuadCurve(to: pt(86, 76), control: pt(81, 79)); p.closeSubpath()
+            // and two over the right, one longer
+            p.move(to: pt(108, 74.5)); p.addCurve(to: pt(112.5, 89), control1: pt(107.5, 80), control2: pt(110, 85))
+            p.addQuadCurve(to: pt(115, 82), control: pt(115.5, 86.5)); p.addQuadCurve(to: pt(108, 74.5), control: pt(113.5, 77)); p.closeSubpath()
+            p.move(to: pt(115.5, 79)); p.addCurve(to: pt(119.5, 92), control1: pt(116, 84), control2: pt(118, 88))
+            p.addQuadCurve(to: pt(121.5, 85), control: pt(122, 89)); p.addQuadCurve(to: pt(115.5, 79), control: pt(120, 81)); p.closeSubpath()
+        }
+        fringe = head.intersection(cap).union(looseLocks.intersection(head))
         hairLines = makePath { p in
-            for t in tips.dropFirst().dropLast() where t.1 > 79 {
-                p.move(to: pt(t.0, t.1 - 1)); p.addQuadCurve(to: pt(100 + (t.0 - 100) * 0.6, 62), control: pt(t.0 + (t.0 < 100 ? 2 : -2), 70))
+            // the parting, and strands sweeping away from it
+            p.move(to: pt(96.5, 70.5)); p.addQuadCurve(to: pt(95, 61.5), control: pt(96, 66))
+            for k in 0..<4 {
+                let k = CGFloat(k)
+                p.move(to: pt(94.5 - k * 1.2, 63 + k * 2)); p.addQuadCurve(to: pt(79 + k * 0.5, 84 + k * 3.5), control: pt(83 - k, 67 + k * 2))
+                p.move(to: pt(98 + k * 1.5, 63 + k * 2)); p.addQuadCurve(to: pt(121 - k * 0.5, 84 + k * 3.5), control: pt(117 + k, 67 + k * 2))
             }
+            p.move(to: pt(84, 80)); p.addQuadCurve(to: pt(83, 88), control: pt(85, 84))
+            p.move(to: pt(110.5, 78)); p.addQuadCurve(to: pt(112, 87), control: pt(110, 83))
         }
         .union(strands(side: -1, from: 68, to: 81, top: 90, bottom: 132, count: 5, waves: 5))
         .union(strands(side: 1, from: 68, to: 81, top: 90, bottom: 132, count: 5, waves: 5))
@@ -953,6 +975,9 @@ struct DescartesArt: CrewArt {
     }
 
     func overlay(_ pen: Pen, _ f: CrewFrame) { eyes.draw(pen, f) }
+
+    // A second, darker layer over the cloak, so it reads as black rather than grey
+    func extras(_ f: CrewFrame) -> [(Path, Color)] { [(cloak, Color(hex: 0x86868C))] }
 
     func detail(_ f: CrewFrame) -> Path { collar }
 

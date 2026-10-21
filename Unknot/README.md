@@ -94,8 +94,8 @@ Where timing matters, the label at the top keeps time with it: *Breathe in · 3*
 </p>
 
 Fifteen characters drawn like small engravings: one ink line, hatching for shadow and a soft wash of colour.
-Otto the frog is on the app icon, Selma is a semla, the Swedish cream bun, Finn is a rye crispbread full of
-little craters and Kaknäs is Stockholm's TV tower, dishes and all. Stefan Löfven, Jesus, Gandhi, Descartes and
+Otto the frog is on the app icon, Selma is a semla, the Swedish cream bun, Finn is a Finn Crisp, a rye thin full of
+fine pores and Kaknäs is Stockholm's TV tower, dishes and all. Stefan Löfven, Jesus, Gandhi, Descartes and
 Alexander Bard are drawn from photographs and portraits, in a slightly more cartoonish style: Jesus after the
 Sinai icon, Gandhi in his round glasses, Descartes as Frans Hals painted him and Bard with his beard and
 polka-dot braces. A random member leads each break,

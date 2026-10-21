@@ -470,15 +470,26 @@ func drawCrew(_ ctx: inout GraphicsContext, _ buddy: Buddy, _ p: Pose, t: Double
     pen.shape(art.body)
     for h in art.hatches { pen.hatch(h) }
     art.onBody(pen, f)
-    art.headParts(headPen, f)
-    art.face(headPen, f)
-    art.front(pen, f)
 
-    // Colour is printed over the body before the arms in front, so wings and hugging arms aren't tinted twice
-    pen.tint(art.wash, art.accent.opacity(0.6))
-    for (path, colour) in art.extras(f) { pen.tint(path, colour) }
-    for (path, colour) in art.headTints(f) { headPen.tint(path, colour) }
-    pen.tint(art.detail(f), art.detailColor)
+    func printBody() {
+        pen.tint(art.wash, art.accent.opacity(0.6))
+        for (path, colour) in art.extras(f) { pen.tint(path, colour) }
+        pen.tint(art.detail(f), art.detailColor)
+    }
+    if ownHead {
+        // People's clothes are coloured before the head goes on, so the colour of a jacket or a tunic never
+        // runs over a chin, a beard or hair lying on the shoulders
+        printBody()
+        art.headParts(headPen, f)
+        art.face(headPen, f)
+        art.front(pen, f)
+        for (path, colour) in art.headTints(f) { headPen.tint(path, colour) }
+    } else {
+        // Colour is printed over the body before the arms in front, so wings and hugging arms aren't tinted twice
+        art.face(pen, f)
+        art.front(pen, f)
+        printBody()
+    }
     art.overlay(headPen, f)
 
     arms(inFront: true)

@@ -716,112 +716,116 @@ struct ChickArt: CrewArt {
 
 // MARK: - Crispbread
 
-/// Finn, a thin rye crispbread standing on end: an edge that's broken rather than cut, a pale side where it's
-/// thin enough to show, and a surface full of little craters of every size, with a few white grains.
+/// Finn, a Finn Crisp thin standing on end, from the photographs on the packet: a narrow slab of sourdough rye,
+/// warm reddish brown, its edge rough rather than cut, a pale side where it's thin, and a surface packed with
+/// fine pores, a few bigger holes and the odd light grain.
 struct CrispbreadArt: CrewArt {
-    let accent = Color(hex: 0xB39A7A)            // rye
-    let detailColor = Color(hex: 0xDCC9A8)       // the paler crumb at the edge
+    let accent = Color(hex: 0x8F5536)            // baked rye
+    let detailColor = Color(hex: 0xDDB18C)       // the paler crumb at the edge
     let body: Path
     let wash: Path
     let hatches: [Hatch]
     let edge: Path
-    let pits: Path                               // the small holes, filled
-    let rims: Path                               // the bigger craters, outlined
-    let hollows: Path                            // the shadow inside each crater
+    let pores: Path                              // the fine pores, filled
+    let rims: Path                               // the few bigger holes, outlined
+    let hollows: Path                            // the shadow inside each bigger hole
     let grains: Path
-    let shoulders = [pt(73, 128), pt(127, 128)]
+    let shoulders = [pt(79, 126), pt(121, 126)]
     let arm = ArmStyle.noodle(length: 24, hand: .loop)
     let armOffset = -10.0
-    let brow: CGPoint? = pt(110, 104)
+    let brow: CGPoint? = pt(108, 96)
     let reachExtra: CGFloat = 28
-    let groundWidth: CGFloat = 76
+    let groundWidth: CGFloat = 66
     var anchor: CGPoint { pt(100, 166) }
 
     init() {
-        // A slab with a slightly broken edge: the outline wanders a little all the way round
+        // A narrow slab with a rough edge: the outline wanders a little all the way round
         var r = SeededRandom(state: 77)
-        let corners = [pt(72, 70), pt(128, 70), pt(128, 164), pt(72, 164)]
+        let corners = [pt(78, 62), pt(122, 62), pt(122, 165), pt(78, 165)]
         let slab = makePath { p in
             var first = true
             for i in 0..<4 {
                 let a = corners[i], b = corners[(i + 1) % 4]
-                let steps = Int(max(abs(b.x - a.x), abs(b.y - a.y)) / 4)
+                let steps = Int(max(abs(b.x - a.x), abs(b.y - a.y)) / 3.5)
+                let along = pt((b.x - a.x) / CGFloat(steps), (b.y - a.y) / CGFloat(steps))
+                let normal = pt(along.y == 0 ? 0 : (along.y > 0 ? 1 : -1), along.x == 0 ? 0 : (along.x > 0 ? -1 : 1))
                 for k in 0..<steps {
-                    let t = CGFloat(k) / CGFloat(steps)
-                    // Rounded corners, a wobble along the sides
-                    let inset: CGFloat = (k == 0) ? 2.2 : 0
-                    let q = pt(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t)
-                    let nx = (b.y - a.y) == 0 ? 0 : (b.y > a.y ? 1 : -1)
-                    let ny = (b.x - a.x) == 0 ? 0 : (b.x > a.x ? -1 : 1)
-                    let jitter = (r.next() - 0.5) * 1.6
-                    let pq = pt(q.x + CGFloat(nx) * jitter + (b.x - a.x == 0 ? 0 : (b.x > a.x ? inset : -inset)),
-                                q.y + CGFloat(ny) * jitter + (b.y - a.y == 0 ? 0 : (b.y > a.y ? inset : -inset)))
-                    if first { p.move(to: pq); first = false } else { p.addLine(to: pq) }
+                    let round: CGFloat = k == 0 ? 1.6 : 0
+                    let jitter = (r.next() - 0.5) * 1.1
+                    let q = pt(a.x + along.x * CGFloat(k) + (along.x == 0 ? 0 : (along.x > 0 ? round : -round)) + normal.x * jitter,
+                               a.y + along.y * CGFloat(k) + (along.y == 0 ? 0 : (along.y > 0 ? round : -round)) + normal.y * jitter)
+                    if first { p.move(to: q); first = false } else { p.addLine(to: q) }
                 }
             }
             p.closeSubpath()
         }
         body = slab
-        edge = slab.applying(CGAffineTransform(translationX: 3.2, y: 2.6))
-        hatches = [Hatch.shadow(of: slab, shift: 9, spacing: 2.8)]
-        // The surface: craters of every size, most of them small, none on the face
-        let face = oval(100, 111, 34, 24)
-        var small = Path(), outlines = Path(), shadows = Path(), white = Path()
+        edge = slab.applying(CGAffineTransform(translationX: 2.6, y: 2.2))
+        hatches = [Hatch.shadow(of: slab, shift: 8, spacing: 2.8)]
+        // Packed with fine pores, a few bigger holes, all clear of the face
+        let face = oval(100, 103, 30, 22)
+        var fine = Path(), outlines = Path(), shadows = Path(), light = Path()
         var placed = 0
-        while placed < 170 {
-            let q = pt(75 + r.next() * 50, 73 + r.next() * 88)
+        while placed < 340 {
+            let q = pt(80 + r.next() * 40, 64 + r.next() * 99)
             guard slab.contains(q), !face.contains(q) else { continue }
-            let size = 0.5 + pow(r.next(), 2.2) * 2.4
-            let stretch = 0.8 + r.next() * 0.5
-            let w = size * 2 * stretch, h = size * 2 / stretch
-            if size < 1.1 {
-                small.addEllipse(in: CGRect(x: q.x - w / 2, y: q.y - h / 2, width: w, height: h))
-            } else {
-                let crater = oval(q.x, q.y, w, h)
-                outlines.addPath(crater)
-                shadows.addPath(crater.subtracting(oval(q.x - size * 0.45, q.y - size * 0.4, w, h)))
-            }
+            let size = 0.35 + pow(r.next(), 1.6) * 0.6
+            let stretch = 0.75 + r.next() * 0.6
+            fine.addEllipse(in: CGRect(x: q.x - size * stretch, y: q.y - size / stretch, width: size * 2 * stretch, height: size * 2 / stretch))
             placed += 1
         }
-        var grainsPlaced = 0
-        while grainsPlaced < 16 {
-            let q = pt(76 + r.next() * 48, 74 + r.next() * 86)
+        placed = 0
+        while placed < 24 {
+            let q = pt(81 + r.next() * 38, 66 + r.next() * 96)
             guard slab.contains(q), !face.contains(q) else { continue }
-            let g = 0.6 + r.next() * 0.6
-            white.addEllipse(in: CGRect(x: q.x - g, y: q.y - g * 0.8, width: g * 2, height: g * 1.6))
-            grainsPlaced += 1
+            let size = 1.1 + r.next() * 0.6
+            let hole = oval(q.x, q.y, size * 2.3, size * 1.8)
+            outlines.addPath(hole)
+            shadows.addPath(hole.subtracting(oval(q.x - size * 0.4, q.y - size * 0.35, size * 2.3, size * 1.8)))
+            placed += 1
         }
-        pits = small
+        placed = 0
+        while placed < 12 {
+            let q = pt(81 + r.next() * 38, 66 + r.next() * 96)
+            guard slab.contains(q), !face.contains(q) else { continue }
+            let g = 0.5 + r.next() * 0.45
+            light.addEllipse(in: CGRect(x: q.x - g, y: q.y - g * 0.8, width: g * 2, height: g * 1.6))
+            placed += 1
+        }
+        pores = fine
         rims = outlines
         hollows = shadows
-        grains = white
+        grains = light
         wash = slab
     }
 
-    func feet(_ pen: Pen, _ f: CrewFrame) { ovalFeet(pen, [86, 114], width: 16) }
+    func feet(_ pen: Pen, _ f: CrewFrame) { ovalFeet(pen, [88, 112], width: 15) }
 
     func behind(_ pen: Pen, _ f: CrewFrame) {
         // The thin side of the slab, paler, showing at the right and the bottom
-        pen.shape(edge, 1.7)
+        pen.shape(edge, 1.6)
         pen.tint(edge, detailColor)
     }
 
     func onBody(_ pen: Pen, _ f: CrewFrame) {
-        pen.c.fill(pits, with: .color(Pen.ink.opacity(0.55)))
+        pen.c.fill(pores, with: .color(Pen.ink.opacity(0.5)))
         pen.c.fill(hollows, with: .color(Pen.ink.opacity(0.6)))
-        pen.c.stroke(rims, with: .color(Pen.ink.opacity(0.8)), lineWidth: 0.7)
+        pen.c.stroke(rims, with: .color(Pen.ink.opacity(0.75)), lineWidth: 0.6)
     }
 
     func face(_ pen: Pen, _ f: CrewFrame) {
-        pen.eye(pt(91 + f.fx, 108), f)
-        pen.eye(pt(109 + f.fx, 108), f)
-        pen.mouth(pt(100 + f.fx, 116), f)
+        pen.eye(pt(92 + f.fx, 100), f)
+        pen.eye(pt(108 + f.fx, 100), f)
+        pen.mouth(pt(100 + f.fx, 108), f, width: 4, depth: 3)
     }
 
-    // White grains of rye, printed over the colour
-    func overlay(_ pen: Pen, _ f: CrewFrame) { pen.paper(grains) }
+    // Light grains of rye, printed over the colour
+    func overlay(_ pen: Pen, _ f: CrewFrame) { pen.c.fill(grains, with: .color(Color(hex: 0xEAD3B4))) }
 
     func detail(_ f: CrewFrame) -> Path { Path() }
+
+    // A second, warmer layer of colour, for the deep brown of baked rye
+    func extras(_ f: CrewFrame) -> [(Path, Color)] { [(body, Color(hex: 0xE2C3A8))] }
 }
 
 // MARK: - Onigiri

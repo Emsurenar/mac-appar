@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.19.0 – 2026-10-21
+
+- **Fixed: clothes coloured over faces.** The colour of Stefan Löfven's jacket, Jesus's tunic and mantle,
+  Descartes's doublet and Bard's shirt was printed after their heads, so it ran over chins, beards and hair
+  lying on the shoulders. The people's clothes are now coloured before the head goes on. Stefan's flag pin
+  keeps its own colours too.
+- **Finn looks like a Finn Crisp**, from the photographs on the packet: a narrower, taller slab in a warm
+  reddish brown, with a surface packed with fine pores and only a few bigger holes.
+- **Alexander Bard's beard, redrawn**: it starts low on the cheeks, is widest along the jaw and hangs long
+  and broad, with a wiry edge, lighter strands and a big bushy moustache that hangs down over the mouth.
+
 ## 1.18.0 – 2026-10-21
 
 - **Finn the crispbread takes Toby's place**: a thin slab of rye with a broken edge, a pale side where it's

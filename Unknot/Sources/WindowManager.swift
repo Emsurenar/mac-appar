@@ -35,7 +35,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
             window.titleVisibility = .hidden
             window.isMovableByWindowBackground = true
             window.isReleasedWhenClosed = false
-            window.title = L("Welcome to Sträckis")
+            window.title = L("Welcome to Unknot")
             window.delegate = self
             window.setContentSize(host.view.fittingSize)
             window.center()
@@ -111,12 +111,12 @@ enum MainMenu {
         let main = NSMenu()
 
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: L("About Sträckis"), action: #selector(AppDelegate.showAbout), keyEquivalent: "")
+        appMenu.addItem(withTitle: L("About Unknot"), action: #selector(AppDelegate.showAbout), keyEquivalent: "")
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: L("Settings…"), action: #selector(AppDelegate.showSettings), keyEquivalent: ",")
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: L("Hide Sträckis"), action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
-        appMenu.addItem(withTitle: L("Quit Sträckis"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenu.addItem(withTitle: L("Hide Unknot"), action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        appMenu.addItem(withTitle: L("Quit Unknot"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         main.addItem(submenu: appMenu)
 
         let editMenu = NSMenu(title: L("Edit"))

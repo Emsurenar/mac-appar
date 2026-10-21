@@ -63,11 +63,11 @@
 "For 2 hours" = "I två timmar";
 "For the rest of the day" = "Resten av dagen";
 "Settings…" = "Inställningar…";
-"Quit Sträckis" = "Avsluta Sträckis";
+"Quit Unknot" = "Avsluta Unknot";
 
 /* Appens meny */
-"About Sträckis" = "Om Sträckis";
-"Hide Sträckis" = "Göm Sträckis";
+"About Unknot" = "Om Unknot";
+"Hide Unknot" = "Göm Unknot";
 "Edit" = "Redigera";
 "Undo" = "Ångra";
 "Redo" = "Gör om";
@@ -104,10 +104,10 @@
 "Play a sound when a break starts" = "Spela ett ljud när en paus börjar";
 "System" = "System";
 "Open at login" = "Öppna vid inloggning";
-"Approve Sträckis in System Settings to finish." = "Godkänn Sträckis i Systeminställningar för att slutföra.";
+"Approve Unknot in System Settings to finish." = "Godkänn Unknot i Systeminställningar för att slutföra.";
 "Open System Settings" = "Öppna Systeminställningar";
 "Check for updates automatically" = "Sök efter uppdateringar automatiskt";
-"Choose which exercises Sträckis can suggest. Hover over one to see the movement." = "Välj vilka övningar Sträckis får föreslå. Håll muspekaren över en övning för att se rörelsen.";
+"Choose which exercises Unknot can suggest. Hover over one to see the movement." = "Välj vilka övningar Unknot får föreslå. Håll muspekaren över en övning för att se rörelsen.";
 "%ld of %ld selected" = "%ld av %ld valda";
 "Select all" = "Välj alla";
 "At least one exercise has to stay on." = "Minst en övning måste vara på.";
@@ -120,7 +120,7 @@
 "Count time away from the computer as a break" = "Räkna tid borta från datorn som paus";
 "Away for at least" = "Borta i minst";
 "Wait while an app is in full screen" = "Vänta när en app visas i helskärm";
-"Full screen usually means a presentation, a video call or a movie. Sträckis waits until you're done." = "Helskärm betyder oftast en presentation, ett videosamtal eller en film. Sträckis väntar tills du är klar.";
+"Full screen usually means a presentation, a video call or a movie. Unknot waits until you're done." = "Helskärm betyder oftast en presentation, ett videosamtal eller en film. Unknot väntar tills du är klar.";
 "Today" = "Idag";
 "All time" = "Totalt";
 
@@ -153,12 +153,12 @@
 "Free and open source under the MIT license." = "Gratis och öppen källkod under MIT-licensen.";
 
 /* Välkomstfönstret */
-"Welcome to Sträckis" = "Välkommen till Sträckis";
-"Hi, I'm Sträckis!" = "Hej, jag heter Sträckis!";
+"Welcome to Unknot" = "Välkommen till Unknot";
+"Hi, I'm Unknot!" = "Hej, jag heter Unknot!";
 "I live in your menu bar and remind you to get up and stretch. Each break takes about %ld seconds." = "Jag bor i menyraden och påminner dig om att sträcka på dig. Varje paus tar ungefär %ld sekunder.";
 "Move to the Applications folder" = "Flytta till Program-mappen";
-"Recommended, so Sträckis can open at login." = "Rekommenderas, så att Sträckis kan öppnas vid inloggning.";
+"Recommended, so Unknot can open at login." = "Rekommenderas, så att Unknot kan öppnas vid inloggning.";
 "Move" = "Flytta";
-"You'll find me in the menu bar. If the icon is hidden, just open Sträckis again to get to the settings." = "Du hittar mig i menyraden. Syns inte ikonen kan du bara öppna Sträckis igen för att komma till inställningarna.";
+"You'll find me in the menu bar. If the icon is hidden, just open Unknot again to get to the settings." = "Du hittar mig i menyraden. Syns inte ikonen kan du bara öppna Unknot igen för att komma till inställningarna.";
 "Try a break" = "Testa en paus";
 "Get started" = "Kom igång";

@@ -176,7 +176,7 @@ enum Snapshot {
 
         check(Set(allExercises.map(\.id)).count == allExercises.count, "Exercise ids are unique")
 
-        let stats = Preferences(defaults: UserDefaults(suiteName: "strackis.selftest.\(UUID().uuidString)")!)
+        let stats = Preferences(defaults: UserDefaults(suiteName: "unknot.selftest.\(UUID().uuidString)")!)
         stats.recordCompletedBreak(at: date(19, 10))
         stats.recordCompletedBreak(at: date(20, 10))
         stats.recordCompletedBreak(at: date(20, 14))

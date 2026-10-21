@@ -16,7 +16,7 @@ struct WelcomeView: View {
                 .frame(width: 150, height: 150)
                 .padding(.top, 34)
 
-            Text(L("Hi, I'm Sträckis!"))
+            Text(L("Hi, I'm Unknot!"))
                 .font(.system(size: 26, weight: .bold))
                 .tracking(-0.4)
                 .padding(.top, 6)
@@ -53,7 +53,7 @@ struct WelcomeView: View {
                     row {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(L("Move to the Applications folder"))
-                            Text(moveError ?? L("Recommended, so Sträckis can open at login."))
+                            Text(moveError ?? L("Recommended, so Unknot can open at login."))
                                 .font(.callout)
                                 .foregroundStyle(moveError == nil ? Color.secondary : Color.red)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -75,13 +75,13 @@ struct WelcomeView: View {
             .padding(.top, 22)
 
             if login.needsApproval {
-                Button(L("Approve Sträckis in System Settings to finish.")) { LoginItem.openSystemSettings() }
+                Button(L("Approve Unknot in System Settings to finish.")) { LoginItem.openSystemSettings() }
                     .buttonStyle(.link)
                     .font(.callout)
                     .padding(.top, 8)
             }
 
-            Label(L("You'll find me in the menu bar. If the icon is hidden, just open Sträckis again to get to the settings."), systemImage: "menubar.arrow.up.rectangle")
+            Label(L("You'll find me in the menu bar. If the icon is hidden, just open Unknot again to get to the settings."), systemImage: "menubar.arrow.up.rectangle")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 28)

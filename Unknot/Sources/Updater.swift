@@ -5,7 +5,7 @@ import AppKit
 final class Updater: ObservableObject {
     static let shared = Updater()
 
-    static let repository = "Emsurenar/strackis"
+    static let repository = "Emsurenar/unknot"
     static let repositoryURL = URL(string: "https://github.com/\(repository)")!
     static let releasesURL = URL(string: "https://github.com/\(repository)/releases/latest")!
     static let issuesURL = URL(string: "https://github.com/\(repository)/issues")!

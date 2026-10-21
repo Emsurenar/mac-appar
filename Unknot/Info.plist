@@ -3,19 +3,19 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>Sträckis</string>
+    <string>Unknot</string>
     <key>CFBundleDisplayName</key>
-    <string>Sträckis</string>
+    <string>Unknot</string>
     <key>CFBundleIdentifier</key>
-    <string>io.github.emsurenar.strackis</string>
+    <string>io.github.emsurenar.unknot</string>
     <key>CFBundleExecutable</key>
-    <string>Strackis</string>
+    <string>Unknot</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.1.0</string>
+    <string>1.2.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>CFBundleDevelopmentRegion</key>

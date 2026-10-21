@@ -111,3 +111,32 @@ enum Activity {
         return false
     }
 }
+
+/// The app was called Sträckis before 1.2.0. Carries settings and statistics over,
+/// and quits and removes the old app so there aren't two of them.
+enum LegacyMigration {
+    static let oldBundleIdentifier = "io.github.emsurenar.strackis"
+    private static let doneKey = "migratedFromStrackis"
+
+    @MainActor
+    static func run() {
+        let defaults = UserDefaults.standard
+        if !defaults.bool(forKey: doneKey) {
+            for (key, value) in defaults.persistentDomain(forName: oldBundleIdentifier) ?? [:]
+            where defaults.object(forKey: key) == nil {
+                defaults.set(value, forKey: key)
+            }
+            defaults.set(true, forKey: doneKey)
+        }
+
+        for app in NSRunningApplication.runningApplications(withBundleIdentifier: oldBundleIdentifier) {
+            app.terminate()
+        }
+        let folders = FileManager.default.urls(for: .applicationDirectory, in: [.localDomainMask, .userDomainMask])
+        for folder in folders {
+            let old = folder.appendingPathComponent("Str\u{00E4}ckis.app")
+            guard Bundle(url: old)?.bundleIdentifier == oldBundleIdentifier else { continue }
+            try? FileManager.default.trashItem(at: old, resultingItemURL: nil)
+        }
+    }
+}

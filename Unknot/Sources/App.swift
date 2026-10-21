@@ -1,13 +1,14 @@
-// Sträckis – a tiny menu bar friend that reminds you to stretch.
+// Unknot – a tiny menu bar friend that reminds you to stretch.
 
 import AppKit
 import Combine
 
 @main
-struct StrackisMain {
+struct UnknotMain {
     @MainActor static func main() {
         let app = NSApplication.shared
         if Snapshot.run(CommandLine.arguments) { return }
+        LegacyMigration.run()  // before anything reads the settings
         let delegate = AppDelegate()
         app.delegate = delegate
         app.setActivationPolicy(.accessory)
@@ -16,7 +17,7 @@ struct StrackisMain {
 }
 
 /// Posted by a second copy of the app before it quits, so the running one can show its settings.
-private let showSettingsNotification = Notification.Name("io.github.emsurenar.strackis.showSettings")
+private let showSettingsNotification = Notification.Name("io.github.emsurenar.unknot.showSettings")
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
@@ -36,7 +37,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.imagePosition = .imageLeading
         statusItem.button?.font = .monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
-        statusItem.button?.setAccessibilityTitle("Sträckis")
+        statusItem.button?.setAccessibilityTitle("Unknot")
         let menu = NSMenu()
         menu.delegate = self
         statusItem.menu = menu
@@ -96,7 +97,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if prefs.showCountdownInMenuBar { title = " " + L("%ld min", minutes) }
         }
         if icon != shownIcon {
-            let image = NSImage(systemSymbolName: icon, accessibilityDescription: "Sträckis")
+            let image = NSImage(systemSymbolName: icon, accessibilityDescription: "Unknot")
             image?.isTemplate = true
             button.image = image
             shownIcon = icon
@@ -136,7 +137,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         menu.addItem(.separator())
         addItem(to: menu, L("Settings…"), #selector(showSettings), key: ",", symbol: "gearshape")
-        addItem(to: menu, L("Quit Sträckis"), #selector(quit), key: "q")
+        addItem(to: menu, L("Quit Unknot"), #selector(quit), key: "q")
     }
 
     private var statusText: String {

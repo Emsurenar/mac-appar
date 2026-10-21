@@ -115,7 +115,7 @@ struct ExercisesSettingsView: View {
                                 isLocked: enabledCount == 1 && prefs.isEnabled(exercise))
                 }
             } header: {
-                Text(L("Choose which exercises Sträckis can suggest. Hover over one to see the movement."))
+                Text(L("Choose which exercises Unknot can suggest. Hover over one to see the movement."))
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .textCase(nil)
@@ -198,7 +198,7 @@ struct ScheduleSettingsView: View {
             } header: {
                 Text(L("Smart pauses"))
             } footer: {
-                Text(L("Full screen usually means a presentation, a video call or a movie. Sträckis waits until you're done."))
+                Text(L("Full screen usually means a presentation, a video call or a movie. Unknot waits until you're done."))
                     .foregroundStyle(.secondary)
                     .font(.callout)
             }
@@ -318,7 +318,7 @@ struct AboutSettingsView: View {
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
                 .frame(width: 112, height: 112)
-            Text(verbatim: "Sträckis")
+            Text(verbatim: "Unknot")
                 .font(.system(size: 26, weight: .bold))
                 .tracking(-0.4)
                 .padding(.top, 6)
@@ -407,7 +407,7 @@ struct LoginItemRows: View {
             LabeledContent {
                 Button(L("Open System Settings")) { LoginItem.openSystemSettings() }
             } label: {
-                Text(L("Approve Sträckis in System Settings to finish."))
+                Text(L("Approve Unknot in System Settings to finish."))
                     .foregroundStyle(.secondary)
             }
         }

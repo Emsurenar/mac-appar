@@ -124,7 +124,7 @@ final class Preferences: ObservableObject {
 
     /// Default settings with a made-up week of breaks, for screenshots. Never touches the real settings.
     static func sample() -> Preferences {
-        let suite = "io.github.emsurenar.strackis.screenshots"
+        let suite = "io.github.emsurenar.unknot.screenshots"
         UserDefaults().removePersistentDomain(forName: suite)
         let prefs = Preferences(defaults: UserDefaults(suiteName: suite)!)
         let today = Calendar.current.startOfDay(for: Date())

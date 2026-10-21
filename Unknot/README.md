@@ -1,15 +1,15 @@
 <p align="center">
-  <img src="docs/icon.png" width="128" height="128" alt="Sträckis app icon">
+  <img src="docs/icon.png" width="128" height="128" alt="Unknot app icon">
 </p>
 
-<h1 align="center">Sträckis</h1>
+<h1 align="center">Unknot</h1>
 
 <p align="center">
   A tiny friend in your Mac's menu bar that reminds you to get up and stretch.
 </p>
 
 <p align="center">
-  <a href="https://github.com/Emsurenar/strackis/releases/latest"><strong>Download for macOS</strong></a>
+  <a href="https://github.com/Emsurenar/unknot/releases/latest"><strong>Download for macOS</strong></a>
   &nbsp;·&nbsp; macOS 13 or later &nbsp;·&nbsp; Apple silicon and Intel &nbsp;·&nbsp; Free and open source
 </p>
 
@@ -21,14 +21,15 @@ Every 20 minutes a small glass panel slides into the corner of your screen. A li
 demonstrates a few quick exercises, a progress bar counts down, and after 30 seconds it's gone again.
 It never steals focus, so you can keep typing if you really have to.
 
-The name is a playful Swedish take on *sträcka på sig*, "to stretch".
+*Unknot* (verb): to undo the knots in your neck, your shoulders and your back. Unknot was called Sträckis
+before version 1.2.0; updating keeps your settings and statistics.
 
 ## Features
 
 - **Gentle breaks.** A non-activating panel in the corner of your screen, light and dark mode, sound optional.
 - **12 animated exercises.** Each break picks a few at random. Turn off the ones you don't like.
 - **Smart timing.** Time away from the computer counts as a break. Sleep and a locked screen restart the countdown.
-  Optional working hours, and Sträckis can wait while an app is in full screen (presentations, calls, movies).
+  Optional working hours, and Unknot can wait while an app is in full screen (presentations, calls, movies).
 - **A quiet menu bar icon.** See when the next break is, stretch now, or pause for 30 minutes, an hour, two hours
   or the rest of the day.
 - **See your progress.** Breaks today, this week, days in a row and a chart of the last seven days.
@@ -45,18 +46,18 @@ The name is a playful Swedish take on *sträcka på sig*, "to stretch".
 **One line in Terminal** (downloads the latest release into Applications and opens it):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Emsurenar/strackis/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Emsurenar/unknot/main/install.sh | bash
 ```
 
 **Or download it yourself:**
 
-1. Download `Strackis.zip` from the [latest release](https://github.com/Emsurenar/strackis/releases/latest) and unzip it.
-2. Drag **Sträckis** into your **Applications** folder and open it.
-3. The first time, macOS says it can't verify the developer, because Sträckis isn't signed with a paid
+1. Download `Unknot.zip` from the [latest release](https://github.com/Emsurenar/unknot/releases/latest) and unzip it.
+2. Drag **Unknot** into your **Applications** folder and open it.
+3. The first time, macOS says it can't verify the developer, because Unknot isn't signed with a paid
    Apple Developer ID. Click **Done**, open **System Settings → Privacy & Security**, scroll down and click
    **Open Anyway**. You only need to do this once.
 
-A welcome window shows up on first launch. From then on Sträckis lives in the menu bar.
+A welcome window shows up on first launch. From then on Unknot lives in the menu bar.
 
 <p align="center">
   <img src="docs/welcome.png" width="320" alt="The welcome window on first launch">
@@ -80,12 +81,12 @@ Click the menu bar icon and choose **Settings…**, or open the app again from F
 - **Schedule:** working hours and smart pauses.
 - **Activity:** your breaks today, this week, days in a row and all time, with a chart of the last seven days.
 
-Can't see the menu bar icon, for example because it's hidden behind the camera notch? Open Sträckis again from
+Can't see the menu bar icon, for example because it's hidden behind the camera notch? Open Unknot again from
 Finder or Spotlight and the settings appear.
 
 ## Privacy
 
-Sträckis doesn't collect anything. Settings and statistics stay on your Mac. The only network request is an
+Unknot doesn't collect anything. Settings and statistics stay on your Mac. The only network request is an
 optional check of GitHub's releases API, at most once a day, to tell you about new versions. You can turn it
 off under **Settings → General**. Nothing is ever downloaded or installed automatically.
 
@@ -94,14 +95,14 @@ off under **Settings → General**. Nothing is ever downloaded or installed auto
 You need Xcode or the Command Line Tools (`xcode-select --install`). There are no dependencies.
 
 ```bash
-git clone https://github.com/Emsurenar/strackis.git
-cd strackis
+git clone https://github.com/Emsurenar/unknot.git
+cd unknot
 ./build.sh
-open "build/Sträckis.app"
+open "build/Unknot.app"
 ```
 
-`./build.sh --release` builds a universal app and `dist/Strackis.zip`. The build also checks the
-translations and runs a small self-test (`Sträckis --selftest`).
+`./build.sh --release` builds a universal app and `dist/Unknot.zip`. The build also checks the
+translations and runs a small self-test (`Unknot --selftest`).
 
 | Path | What's inside |
 | --- | --- |
@@ -130,22 +131,22 @@ Bump `CFBundleShortVersionString` in `Info.plist`, add an entry to `CHANGELOG.md
 git tag v1.0.1 && git push origin v1.0.1
 ```
 
-GitHub Actions builds the universal app and attaches `Strackis.zip` to the release.
+GitHub Actions builds the universal app and attaches `Unknot.zip` to the release.
 
 ## Uninstall
 
-Choose **Quit Sträckis** in the menu, turn off **Open at login** first if you enabled it, and drag the app to
+Choose **Quit Unknot** in the menu, turn off **Open at login** first if you enabled it, and drag the app to
 the Trash. To remove its settings as well:
 
 ```bash
-defaults delete io.github.emsurenar.strackis
+defaults delete io.github.emsurenar.unknot
 ```
 
 ## På svenska
 
-Sträckis är en liten kompis i menyraden som påminner dig om att sträcka på dig. Var 20:e minut glider en ruta
+Unknot är en liten kompis i menyraden som påminner dig om att sträcka på dig. Var 20:e minut glider en ruta
 in i hörnet och figuren visar några snabba övningar. Appen följer din Macs språk och finns på svenska och
-engelska. Ladda ned den under [Releases](https://github.com/Emsurenar/strackis/releases/latest).
+engelska. Ladda ned den under [Releases](https://github.com/Emsurenar/unknot/releases/latest).
 
 ## License
 

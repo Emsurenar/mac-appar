@@ -1,12 +1,12 @@
 #!/bin/bash
-# Builds build/Sträckis.app.
+# Builds build/Unknot.app.
 #   ./build.sh            native architecture, for development
-#   ./build.sh --release  universal (Apple silicon + Intel) and dist/Strackis.zip
+#   ./build.sh --release  universal (Apple silicon + Intel) and dist/Unknot.zip
 set -euo pipefail
 cd "$(dirname "$0")"
 
-APP="build/Sträckis.app"
-BIN="$APP/Contents/MacOS/Strackis"
+APP="build/Unknot.app"
+BIN="$APP/Contents/MacOS/Unknot"
 RELEASE=false
 [[ "${1:-}" == "--release" ]] && RELEASE=true
 
@@ -22,9 +22,9 @@ for arch in "${ARCHS[@]}"; do
     echo "→ Compiling for $arch"
     swiftc -O -swift-version 5 -parse-as-library \
         -target "$arch-apple-macos13.0" \
-        Sources/*.swift -o "build/obj/Strackis-$arch"
+        Sources/*.swift -o "build/obj/Unknot-$arch"
 done
-lipo -create build/obj/Strackis-* -output "$BIN"
+lipo -create build/obj/Unknot-* -output "$BIN"
 
 cp Info.plist "$APP/Contents/Info.plist"
 # The build number is the number of commits, so every release build is unique.
@@ -48,8 +48,8 @@ echo "→ Self-test"
 
 if $RELEASE; then
     mkdir -p dist
-    rm -f dist/Strackis.zip
-    ditto -c -k --sequesterRsrc --keepParent "$APP" dist/Strackis.zip
-    echo "→ dist/Strackis.zip ($(du -h dist/Strackis.zip | cut -f1)) for $(lipo -archs "$BIN")"
+    rm -f dist/Unknot.zip
+    ditto -c -k --sequesterRsrc --keepParent "$APP" dist/Unknot.zip
+    echo "→ dist/Unknot.zip ($(du -h dist/Unknot.zip | cut -f1)) for $(lipo -archs "$BIN")"
 fi
 echo "✓ Built $APP"

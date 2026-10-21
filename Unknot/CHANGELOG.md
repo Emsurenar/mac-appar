@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0 – 2026-10-21
+
+- **Sträckis is now called Unknot.** A name that works in every language and says what the app is for.
+  Your settings and statistics come along, and the old Sträckis app is quit and moved to the Trash.
+- The installer waits for the running app to quit before opening the new version, so updating no longer
+  fails with error -600.
+
 ## 1.1.0 – 2026-10-21
 
 - New **Activity** tab: today, this week, days in a row and all time, plus a chart of the last seven days.

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.17.0 – 2026-10-21
+
+- **Kaknästornet joins the Stretch Crew**, drawn from a photograph: the concrete shaft with its groove and
+  small windows, platforms on brackets carrying white dishes, the top floors with their bands of brown
+  windows, and the lattice mast. Its face is on the shaft, just under the top.
+- **Barack Obama has left the crew.**
+- Jesus, Gandhi and Descartes have their big round eyes back. Stefan Löfven keeps the almond-shaped ones.
+- **Stefan Löfven's hair, redrawn**: a side parting with short grey hair above the ear on that side, and a
+  soft wave combed across that lifts a little at the front and falls over the other temple.
+- Colour that never changes is worked out once instead of every frame, so the most detailed members of the
+  crew draw a quarter faster.
+
 ## 1.16.0 – 2026-10-21
 
 - **Stefan Löfven and Barack Obama, redrawn again** from more photographs:

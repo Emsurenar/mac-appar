@@ -2,7 +2,7 @@ import SwiftUI
 
 /// The Stretch Crew. Every member can do every move; how each one is drawn lives in Crew.swift.
 enum Buddy: String, CaseIterable, Identifiable {
-    case mochi, cat, panda, bunny, frog, semla, chick, toast, onigiri, stefan, jesus, gandhi, obama, descartes
+    case mochi, cat, panda, bunny, frog, semla, chick, toast, onigiri, stefan, jesus, gandhi, descartes, kaknas
 
     var id: String { rawValue }
 
@@ -21,8 +21,8 @@ enum Buddy: String, CaseIterable, Identifiable {
         case .stefan: return "Stefan"
         case .jesus: return "Jesus"
         case .gandhi: return "Mahatma"
-        case .obama: return "Barack"
         case .descartes: return "René"
+        case .kaknas: return "Kaknäs"
         }
     }
 
@@ -41,8 +41,8 @@ enum Buddy: String, CaseIterable, Identifiable {
         case .stefan: return "Löfven"
         case .jesus: return L("of Nazareth")
         case .gandhi: return "Gandhi"
-        case .obama: return "Obama"
         case .descartes: return "Descartes"
+        case .kaknas: return L("TV tower")
         }
     }
 
@@ -61,8 +61,8 @@ enum Buddy: String, CaseIterable, Identifiable {
         case .stefan: return "Stefan Löfven"
         case .jesus: return L("Jesus of Nazareth")
         case .gandhi: return "Mahatma Gandhi"
-        case .obama: return "Barack Obama"
         case .descartes: return "René Descartes"
+        case .kaknas: return L("Kaknäs Tower")
         }
     }
 }

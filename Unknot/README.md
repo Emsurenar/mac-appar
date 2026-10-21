@@ -90,13 +90,14 @@ Where timing matters, the label at the top keeps time with it: *Breathe in · 3*
 ## The Stretch Crew
 
 <p align="center">
-  <img src="docs/buddies.png" width="640" alt="The Stretch Crew: Momo the mochi, Miso the cat, Bao the panda, Juni the bunny, Otto the frog, Selma the semla, Pip the chick, Toby the toast, Nori the onigiri, Stefan Löfven, Jesus of Nazareth, Mahatma Gandhi, Barack Obama and René Descartes">
+  <img src="docs/buddies.png" width="640" alt="The Stretch Crew: Momo the mochi, Miso the cat, Bao the panda, Juni the bunny, Otto the frog, Selma the semla, Pip the chick, Toby the toast, Nori the onigiri, Stefan Löfven, Jesus of Nazareth, Mahatma Gandhi, René Descartes and Kaknästornet">
 </p>
 
 Fourteen characters drawn like small engravings: one ink line, hatching for shadow and a soft wash of colour.
-Otto the frog is on the app icon and Selma is a semla, the Swedish cream bun. Stefan Löfven and the last row
-are drawn from photographs and portraits, in a slightly more cartoonish style with big eyes: Jesus after the
-Sinai icon, Gandhi in his round glasses, Obama with his smile and Descartes as Frans Hals painted him. A random member leads each break,
+Otto the frog is on the app icon, Selma is a semla, the Swedish cream bun, and Kaknäs is Stockholm's TV tower,
+dishes and all. Stefan Löfven, Jesus, Gandhi and Descartes are drawn from photographs and portraits, in a
+slightly more cartoonish style: Jesus after the Sinai icon, Gandhi in his round glasses and Descartes as
+Frans Hals painted him. A random member leads each break,
 and under **Settings → Stretch Crew** you can keep only your favourites.
 
 ## When breaks happen

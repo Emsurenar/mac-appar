@@ -64,7 +64,7 @@ enum CrewArtwork {
     static let all: [Buddy: CrewArt] = [
         .mochi: mochi, .cat: CatArt(), .panda: PandaArt(), .bunny: BunnyArt(), .frog: FrogArt(),
         .semla: SemlaArt(), .chick: ChickArt(), .toast: ToastArt(), .onigiri: OnigiriArt(), .stefan: StefanArt(),
-        .jesus: JesusArt(), .gandhi: GandhiArt(), .obama: ObamaArt(), .descartes: DescartesArt(),
+        .jesus: JesusArt(), .gandhi: GandhiArt(), .descartes: DescartesArt(), .kaknas: KaknasArt(),
     ]
 }
 
@@ -876,4 +876,145 @@ struct OnigiriArt: CrewArt {
     }
 
     func detail(_ f: CrewFrame) -> Path { plum }
+}
+
+// MARK: - Kaknästornet
+
+/// Kaknästornet, Stockholm's TV tower, from a photograph: a slender concrete shaft with a groove and small
+/// windows, platforms on brackets carrying white dishes, a wider top with bands of brown windows over angled
+/// brackets, a box above it and a lattice mast.
+struct KaknasArt: CrewArt {
+    let accent = Color(hex: 0xBEBAB3)            // concrete
+    let detailColor = Color(hex: 0x8C6B50)       // the windows of the restaurant floors
+    let body: Path
+    let wash: Path
+    let hatches: [Hatch]
+    let top: Path
+    let topHatch: Hatch
+    let windows: Path
+    let mullions: Path
+    let brackets: Path
+    let platforms: Path
+    let platformBrackets: Path
+    let box: Path
+    let mast: Path
+    let marks: Path
+    let concrete: Path                           // the lighter concrete of the top, platforms and box
+    let shoulders = [pt(86, 116), pt(114, 116)]
+    let arm = ArmStyle.noodle(length: 24, hand: .loop)
+    let armOffset = -10.0
+    let brow: CGPoint? = pt(107, 95)
+    let reachExtra: CGFloat = 30
+    let groundWidth: CGFloat = 72
+    var headBox: CGRect { CGRect(x: 75, y: 58, width: 50, height: 28) }
+
+    init() {
+        let shaft = makePath { p in
+            p.move(to: pt(86, 86)); p.addLine(to: pt(114, 86)); p.addLine(to: pt(116, 164))
+            p.addQuadCurve(to: pt(113, 167), control: pt(116, 167)); p.addLine(to: pt(87, 167))
+            p.addQuadCurve(to: pt(84, 164), control: pt(84, 167)); p.closeSubpath()
+        }
+        body = shaft
+        hatches = [Hatch.shadow(of: shaft, shift: 9)]
+        // The top: floors with chamfered corners, two bands of windows
+        let t = makePath { p in
+            p.move(to: pt(79, 60)); p.addLine(to: pt(121, 60)); p.addLine(to: pt(125, 64)); p.addLine(to: pt(125, 81))
+            p.addLine(to: pt(121, 85)); p.addLine(to: pt(79, 85)); p.addLine(to: pt(75, 81)); p.addLine(to: pt(75, 64)); p.closeSubpath()
+        }
+        top = t
+        topHatch = Hatch.shadow(of: t, shift: 8, spacing: 2.6)
+        windows = Path(CGRect(x: 77, y: 64, width: 46, height: 6.5)).union(Path(CGRect(x: 77, y: 73.5, width: 46, height: 6.5)))
+        mullions = makePath { p in
+            for x in stride(from: 80.0, through: 120.0, by: 4.0) {
+                p.move(to: pt(x, 64)); p.addLine(to: pt(x, 70.5))
+                p.move(to: pt(x, 73.5)); p.addLine(to: pt(x, 80))
+            }
+        }
+        brackets = makePath { p in
+            p.move(to: pt(76, 85)); p.addLine(to: pt(86, 94)); p.addLine(to: pt(86, 85))
+            p.move(to: pt(124, 85)); p.addLine(to: pt(114, 94)); p.addLine(to: pt(114, 85))
+        }
+        // Platforms for the dishes, each on two brackets
+        var slabs = Path()
+        var under = Path()
+        for y: CGFloat in [126, 135, 144] {
+            slabs.addRoundedRect(in: CGRect(x: 75, y: y, width: 50, height: 3.2), cornerSize: CGSize(width: 1, height: 1))
+            under.move(to: pt(77, y + 3.2)); under.addLine(to: pt(85, y + 8)); under.addLine(to: pt(85, y + 3.2))
+            under.move(to: pt(123, y + 3.2)); under.addLine(to: pt(115, y + 8)); under.addLine(to: pt(115, y + 3.2))
+        }
+        platforms = slabs
+        platformBrackets = under
+        box = Path(CGRect(x: 90, y: 50, width: 20, height: 10))
+        // The lattice mast, tapering, braced in a zigzag, with a few short antennas
+        mast = makePath { p in
+            p.move(to: pt(95.5, 50)); p.addLine(to: pt(99, 31))
+            p.move(to: pt(104.5, 50)); p.addLine(to: pt(101, 31))
+            var y: CGFloat = 50
+            var left = true
+            while y > 33 {
+                let next = y - 3.4
+                let w0 = 4.5 - (50 - y) * 0.18, w1 = 4.5 - (50 - next) * 0.18
+                p.move(to: pt(100 + (left ? -w0 : w0), y)); p.addLine(to: pt(100 + (left ? w1 : -w1), next))
+                y = next
+                left.toggle()
+            }
+            for (y, w) in [(44.0, 7.0), (38.0, 5.5)] { p.move(to: pt(100 - w, y)); p.addLine(to: pt(100 + w, y)) }
+        }
+        // The shuttering marks in the concrete, a groove and a column of small windows
+        marks = makePath { p in
+            p.move(to: pt(100, 120)); p.addLine(to: pt(100, 162))
+            for y in stride(from: 152.0, through: 162.0, by: 10.0) { p.addRect(CGRect(x: 102.5, y: y - 1.6, width: 3, height: 3.2)) }
+            p.addRect(CGRect(x: 94.5, y: 116, width: 3, height: 3)); p.addRect(CGRect(x: 102.5, y: 116, width: 3, height: 3))
+        }
+        wash = shaft
+        concrete = t.subtracting(windows).union(slabs).union(box)
+    }
+
+    func feet(_ pen: Pen, _ f: CrewFrame) { ovalFeet(pen, [91, 109], width: 15) }
+
+    func behind(_ pen: Pen, _ f: CrewFrame) {
+        pen.stroke(mast, 1.1)
+        pen.shape(box, 1.6)
+        pen.fine(line(pt(96, 50), pt(96, 60)))
+        pen.fine(line(pt(104, 50), pt(104, 60)))
+    }
+
+    func onBody(_ pen: Pen, _ f: CrewFrame) {
+        pen.fine(marks)
+        for y in stride(from: 100.0, through: 160.0, by: 6.0) {
+            pen.c.stroke(line(pt(85.5, y), pt(87.5, y)), with: .color(Pen.ink.opacity(0.35)), lineWidth: 0.7)
+            pen.c.stroke(line(pt(112.5, y), pt(114.5, y)), with: .color(Pen.ink.opacity(0.35)), lineWidth: 0.7)
+        }
+        pen.shape(platforms, 1.5)
+        pen.fine(platformBrackets)
+        pen.shape(brackets, 1.5)
+        pen.shape(top)
+        pen.hatch(topHatch)
+        pen.shape(windows, 1.2)
+        pen.fine(mullions)
+    }
+
+    func face(_ pen: Pen, _ f: CrewFrame) {
+        pen.eye(pt(93.5 + f.fx * 0.6, 100), f, r: 2.3)
+        pen.eye(pt(106.5 + f.fx * 0.6, 100), f, r: 2.3)
+        pen.mouth(pt(100 + f.fx * 0.6, 107), f, width: 3.8, depth: 2.6)
+    }
+
+    func overlay(_ pen: Pen, _ f: CrewFrame) {
+        // White dishes at the ends of the platforms, turned to the sides
+        for y: CGFloat in [126, 135, 144] {
+            for x: CGFloat in [79, 121] {
+                let dish = oval(x, y - 2.6, 4.6, 5.2)
+                pen.paper(dish)
+                pen.c.stroke(dish, with: .color(Pen.ink), lineWidth: 1)
+                pen.fine(line(pt(x, y - 2.6), pt(x + (x < 100 ? -2.2 : 2.2), y - 3.4)))
+            }
+        }
+    }
+
+    func detail(_ f: CrewFrame) -> Path { windows }
+
+    func extras(_ f: CrewFrame) -> [(Path, Color)] {
+        [(concrete, Color(hex: 0xC9C5BE))]
+    }
 }

@@ -338,6 +338,7 @@ func drawCrew(_ ctx: inout GraphicsContext, _ buddy: Buddy, _ p: Pose, t: Double
     pen.tint(art.wash, art.accent.opacity(0.6))
     for (path, colour) in art.extras(f) { pen.tint(path, colour) }
     pen.tint(art.detail(f), art.detailColor)
+    art.overlay(pen, f)
 
     arms(inFront: true)
 }

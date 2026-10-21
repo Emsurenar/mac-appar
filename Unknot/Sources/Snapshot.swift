@@ -24,6 +24,7 @@ enum Snapshot {
         if args.contains("--verify-latest-release") { verifyLatestRelease(); return true }
         if args.contains("--benchmark") { benchmark(); return true }
         if let path = value("--transitions") { transitions(to: path); return true }
+        if let path = value("--portraits") { portraits(to: path); return true }
         if args.contains("--selftest") { exit(selfTest() ? 0 : 1) }
         return false
     }
@@ -144,6 +145,22 @@ enum Snapshot {
             .background(dark ? Color(hex: 0x2A2A2C) : Color(hex: 0xECEBEA))
         }
         save(VStack(spacing: 0) { row(false); row(true) }, to: path, scale: 8)
+    }
+
+    /// The people in the crew, large, waving and at rest, for checking the likeness.
+    static func portraits(to path: String) {
+        let people: [Buddy] = [.stefan, .jesus, .gandhi, .obama, .descartes]
+        let sheet = VStack(spacing: 0) {
+            ForEach([(Move.wave, 0.5), (Move.breathe, 6.5)], id: \.1) { move, t in
+                HStack(spacing: 0) {
+                    ForEach(people) { buddy in
+                        BuddyView(move: move, buddy: buddy, fixedTime: t).frame(width: 300, height: 300)
+                    }
+                }
+            }
+        }
+        .background(Pen.paper)
+        save(sheet, to: path, scale: 1.5)
     }
 
     /// The frames around a change of exercise: the end of one move, then the next one blending in.

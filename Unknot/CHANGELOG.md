@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.14.0 – 2026-10-21
+
+- **The people in the crew look like themselves.** Stefan Löfven, Jesus, Gandhi, Obama and Descartes are
+  redrawn from photographs and portraits, with a more cartoonish face: big white eyes with small pupils,
+  heavy lids, noses drawn in one line.
+  - Stefan Löfven has his thin swept-back hair, pale bushy brows, narrowed smiling eyes, a broad nose,
+    a red tie and a Swedish flag pin.
+  - Jesus follows the icon of Christ Pantocrator at Sinai: dark hair parted in the middle, a forked beard,
+    a cruciform halo, a red tunic with a gold stripe and a blue mantle.
+  - Gandhi has a shaven head with grey stubble, big ears, round wire glasses, a bushy moustache and a thick
+    white shawl.
+  - Obama has close-cropped greying hair, ears that stand out, his broad smile with teeth showing, a navy
+    suit, a light blue shirt and a patterned tie.
+  - Descartes has the locks over his forehead, the raised brow, heavy lids, a long nose, a thin upturned
+    moustache and the tuft under his lip from Frans Hals's portrait.
+- `Unknot --portraits` draws the people large, for checking the likeness.
+
 ## 1.13.0 – 2026-10-21
 
 - **Four new members of the Stretch Crew**, drawn in more detail than the rest:

@@ -22,6 +22,8 @@ protocol CrewArt: Sendable {
     func front(_ pen: Pen, _ f: CrewFrame)
     func detail(_ f: CrewFrame) -> Path
     func extras(_ f: CrewFrame) -> [(Path, Color)]
+    /// Drawn after the colour, for what has to stay white: eyeballs, teeth.
+    func overlay(_ pen: Pen, _ f: CrewFrame)
 }
 
 extension CrewArt {
@@ -36,6 +38,7 @@ extension CrewArt {
     func onBody(_ pen: Pen, _ f: CrewFrame) {}
     func front(_ pen: Pen, _ f: CrewFrame) {}
     func extras(_ f: CrewFrame) -> [(Path, Color)] { [] }
+    func overlay(_ pen: Pen, _ f: CrewFrame) {}
 }
 
 extension Buddy {

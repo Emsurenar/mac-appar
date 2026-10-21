@@ -93,9 +93,9 @@ it: *Breathe in · 3*, *Switch sides*.
 </p>
 
 Fourteen characters drawn like small engravings: one ink line, hatching for shadow and a soft wash of colour.
-Otto the frog is on the app icon and Selma is a semla, the Swedish cream bun. The last row is drawn in more
-detail: Jesus with his halo, Gandhi in his round glasses, Obama with a flag pin and Descartes in the collar
-from his portrait. A random member leads each break,
+Otto the frog is on the app icon and Selma is a semla, the Swedish cream bun. Stefan Löfven and the last row
+are drawn from photographs and portraits, in a slightly more cartoonish style with big eyes: Jesus after the
+Sinai icon, Gandhi in his round glasses, Obama with his smile and Descartes as Frans Hals painted him. A random member leads each break,
 and under **Settings → Stretch Crew** you can keep only your favourites.
 
 ## When breaks happen

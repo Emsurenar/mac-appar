@@ -81,7 +81,7 @@ struct WelcomeView: View {
                     .padding(.top, 8)
             }
 
-            Label(L("You'll find me in the menu bar whenever you want to pause or change settings."), systemImage: "menubar.arrow.up.rectangle")
+            Label(L("You'll find me in the menu bar. If the icon is hidden, just open Sträckis again to get to the settings."), systemImage: "menubar.arrow.up.rectangle")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 28)

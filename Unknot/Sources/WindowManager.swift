@@ -6,8 +6,6 @@ import SwiftUI
 @MainActor
 final class WindowManager: NSObject, NSWindowDelegate {
     static let shared = WindowManager()
-    static let settingsSize = NSSize(width: 580, height: 620)
-
     var onTestBreak: (() -> Void)?
 
     private var settingsWindow: NSWindow?
@@ -46,13 +44,15 @@ final class WindowManager: NSObject, NSWindowDelegate {
         present(welcomeWindow!)
     }
 
-    func makeSettingsWindow() -> (NSWindow, NSTabViewController) {
-        let tabs = NSTabViewController()
+    func makeSettingsWindow(animatesResize: Bool = true) -> (NSWindow, NSTabViewController) {
+        let tabs = SettingsTabViewController()
+        tabs.animatesResize = animatesResize
         tabs.tabStyle = .toolbar
+        tabs.transitionOptions = [.crossfade, .allowUserInteraction]
         for tab in SettingsTab.allCases {
             let host = NSHostingController(rootView: tab.makeView(onTestBreak: { [weak self] in self?.onTestBreak?() }))
             host.sizingOptions = []
-            host.preferredContentSize = Self.settingsSize
+            host.preferredContentSize = tab.contentSize
             host.title = tab.title
             let item = NSTabViewItem(viewController: host)
             item.label = tab.title
@@ -62,7 +62,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
         let window = NSWindow(contentViewController: tabs)
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.toolbarStyle = .preference
-        window.setContentSize(Self.settingsSize)
+        window.setContentSize(SettingsTab.general.contentSize)
         window.isReleasedWhenClosed = false
         return (window, tabs)
     }
@@ -85,6 +85,22 @@ final class WindowManager: NSObject, NSWindowDelegate {
         if !othersOpen {
             NSApp.setActivationPolicy(.accessory)
         }
+    }
+}
+
+/// Resizes the window to fit each tab, keeping its top edge in place, like System Settings panes.
+final class SettingsTabViewController: NSTabViewController {
+    var animatesResize = true
+
+    override func tabView(_ tabView: NSTabView, didSelect tabViewItem: NSTabViewItem?) {
+        super.tabView(tabView, didSelect: tabViewItem)
+        guard let size = tabViewItem?.viewController?.preferredContentSize, size != .zero,
+              let window = view.window else { return }
+        let target = window.frameRect(forContentRect: NSRect(origin: .zero, size: size)).size
+        var frame = window.frame
+        frame.origin.y += frame.height - target.height
+        frame.size = target
+        window.setFrame(frame, display: true, animate: animatesResize && window.isVisible)
     }
 }
 

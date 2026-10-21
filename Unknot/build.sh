@@ -27,6 +27,10 @@ done
 lipo -create build/obj/Strackis-* -output "$BIN"
 
 cp Info.plist "$APP/Contents/Info.plist"
+# The build number is the number of commits, so every release build is unique.
+if git rev-parse --git-dir >/dev/null 2>&1; then
+    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(git rev-list --count HEAD)" "$APP/Contents/Info.plist"
+fi
 cp -R Resources/*.lproj "$APP/Contents/Resources/"
 
 echo "→ Drawing the app icon"

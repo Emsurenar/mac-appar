@@ -256,7 +256,7 @@ struct BuddyView: View {
             if let t = fixedTime {
                 canvas(t)
             } else {
-                TimelineView(.animation) { tl in canvas(tl.date.timeIntervalSinceReferenceDate) }
+                TimelineView(.animation(minimumInterval: 1.0 / 30)) { tl in canvas(tl.date.timeIntervalSinceReferenceDate) }
             }
         }
         .accessibilityHidden(true)

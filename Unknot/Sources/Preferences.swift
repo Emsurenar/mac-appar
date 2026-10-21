@@ -20,16 +20,18 @@ enum ReminderPosition: String, CaseIterable, Identifiable {
 /// All user settings, persisted in UserDefaults.
 @MainActor
 final class Preferences: ObservableObject {
-    static let shared = Preferences()
+    static let shared: Preferences = CommandLine.arguments.contains("--settings-screenshots") ? .sample() : Preferences()
 
     static let intervalOptions = [10, 15, 20, 25, 30, 45, 60, 90]
     static let breakLengthOptions = [15, 30, 45, 60]
     static let exerciseCountOptions = [1, 2, 3, 4]
     static let awayOptions = [2, 5, 10, 15]
+    static let snoozeOptions = [5, 10, 15]
     static let soundOptions = ["Purr", "Pop", "Tink", "Glass", "Bottle", "Hero", "Submarine", "Blow", "Ping", "Morse", "Frog", "Funk"]
 
     private enum Key {
         static let interval = "intervalMinutes"
+        static let snooze = "snoozeMinutes"
         static let breakLength = "breakSeconds"
         static let exerciseCount = "exercisesPerBreak"
         static let soundEnabled = "soundEnabled"
@@ -46,14 +48,17 @@ final class Preferences: ObservableObject {
         static let waitForFullscreen = "waitForFullscreen"
         static let checkForUpdates = "checkForUpdates"
         static let onboarded = "hasCompletedOnboarding"
-        static let statsDay = "statsDay"
-        static let breaksToday = "breaksToday"
+        static let history = "breakHistory"
         static let breaksTotal = "breaksTotal"
+        // Used by 1.0.0, migrated into `history`
+        static let legacyStatsDay = "statsDay"
+        static let legacyBreaksToday = "breaksToday"
     }
 
     private let d: UserDefaults
 
     @Published var intervalMinutes: Int { didSet { d.set(intervalMinutes, forKey: Key.interval) } }
+    @Published var snoozeMinutes: Int { didSet { d.set(snoozeMinutes, forKey: Key.snooze) } }
     @Published var breakSeconds: Int { didSet { d.set(breakSeconds, forKey: Key.breakLength) } }
     @Published var exercisesPerBreak: Int { didSet { d.set(exercisesPerBreak, forKey: Key.exerciseCount) } }
     @Published var soundEnabled: Bool { didSet { d.set(soundEnabled, forKey: Key.soundEnabled) } }
@@ -70,14 +75,15 @@ final class Preferences: ObservableObject {
     @Published var waitForFullscreen: Bool { didSet { d.set(waitForFullscreen, forKey: Key.waitForFullscreen) } }
     @Published var checkForUpdates: Bool { didSet { d.set(checkForUpdates, forKey: Key.checkForUpdates) } }
     @Published var hasCompletedOnboarding: Bool { didSet { d.set(hasCompletedOnboarding, forKey: Key.onboarded) } }
-    @Published private(set) var breaksToday: Int { didSet { d.set(breaksToday, forKey: Key.breaksToday) } }
+    /// Completed breaks per day, keyed "yyyy-MM-dd". Kept for 90 days.
+    @Published private(set) var history: [String: Int] { didSet { d.set(history, forKey: Key.history) } }
     @Published private(set) var breaksTotal: Int { didSet { d.set(breaksTotal, forKey: Key.breaksTotal) } }
-    private var statsDay: String { didSet { d.set(statsDay, forKey: Key.statsDay) } }
 
     init(defaults: UserDefaults = .standard) {
         d = defaults
         d.register(defaults: [
             Key.interval: 20,
+            Key.snooze: 5,
             Key.breakLength: 30,
             Key.exerciseCount: 3,
             Key.soundEnabled: true,
@@ -94,6 +100,7 @@ final class Preferences: ObservableObject {
             Key.checkForUpdates: true,
         ])
         intervalMinutes = d.integer(forKey: Key.interval)
+        snoozeMinutes = d.integer(forKey: Key.snooze)
         breakSeconds = d.integer(forKey: Key.breakLength)
         exercisesPerBreak = d.integer(forKey: Key.exerciseCount)
         soundEnabled = d.bool(forKey: Key.soundEnabled)
@@ -110,10 +117,23 @@ final class Preferences: ObservableObject {
         waitForFullscreen = d.bool(forKey: Key.waitForFullscreen)
         checkForUpdates = d.bool(forKey: Key.checkForUpdates)
         hasCompletedOnboarding = d.bool(forKey: Key.onboarded)
-        breaksToday = d.integer(forKey: Key.breaksToday)
+        history = d.dictionary(forKey: Key.history) as? [String: Int] ?? [:]
         breaksTotal = d.integer(forKey: Key.breaksTotal)
-        statsDay = d.string(forKey: Key.statsDay) ?? ""
-        refreshDay()
+        migrateLegacyStatistics()
+    }
+
+    /// Default settings with a made-up week of breaks, for screenshots. Never touches the real settings.
+    static func sample() -> Preferences {
+        let suite = "io.github.emsurenar.strackis.screenshots"
+        UserDefaults().removePersistentDomain(forName: suite)
+        let prefs = Preferences(defaults: UserDefaults(suiteName: suite)!)
+        let today = Calendar.current.startOfDay(for: Date())
+        for (offset, count) in [4, 6, 3, 0, 5, 7, 4].reversed().enumerated() {
+            guard let day = Calendar.current.date(byAdding: .day, value: -offset, to: today) else { continue }
+            for _ in 0..<count { prefs.recordCompletedBreak(at: day.addingTimeInterval(10 * 3600)) }
+        }
+        prefs.breaksTotal += 112
+        return prefs
     }
 
     // MARK: Exercises
@@ -136,25 +156,71 @@ final class Preferences: ObservableObject {
 
     // MARK: Statistics
 
-    func recordCompletedBreak() {
-        refreshDay()
-        breaksToday += 1
-        breaksTotal += 1
-    }
+    var breaksToday: Int { history[Self.dayKey(Date())] ?? 0 }
 
-    /// Resets today's counter when the date changes.
-    func refreshDay() {
-        let c = Calendar.current.dateComponents([.year, .month, .day], from: Date())
-        let today = "\(c.year ?? 0)-\(c.month ?? 0)-\(c.day ?? 0)"
-        if statsDay != today {
-            statsDay = today
-            breaksToday = 0
+    func recordCompletedBreak(at date: Date = Date()) {
+        history[Self.dayKey(date), default: 0] += 1
+        breaksTotal += 1
+        // Keep the last 90 days
+        if let cutoff = Calendar.current.date(byAdding: .day, value: -90, to: date) {
+            let oldest = Self.dayKey(cutoff)
+            history = history.filter { $0.key >= oldest }
         }
     }
 
     func resetStatistics() {
-        breaksToday = 0
+        history = [:]
         breaksTotal = 0
+    }
+
+    struct DayCount: Identifiable {
+        let date: Date
+        let count: Int
+        var id: Date { date }
+    }
+
+    /// Break counts for the last `days` days, oldest first, ending today.
+    func recentDays(_ days: Int, until now: Date = Date(), calendar: Calendar = .current) -> [DayCount] {
+        let today = calendar.startOfDay(for: now)
+        return (0..<days).reversed().compactMap { offset in
+            guard let day = calendar.date(byAdding: .day, value: -offset, to: today) else { return nil }
+            return DayCount(date: day, count: history[Self.dayKey(day, calendar: calendar)] ?? 0)
+        }
+    }
+
+    /// Days in a row with at least one break. Today only counts once you've had a break,
+    /// so the streak isn't broken in the morning.
+    func streak(until now: Date = Date(), calendar: Calendar = .current) -> Int {
+        var day = calendar.startOfDay(for: now)
+        if (history[Self.dayKey(day, calendar: calendar)] ?? 0) == 0 {
+            guard let yesterday = calendar.date(byAdding: .day, value: -1, to: day) else { return 0 }
+            day = yesterday
+        }
+        var count = 0
+        while (history[Self.dayKey(day, calendar: calendar)] ?? 0) > 0 {
+            count += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: day) else { break }
+            day = previous
+        }
+        return count
+    }
+
+    nonisolated static func dayKey(_ date: Date, calendar: Calendar = .current) -> String {
+        let c = calendar.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
+    }
+
+    /// Version 1.0.0 only stored today's count, as "year-month-day" without padding.
+    private func migrateLegacyStatistics() {
+        guard let day = d.string(forKey: Key.legacyStatsDay) else { return }
+        let parts = day.split(separator: "-").compactMap { Int($0) }
+        let count = d.integer(forKey: Key.legacyBreaksToday)
+        if parts.count == 3, count > 0 {
+            let key = String(format: "%04d-%02d-%02d", parts[0], parts[1], parts[2])
+            history[key, default: 0] += count
+        }
+        d.removeObject(forKey: Key.legacyStatsDay)
+        d.removeObject(forKey: Key.legacyBreaksToday)
     }
 }
 

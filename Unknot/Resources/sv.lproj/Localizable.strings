@@ -90,6 +90,7 @@
 "Break length" = "Pausens längd";
 "%ld seconds" = "%ld sekunder";
 "Exercises per break" = "Övningar per paus";
+"Snooze for" = "Skjut upp i";
 "Try it out" = "Testa";
 "Show a break now" = "Visa en paus nu";
 "Appearance" = "Utseende";
@@ -120,9 +121,23 @@
 "Away for at least" = "Borta i minst";
 "Wait while an app is in full screen" = "Vänta när en app visas i helskärm";
 "Full screen usually means a presentation, a video call or a movie. Sträckis waits until you're done." = "Helskärm betyder oftast en presentation, ett videosamtal eller en film. Sträckis väntar tills du är klar.";
-"Your stretch breaks" = "Dina sträckpauser";
 "Today" = "Idag";
 "All time" = "Totalt";
+
+/* Aktivitet */
+"Activity" = "Aktivitet";
+"This week" = "Den här veckan";
+"Streak" = "I rad";
+"1 day" = "1 dag";
+"%ld days" = "%ld dagar";
+"Last 7 days" = "Senaste 7 dagarna";
+"Day" = "Dag";
+"Your stretch breaks will show up here." = "Dina sträckpauser visas här.";
+"Statistics stay on this Mac." = "Statistiken stannar på den här datorn.";
+"Reset…" = "Nollställ…";
+"Reset your statistics?" = "Nollställa din statistik?";
+"Reset" = "Nollställ";
+"This removes your history and streak. It can't be undone." = "Historiken och dagarna i rad tas bort. Det går inte att ångra.";
 
 /* Om */
 "Version %@" = "Version %@";
@@ -144,6 +159,6 @@
 "Move to the Applications folder" = "Flytta till Program-mappen";
 "Recommended, so Sträckis can open at login." = "Rekommenderas, så att Sträckis kan öppnas vid inloggning.";
 "Move" = "Flytta";
-"You'll find me in the menu bar whenever you want to pause or change settings." = "Du hittar mig i menyraden när du vill pausa eller ändra inställningar.";
+"You'll find me in the menu bar. If the icon is hidden, just open Sträckis again to get to the settings." = "Du hittar mig i menyraden. Syns inte ikonen kan du bara öppna Sträckis igen för att komma till inställningarna.";
 "Try a break" = "Testa en paus";
 "Get started" = "Kom igång";

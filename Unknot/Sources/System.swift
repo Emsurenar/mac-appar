@@ -34,6 +34,15 @@ enum AppMover {
         let source = Bundle.main.bundleURL
         let destination = URL(fileURLWithPath: "/Applications").appendingPathComponent(source.lastPathComponent)
         if fm.fileExists(atPath: destination.path) {
+            let installed = Bundle(url: destination)?.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
+            if !Updater.isVersion(Updater.currentVersion, newerThan: installed) {
+                // The same or a newer version is already installed: switch to that one.
+                if !source.path.contains("/AppTranslocation/") {
+                    try? fm.trashItem(at: source, resultingItemURL: nil)
+                }
+                relaunch(from: destination)
+                return
+            }
             try fm.trashItem(at: destination, resultingItemURL: nil)
         }
         try fm.copyItem(at: source, to: destination)
@@ -41,6 +50,11 @@ enum AppMover {
         if !source.path.contains("/AppTranslocation/") {
             try? fm.trashItem(at: source, resultingItemURL: nil)
         }
+        relaunch(from: destination)
+    }
+
+    @MainActor
+    private static func relaunch(from destination: URL) {
         let config = NSWorkspace.OpenConfiguration()
         config.createsNewApplicationInstance = true
         config.arguments = ["--relaunched"]
@@ -62,19 +76,36 @@ enum Activity {
     }
 
     /// True when the frontmost app shows a window that covers a whole screen (presentations, video, games).
-    /// Window bounds are readable without the Screen Recording permission.
+    /// Window bounds and owners are readable without the Screen Recording permission.
     static var frontmostAppIsFullscreen: Bool {
         guard let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier,
-              let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]]
+              let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]]
         else { return false }
-        let screenSizes = NSScreen.screens.map(\.frame.size)
+
+        func bounds(_ window: [String: Any]) -> CGRect? {
+            guard let dict = window[kCGWindowBounds as String] as? NSDictionary else { return nil }
+            return CGRect(dictionaryRepresentation: dict)
+        }
+        // The Dock draws the wallpaper. A full-screen space has none, a zoomed window still does.
+        let desktopLevel = Int(CGWindowLevelForKey(.desktopIconWindow))
+        let wallpapers = windows
+            .filter { ($0[kCGWindowOwnerName as String] as? String) == "Dock" && ($0[kCGWindowLayer as String] as? Int ?? 0) < desktopLevel }
+            .compactMap(bounds)
+
         for window in windows {
             guard (window[kCGWindowOwnerPID as String] as? pid_t) == pid,
                   (window[kCGWindowLayer as String] as? Int) == 0,
-                  let boundsDict = window[kCGWindowBounds as String] as? NSDictionary,
-                  let bounds = CGRect(dictionaryRepresentation: boundsDict) else { continue }
-            if screenSizes.contains(where: { $0.width == bounds.width && $0.height == bounds.height }) {
-                return true
+                  let rect = bounds(window) else { continue }
+            for screen in NSScreen.screens {
+                let frame = screen.frame
+                guard abs(rect.width - frame.width) < 1 else { continue }
+                if abs(rect.height - frame.height) < 1 { return true }
+                // On Macs with a camera notch, full-screen windows stop below it.
+                let notch = screen.safeAreaInsets.top
+                let center = CGPoint(x: rect.midX, y: rect.midY)
+                if notch > 0 && rect.height >= frame.height - notch - 1 && !wallpapers.contains(where: { $0.contains(center) }) {
+                    return true
+                }
             }
         }
         return false

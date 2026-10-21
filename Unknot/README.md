@@ -30,7 +30,8 @@ The name is a playful Swedish take on *sträcka på sig*, "to stretch".
 - **Smart timing.** Time away from the computer counts as a break. Sleep and a locked screen restart the countdown.
   Optional working hours, and Sträckis can wait while an app is in full screen (presentations, calls, movies).
 - **A quiet menu bar icon.** See when the next break is, stretch now, or pause for 30 minutes, an hour, two hours
-  or the rest of the day. It also counts your breaks.
+  or the rest of the day.
+- **See your progress.** Breaks today, this week, days in a row and a chart of the last seven days.
 - **Native and tiny.** About 1 MB, written in Swift and SwiftUI. No account, no tracking, no ads.
 - **English and Swedish**, following your Mac's language.
 
@@ -65,14 +66,22 @@ A welcome window shows up on first launch. From then on Sträckis lives in the m
 
 Click the menu bar icon and choose **Settings…**, or open the app again from Finder or Spotlight.
 
-| General | Exercises | Schedule |
-| --- | --- | --- |
-| <img src="docs/settings-general.png" alt="General settings"> | <img src="docs/settings-exercises.png" alt="Exercise settings"> | <img src="docs/settings-schedule.png" alt="Schedule settings"> |
+| General | Exercises |
+| --- | --- |
+| <img src="docs/settings-general.png" alt="General settings"> | <img src="docs/settings-exercises.png" alt="Exercise settings"> |
 
-- **General:** how often, how long, how many exercises per break, position on screen, a countdown in the
-  menu bar, sound, open at login and update checks.
+| Schedule | Activity |
+| --- | --- |
+| <img src="docs/settings-schedule.png" alt="Schedule settings"> | <img src="docs/settings-activity.png" alt="Activity: today, this week, streak and a chart of the last 7 days"> |
+
+- **General:** how often, how long, how many exercises per break, how long to snooze, position on screen,
+  a countdown in the menu bar, sound, open at login and update checks.
 - **Exercises:** choose which exercises can come up. Hover over one to watch the movement.
-- **Schedule:** working hours, smart pauses and your stretch-break statistics.
+- **Schedule:** working hours and smart pauses.
+- **Activity:** your breaks today, this week, days in a row and all time, with a chart of the last seven days.
+
+Can't see the menu bar icon, for example because it's hidden behind the camera notch? Open Sträckis again from
+Finder or Spotlight and the settings appear.
 
 ## Privacy
 
@@ -100,7 +109,8 @@ translations and runs a small self-test (`Sträckis --selftest`).
 | `Sources/BreakScheduler.swift` | When to show a break: interval, pauses, working hours, idle time |
 | `Sources/ReminderView.swift`, `ReminderPanel.swift` | The break itself and its floating glass window |
 | `Sources/Buddy.swift` | The buddy and its poses, drawn with SwiftUI `Canvas` |
-| `Sources/SettingsView.swift`, `WelcomeView.swift` | Settings and first-launch windows |
+| `Sources/SettingsView.swift`, `WelcomeView.swift`, `WindowManager.swift` | Settings and first-launch windows |
+| `Sources/System.swift` | Login item, moving to Applications, idle and full-screen detection |
 | `Sources/Preferences.swift` | All settings, stored in `UserDefaults` |
 | `Resources/*.lproj` | Translations |
 

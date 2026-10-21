@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.0 – 2026-10-21
+
+- New **Activity** tab: today, this week, days in a row and all time, plus a chart of the last seven days.
+- Choose how long the snooze button postpones a break: 5, 10 or 15 minutes.
+- The settings window resizes to fit each tab.
+- Waiting for full-screen apps now works on Macs with a camera notch, without mistaking a zoomed window for full screen.
+- Opening a second copy of Sträckis shows the settings of the one that's already running instead of doing nothing.
+- Moving to Applications no longer replaces a newer version that's already installed.
+- No breaks while the display is asleep.
+- The buddy animates at 30 frames per second, which saves battery.
+- Every build gets its own build number.
+
 ## 1.0.0 – 2026-10-20
 
 First public release.

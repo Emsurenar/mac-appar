@@ -281,6 +281,4 @@ The neck runs from the shoulder towards the head and stops 1.25·r from the head
 
 ## Status
 
-Analysis and design are done (this file). No Swift code has been written yet for Hållning. The Dynamic Island app is unchanged.
-
-The build has to be done on the Mac. The cloud environment is Linux and cannot compile AppKit, SwiftUI, Vision or AVFoundation code, so write the code carefully against the API signatures above and keep it simple to compile.
+The code for Hållning and the Dynamic Island integration is written, following this plan. It has **not been compiled yet**: the cloud environment is Linux and cannot build AppKit, SwiftUI, Vision or AVFoundation code. The first build on the Mac (`./build.sh --run` in both folders) will probably surface a few compile errors to fix.

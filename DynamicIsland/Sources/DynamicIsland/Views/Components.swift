@@ -1,0 +1,250 @@
+import AppKit
+import SwiftUI
+
+// MARK: - Elastic slider
+
+/// The thin media slider from iOS/macOS: it thickens under the pointer and
+/// stretches like rubber when dragged past either end.
+struct ElasticSlider: View {
+    @Binding var value: Double
+    var tint: Color = .white
+    var onEditingChanged: (Bool) -> Void = { _ in }
+
+    @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.hapticFeedbackEnabled) private var hapticFeedbackEnabled
+    @State private var isHovering = false
+    @State private var isDragging = false
+    @State private var stretch: CGFloat = 0
+
+    var body: some View {
+        GeometryReader { geometry in
+            let width = geometry.size.width
+            let isActive = isEnabled && (isHovering || isDragging)
+            let thickness: CGFloat = isActive ? 9 : 6
+            let fraction = CGFloat(min(max(value, 0), 1))
+
+            ZStack(alignment: .leading) {
+                Rectangle().fill(.white.opacity(isEnabled ? 0.18 : 0.1))
+                Rectangle()
+                    .fill(tint.opacity(isEnabled ? (isActive ? 1 : 0.82) : 0.3))
+                    .frame(width: fraction * width + max(stretch, 0))
+            }
+            .frame(width: width + abs(stretch), height: thickness - min(abs(stretch) / 8, 2))
+            .clipShape(Capsule())
+            .offset(x: min(stretch, 0))
+            .frame(width: width, height: geometry.size.height)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { gesture in
+                        guard isEnabled else { return }
+                        if !isDragging {
+                            isDragging = true
+                            onEditingChanged(true)
+                        }
+                        let x = gesture.location.x
+                        let newValue = Double(min(max(x / width, 0), 1))
+                        // A detent at either end, felt while the finger is still dragging.
+                        if hapticFeedbackEnabled, newValue != value, newValue == 0 || newValue == 1 {
+                            NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+                        }
+                        value = newValue
+                        stretch = rubberBand(x < 0 ? x : max(x - width, 0))
+                    }
+                    .onEnded { _ in
+                        guard isDragging else { return }
+                        isDragging = false
+                        withAnimation(.spring(response: 0.38, dampingFraction: 0.5)) { stretch = 0 }
+                        onEditingChanged(false)
+                    }
+            )
+            .onHover { isHovering = $0 }
+            .animation(.spring(response: 0.3, dampingFraction: 0.68), value: isActive)
+        }
+        .frame(height: 18)
+    }
+
+    private func rubberBand(_ overshoot: CGFloat) -> CGFloat {
+        let limit: CGFloat = 12
+        let magnitude = limit * (1 - 1 / (abs(overshoot) / limit * 0.55 + 1))
+        return overshoot < 0 ? -magnitude : magnitude
+    }
+}
+
+private struct HapticFeedbackEnabledKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    var hapticFeedbackEnabled: Bool {
+        get { self[HapticFeedbackEnabledKey.self] }
+        set { self[HapticFeedbackEnabledKey.self] = newValue }
+    }
+}
+
+// MARK: - Buttons
+
+/// Circular icon button with the subtle hover plate and press squish used across macOS.
+struct IslandButtonStyle: ButtonStyle {
+    var diameter: CGFloat = 30
+
+    func makeBody(configuration: Configuration) -> some View {
+        StyledButton(configuration: configuration, diameter: diameter)
+    }
+
+    private struct StyledButton: View {
+        let configuration: Configuration
+        let diameter: CGFloat
+        @Environment(\.isEnabled) private var isEnabled
+        @State private var isHovering = false
+
+        var body: some View {
+            configuration.label
+                .foregroundStyle(.white.opacity(isEnabled ? 1 : 0.3))
+                .frame(width: diameter, height: diameter)
+                .background(Circle().fill(.white.opacity(isHovering && isEnabled ? 0.12 : 0)))
+                .contentShape(Circle())
+                .scaleEffect(configuration.isPressed ? 0.84 : 1)
+                .animation(.spring(response: 0.22, dampingFraction: 0.55), value: configuration.isPressed)
+                .animation(.easeOut(duration: 0.15), value: isHovering)
+                .onHover { isHovering = $0 }
+        }
+    }
+}
+
+// MARK: - Equalizer
+
+struct EqualizerView: View {
+    var color: Color
+    var isPlaying: Bool
+    var barCount = 4
+    var height: CGFloat = 14
+
+    private static let fast: [Double] = [5.3, 7.1, 4.4, 6.2, 5.8]
+    private static let slow: [Double] = [2.1, 3.3, 2.7, 1.6, 2.4]
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: !isPlaying)) { context in
+            let time = context.date.timeIntervalSinceReferenceDate
+            HStack(spacing: 2) {
+                ForEach(0..<barCount, id: \.self) { index in
+                    Capsule()
+                        .fill(color)
+                        .frame(width: 2.6, height: max(3, height * level(index, time)))
+                }
+            }
+            .frame(height: height)
+        }
+        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isPlaying)
+    }
+
+    private func level(_ index: Int, _ time: Double) -> CGFloat {
+        guard isPlaying else { return 0.22 }
+        let i = index % Self.fast.count
+        let wave = sin(time * Self.fast[i] + Double(index) * 1.3) + sin(time * Self.slow[i] + Double(index) * 2.7)
+        return CGFloat(0.3 + 0.7 * (wave + 2) / 4)
+    }
+}
+
+// MARK: - Marquee
+
+/// Single-line text that scrolls like in Music when it does not fit.
+struct MarqueeText: View {
+    let text: String
+    var font: Font
+    var color: Color = .white
+
+    @State private var textWidth: CGFloat = 0
+    @State private var containerWidth: CGFloat = 0
+    @State private var startDate = Date()
+
+    private let gap: CGFloat = 36
+    private let speed: Double = 30
+    private let pause: Double = 2.2
+
+    var body: some View {
+        let overflows = containerWidth > 0 && textWidth > containerWidth + 1
+        TimelineView(.animation(minimumInterval: nil, paused: !overflows)) { context in
+            let offset = overflows ? offset(at: context.date) : 0
+            Text(text)
+                .font(font)
+                .lineLimit(1)
+                .hidden()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .overlay(alignment: .leading) {
+                    HStack(spacing: gap) {
+                        label
+                        if overflows { label }
+                    }
+                    .offset(x: offset)
+                }
+                .clipped()
+                // The leading edge only fades while the text is moving, like in Music.
+                .mask(fade(leading: offset < 0, trailing: overflows))
+        }
+        .onGeometryChange(for: CGFloat.self, of: { $0.size.width }) { containerWidth = $0 }
+        .background(alignment: .leading) {
+            Text(text).font(font).fixedSize().hidden()
+                .onGeometryChange(for: CGFloat.self, of: { $0.size.width }) { textWidth = $0 }
+        }
+        .onChange(of: text) { startDate = Date() }
+    }
+
+    private func fade(leading: Bool, trailing: Bool) -> LinearGradient {
+        LinearGradient(stops: [.init(color: leading ? .clear : .black, location: 0), .init(color: .black, location: 0.04),
+                               .init(color: .black, location: 0.9), .init(color: trailing ? .clear : .black, location: 1)],
+                       startPoint: .leading, endPoint: .trailing)
+    }
+
+    private var label: some View {
+        Text(text).font(font).foregroundStyle(color).fixedSize()
+    }
+
+    private func offset(at date: Date) -> CGFloat {
+        let distance = Double(textWidth + gap)
+        let cycle = pause + distance / speed
+        let t = date.timeIntervalSince(startDate).truncatingRemainder(dividingBy: cycle)
+        return t < pause ? 0 : -CGFloat((t - pause) * speed)
+    }
+}
+
+// MARK: - Artwork
+
+struct ArtworkView: View {
+    var image: NSImage?
+    var version: Int
+    var size: CGFloat
+    var cornerRadius: CGFloat
+
+    var body: some View {
+        ZStack {
+            if let image {
+                Image(nsImage: image)
+                    .resizable()
+                    .interpolation(.high)
+                    .aspectRatio(contentMode: .fill)
+                    .transition(.opacity)
+                    .id(version)
+            } else {
+                LinearGradient(colors: [Color(white: 0.24), Color(white: 0.14)], startPoint: .top, endPoint: .bottom)
+                Image(systemName: "music.note")
+                    .font(.system(size: size * 0.4, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.45))
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        .animation(.easeInOut(duration: 0.35), value: version)
+    }
+}
+
+// MARK: - Formatting
+
+func formatTime(_ seconds: Double) -> String {
+    guard seconds.isFinite, seconds >= 0 else { return "--:--" }
+    let total = Int(seconds.rounded(.down))
+    let hours = total / 3600
+    let minutes = (total % 3600) / 60
+    let secs = total % 60
+    return hours > 0 ? String(format: "%d:%02d:%02d", hours, minutes, secs) : String(format: "%d:%02d", minutes, secs)
+}

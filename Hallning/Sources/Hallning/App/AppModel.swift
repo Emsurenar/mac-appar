@@ -66,7 +66,7 @@ final class AppModel {
             }
         }
         island.stateProvider = { [weak self] in self?.islandState() ?? IslandBridge.State(
-            status: "idle", title: "Hållning", progress: 0, score: 0, todayGood: 0, neckLimit: 15, airpods: false, interval: 10) }
+            status: "idle", title: "Posture", progress: 0, score: 0, todayGood: 0, neckLimit: 15, airpods: false, interval: 10) }
         island.onCommand = { [weak self] command in
             guard let self else { return }
             switch command {
@@ -112,7 +112,7 @@ final class AppModel {
         retrain(evaluate: true)
     }
 
-    /// "Stämmer inte?": adds the latest check as a new sample with the given label.
+    /// "Not right?": adds the latest check as a new sample with the given label.
     func giveFeedback(_ label: PostureLabel) {
         guard let result = monitor.lastResult, !result.vectors.isEmpty else { return }
         var issue: PostureIssue?

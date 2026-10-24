@@ -1,17 +1,18 @@
-# Hållning – plan
+# Posture – plan
 
 A local macOS menu bar app that watches your posture through the camera (Apple Vision) and your AirPods (head angle), learns your good and bad postures during onboarding, and reminds you when you have sat badly for a while. It integrates with the Dynamic Island app in `../DynamicIsland`.
 
-All UI text is Swedish. The design follows Apple's conventions (macOS 26 Tahoe, Liquid Glass, SF Symbols, spring animations) and matches the Dynamic Island app.
+The app was first built in Swedish under the name *Hållning*; all UI text is now English and the app is called **Posture**. The bundle identifier, folder, executable and notification names keep the original name (`Hallning`), so permissions and data carry over. The design follows Apple's conventions (macOS 26 Tahoe, Liquid Glass, SF Symbols, spring animations) and matches the Dynamic Island app.
 
 ## What the user asked for
 
 - A local macOS app with Apple design that integrates with their own Dynamic Island app (`../DynamicIsland`).
 - Every 10 seconds: take a picture with the Mac's camera and get the body posture from Apple's Vision body pose model.
 - Onboarding: the user records 10 good and 10 bad postures.
-- If posture is bad for about 3 minutes in a row (90 %+ of samples), send a notification with a concrete correction such as "Dra bak axlarna", "Sträck på dig" or "Dra bakhuvudet bakåt".
+- If posture is bad for about 3 minutes in a row (90 %+ of samples), send a notification with a concrete correction such as "Pull your shoulders back", "Sit up straight" or "Draw your head back".
 - AirPods integration: the head angle from the AirPods is an input.
-- "Gör den oerhört professionell."
+- "Make it extremely professional."
+- Later: the AirPods neck angle must stay under 15° down to count as good, with a reminder after about 2 minutes, and the camera must not blink.
 
 ## The user's machine (verified)
 
@@ -32,9 +33,9 @@ All UI text is Swedish. The design follows Apple's conventions (macOS 26 Tahoe, 
 ```
 Hallning/
   Package.swift            // swift-tools-version 6.2, platforms [.macOS(.v26)], swiftSettings [.swiftLanguageMode(.v5)], executable "Hallning"
-  build.sh                 // like ../DynamicIsland/build.sh -> "build/Hållning.app", signs, --run
+  build.sh                 // like ../DynamicIsland/build.sh -> "build/Posture.app", signs, --run
   README.md                // Swedish, like the Dynamic Island README
-  Resources/Info.plist     // com.emresunar.Hallning, name "Hållning", LSUIElement, NSCameraUsageDescription, NSMotionUsageDescription, sv
+  Resources/Info.plist     // com.emresunar.Hallning, name "Posture", LSUIElement, NSCameraUsageDescription, NSMotionUsageDescription, en
   Resources/AppIcon.icns   // from Scripts/make-icon.swift (same approach as the island's script)
   Scripts/make-icon.swift  // squircle, teal->blue gradient, white upright seated figure
   Sources/Hallning/
@@ -53,19 +54,19 @@ Hallning/
     Integration/IslandBridge.swift // DistributedNotificationCenter protocol (below)
     Notifications/NotificationService.swift
     Settings/PostureSettings.swift
-    Views/...                      // menu bar panel, main window (Översikt, Kalibrering, Inställningar), onboarding, components
+    Views/...                      // menu bar panel, main window (Overview, Calibration, Settings), onboarding, components
 ```
 
 Code style should match the Dynamic Island app: `@MainActor @Observable` models, `@ObservationIgnored` for internals, short doc comments, English code comments, Swedish UI strings, `UserDefaults` with `didSet` storage as in `AppSettings`.
 
 ## Capture (CameraService)
 
-- Every `interval` seconds (default 10): start the session, throw away frames for about 0.8 s while exposure settles, take 3 frames about 0.1 s apart, then stop the session. The camera is on for about 1 s per check, which saves power and keeps the green light off most of the time. A setting, "Håll kameran igång", keeps the session running instead.
+- While monitoring, the session runs continuously at 15 fps, so the camera light stays steady instead of blinking at every check. Every `interval` seconds (default 10) a check takes 3 frames about 0.1 s apart from that stream. The first frames after a start are skipped for about 0.8 s while exposure settles. The camera turns off while paused, locked, during video calls and before calibration. (The first version started and stopped the camera for every check, which made the light blink.)
 - Use 1280x720 (fall back to 640x480) and BGRA. Convert to `CGImage` with a shared `CIContext` on the video queue. Do not hold on to pool buffers.
 - Keep separate session and video queues, with shared state behind a lock. Fail a capture that has no frames after 6 s.
-- A live preview stream at about 15 fps is used by onboarding, the live view in Översikt and the live test.
+- A live preview stream at about 15 fps is used by onboarding, the live view in Overview and the live test (at the camera's default frame rate).
 - Camera picker via `AVCaptureDevice.DiscoverySession([.builtInWideAngleCamera, .external, .continuityCamera], ...)`.
-- "Pausa under videosamtal" (default on): skip a check when `device.isInUseByAnotherApplication`.
+- "Pause during video calls" (default on): skip a check and stop the camera when `device.isInUseByAnotherApplication`. Our own running session does not count (verified on the Mac).
 - Pause automatically on screen sleep or lock (`NSWorkspace.screensDidSleepNotification` and the distributed `com.apple.screenIsLocked` / `com.apple.screenIsUnlocked` notifications).
 - Images are never saved. Only joint coordinates are stored.
 
@@ -96,8 +97,9 @@ Each check averages the 3 frames with the median per feature. The pose with the 
 - `CMHeadphoneMotionManager`: `startConnectionStatusUpdates()`, then `startDeviceMotionUpdates(to: .main)`. Implement the delegate methods `headphoneMotionManagerDidConnect/DidDisconnect` as nonisolated and hop to the main actor.
 - Keep a 5 s ring buffer of gravity, pitch and roll. `currentSample()` returns the mean if the newest value is less than 1.5 s old.
 - The classifier uses the gravity vector, so it does not depend on how the AirPods axes are oriented.
-- For display ("Nacke 12° nedåt"), show `attitude.pitch` relative to the mean of the good calibration samples. Pick the sign from the calibration: if the forwardHead and lookingDown samples have lower pitch than the good mean, then lower pitch means down.
-- This is optional. Show "Inga AirPods – bara kamera" when there is no data. It needs `NSMotionUsageDescription`. It has not been verified whether macOS delivers headphone motion to a background menu bar app, so handle missing data quietly.
+- For display ("12° down"), show `attitude.pitch` relative to the mean of the good calibration samples. Pick the sign from the calibration: if the forwardHead and lookingDown samples have lower pitch than the good mean, then lower pitch means down.
+- **Neck rule**: every second, the neck angle (relative to the neutral position set in Settings, else the calibration, else level) is compared with `maxNeckAngle` (default 15° down). The neck counts as bent at or past the limit, with 2° of hysteresis for the shown state. A separate window over `neckAlertMinutes` (default 2) reminds with the issue `neckBent` ("Lift your head") when at least the alert threshold (90%) of the seconds are bent. A bent neck also makes an otherwise good camera check bad. Either reminder resets both windows.
+- This is optional. Show "No AirPods – camera only" when there is no data. It needs `NSMotionUsageDescription`. It has not been verified whether macOS delivers headphone motion to a background menu bar app, so handle missing data quietly.
 
 ## Classifier (PostureClassifier)
 
@@ -109,7 +111,7 @@ Each check averages the 3 frames with the median per feature. The pose with the 
 - Distance: d² = Σ wᵢ·clamp(Δzᵢ, ±8)² / Σ wᵢ over the features both vectors have. Require a minimum shared weight.
 - Weighted kNN with k = 7 and a Gaussian kernel. σ is the median nearest-neighbour distance between different poses (floor 0.5). P(bad) = Σw_bad / Σw.
 - Novelty: if the nearest distance is above max(3σ, 2.5), mark the sample as uncertain. It is shown, but it does not count towards an alert.
-- Sensitivity setting: Låg 0.65, Normal 0.5, Hög 0.35.
+- Sensitivity setting: Low 0.65, Normal 0.5, High 0.35.
 - Issue: the kernel-weighted vote among the bad neighbours' issues. If no tagged neighbours exist, infer the issue from z-deviations against the good mean:
   - shoulderTilt → leaningLeft/Right
   - noseDrop, facePitch or gravity → lookingDown
@@ -117,53 +119,54 @@ Each check averages the 3 frames with the median per feature. The pose with the 
   - neckHeight low with shoulderHeight high → shrugging
   - headScale high → forwardHead
   - shoulderWidth high → tooClose
-- Leave-one-pose-out cross-validation, shown as "Träffsäkerhet: 19 av 20 poser".
-- Quick feedback from the menu bar ("Stämmer inte? Det här är bra / dålig hållning") and from the notification action ("Fel – jag satt bra") adds the latest vectors as new samples and retrains.
+- Leave-one-pose-out cross-validation, shown as "Accuracy: 19 of 20 poses".
+- Quick feedback from the menu bar ("Not right? This is good / Poor posture") and from the notification action ("Wrong – I sat well") adds the latest vectors as new samples and retrains.
 
-## Issues and recommendations (Swedish copy)
+## Issues and recommendations
 
 | issue | title | body |
 |---|---|---|
-| slouching | Sträck på dig | Du har sjunkit ihop. Res dig från höfterna och låt ryggen växa mot taket. |
-| forwardHead | Dra bakhuvudet bakåt | Huvudet har glidit fram. Dra in hakan lätt så att öronen hamnar rakt ovanför axlarna. |
-| roundedShoulders | Dra bak axlarna | Axlarna rullar framåt. För skulderbladen bakåt och nedåt och öppna bröstet. |
-| lookingDown | Lyft blicken | Du tittar ner länge. Höj skärmen så att överkanten hamnar i ögonhöjd. |
-| tooClose | Luta dig tillbaka | Du sitter nära skärmen. Sätt dig långt bak i stolen med stöd för ländryggen. |
-| leaningLeft / leaningRight | Räta upp dig | Du lutar åt vänster/höger. Fördela vikten jämnt på båda sittbenen. |
-| shrugging | Släpp ner axlarna | Axlarna är uppdragna mot öronen. Andas ut och låt dem sjunka. |
-| headTilt | Räta upp huvudet | Huvudet lutar åt sidan. Låt det vila rakt ovanpå halsen. |
-| chinOnHand | Släpp hakan | Du stöder huvudet i handen. Lägg händerna på bordet och låt nacken bära huvudet. |
+| slouching | Sit up straight | You have slumped. Rise from your hips and let your spine grow towards the ceiling. |
+| forwardHead | Draw your head back | Your head has drifted forward. Tuck your chin slightly so your ears line up over your shoulders. |
+| roundedShoulders | Pull your shoulders back | Your shoulders are rolling forward. Draw your shoulder blades back and down and open your chest. |
+| lookingDown | Raise your gaze | You have been looking down for a while. Raise the screen so its top edge is at eye level. |
+| tooClose | Lean back | You are sitting close to the screen. Sit back in the chair with support for your lower back. |
+| leaningLeft / leaningRight | Straighten up | You are leaning to the left/right. Spread your weight evenly over both sit bones. |
+| shrugging | Drop your shoulders | Your shoulders are pulled up towards your ears. Breathe out and let them sink. |
+| headTilt | Straighten your head | Your head is tilted to the side. Let it rest straight on top of your neck. |
+| chinOnHand | Let go of your chin | You are resting your head on your hand. Put your hands on the desk and let your neck carry your head. |
+| neckBent (AirPods) | Lift your head | Your neck has been bent more than 15° for 2 minutes. Raise your eyes to the screen and tuck your chin slightly. |
 
 ## Onboarding (window about 860×640, hidden title bar)
 
-1. **Välkommen**: the animated figure loops between upright and slouched. Three rows: "Allt sker lokalt" (no images saved), "Lär sig din kropp", "Fungerar med Dynamic Island". Button "Kom igång".
-2. **Behörigheter**: Kamera (required), Notiser, AirPods huvudvinkel (optional, shows connection status).
-3. **Placering**: live preview, mirrored, with a skeleton overlay. Checklist: "Axlarna syns", "Ansiktet syns".
-4. **10 bra hållningar**:
-   1. Sitt rakt och bekvämt
-   2. Titta mot skärmens vänstra kant
-   3. Titta mot högra kanten
-   4. Titta mot överkanten
-   5. Sänk blicken mot tangentbordet utan att böja nacken
-   6. Händerna på tangentbordet
-   7. Luta dig lätt bakåt mot ryggstödet med rak rygg
-   8. Händerna i knät
-   9. Sitt rakt och andas lugnt
-   10. Din egen bästa hållning
-5. **10 dåliga hållningar**, each tagged with an issue:
-   1. Sjunk ihop (slouching)
-   2. Skjut fram huvudet (forwardHead)
-   3. Runda axlarna (roundedShoulders)
-   4. Titta ner i knät som i mobilen (lookingDown)
-   5. Luta dig nära skärmen (tooClose)
-   6. Luta åt vänster (leaningLeft)
-   7. Luta åt höger (leaningRight)
-   8. Dra upp axlarna (shrugging)
-   9. Vila hakan i handen (chinOnHand)
-   10. Sjunk ner i stolen (slouching)
+1. **Welcome**: the animated figure loops between upright and slouched. Three rows: "Everything stays local" (no images saved), "Learns your body", "Works with Dynamic Island". Button "Get started".
+2. **Permissions**: Camera (required), Notifications, AirPods head angle (optional, shows connection status).
+3. **Position**: live preview, mirrored, with a skeleton overlay. Checklist: "Shoulders visible", "Face visible".
+4. **10 good postures**:
+   1. Sit up straight and comfortably
+   2. Look at the left edge of the screen
+   3. Look at the right edge
+   4. Look at the top edge
+   5. Lower your eyes to the keyboard without bending your neck
+   6. Hands on the keyboard
+   7. Lean back slightly against the backrest with a straight back
+   8. Hands in your lap
+   9. Sit up straight and breathe calmly
+   10. Your own best posture
+5. **10 poor postures**, each tagged with an issue:
+   1. Slump (slouching)
+   2. Push your head forward (forwardHead)
+   3. Round your shoulders (roundedShoulders)
+   4. Look down into your lap as at a phone (lookingDown)
+   5. Lean close to the screen (tooClose)
+   6. Lean to the left (leaningLeft)
+   7. Lean to the right (leaningRight)
+   8. Raise your shoulders (shrugging)
+   9. Rest your chin on your hand (chinOnHand)
+   10. Sink down in the chair (slouching)
 
-   For each prompt: a card with the step ("Bra hållning 3 av 10"), title, instruction and illustration. Press "Ta bild" (space bar), then a 3-2-1 countdown ring, then a burst of 6 frames with "Håll stilla". Validate that at least 4 frames have shoulders and a head; otherwise show "Jag ser inte dina axlar …". Then a checkmark and the next prompt. "Gör om" redoes the previous pose. Progress dots run along the bottom.
-6. **Klart**: a grid of 20 skeleton thumbnails (green for good, orange for bad), the cross-validation result, and a live test that classifies continuously ("Sitt bra och sedan dåligt – stämmer det?"). Button "Klar".
+   For each prompt: a card with the step ("Good posture 3 of 10"), title, instruction and illustration. Press "Take Photo" (space bar), then a 3-2-1 countdown ring, then a burst of 6 frames with "Hold still". Validate that at least 4 frames have shoulders and a head; otherwise show "I can't see your shoulders …". Then a checkmark and the next prompt. "Redo" redoes the previous pose. Progress dots run along the bottom.
+6. **All set**: a grid of 20 skeleton thumbnails (green for good, orange for poor), the cross-validation result, and a live test that classifies continuously ("Sit well, then poorly – does it match?"). Button "Done".
 
 ## Monitoring rule (PostureMonitor)
 
@@ -174,7 +177,7 @@ Each check averages the 3 frames with the median per feature. The pose with the 
   - there are at least 60 % of the expected samples, and
   - the bad fraction is at least the threshold.
 - After an alert, or when the monitor resumes from a pause, set `windowStart = now`, so the next alert needs a full new window.
-- UI progress while the latest sample is bad: badCount / ceil(threshold·expected), with "Påminnelse om m:ss".
+- UI progress while the latest sample is bad: badCount / ceil(threshold·expected), with "Reminder in m:ss".
 - Statuses:
   - idle (not calibrated)
   - good
@@ -185,27 +188,27 @@ Each check averages the 3 frames with the median per feature. The pose with the 
   - cameraBusy
   - noPermission
   - error
-- Pause options: 15 min, 30 min, 1 h, resten av dagen.
+- Pause options: 15 min, 30 min, 1 h, rest of the day.
 - Smoothed score from 0 to 100: an EMA of (1 − P(bad)).
 - History: per-minute buckets per day of good, bad and uncertain counts, plus the alerts with their issues. Store one JSON file per day and keep 30 days.
 
 ## Notifications
 
-`UNUserNotificationCenter`, category `posture-alert` with the actions "Pausa 30 min" and "Fel – jag satt bra". Example: the title is the issue title, and the body is "Du har suttit med dålig hållning i 3 minuter. " followed by the advice. Show banners even while the app is active.
+`UNUserNotificationCenter`, category `posture-alert` with the actions "Pause 30 min" and "Wrong – I sat well". Example: the title is the issue title, and the body is "You have had poor posture for 3 minutes. " followed by the advice (for `neckBent`: "Your neck has been bent more than 15° for 2 minutes. …"). Show banners even while the app is active.
 
 Alert style setting:
-- "Dynamic Island, annars notis" (default): if the island has said hello within 75 s, alert only in the island and play a soft sound if enabled; otherwise send a notification.
-- "Båda".
-- "Endast notis".
+- "Dynamic Island, else notification" (default): if the island has said hello within 75 s, alert only in the island and play a soft sound if enabled; otherwise send a notification.
+- "Both".
+- "Notification only".
 
 ## Dynamic Island protocol (DistributedNotificationCenter, deliverImmediately)
 
-- `com.emresunar.Hallning.state` (Hållning → island), sent on every check, on launch and on quit:
+- `com.emresunar.Hallning.state` (Posture → island), sent on every check, on launch and on quit:
   - `status`: good | bad | uncertain | away | paused | idle | off
-  - `issue`, `title`, `progress` (0…1), `score` (Int), `todayGood` (0…1), `headPitch` (Double, optional), `airpods` (Bool), `interval`, `lastCheck` (epoch), `pausedUntil` (epoch, optional), `version` = 1
-- `com.emresunar.Hallning.alert` (Hållning → island): `issue`, `title`, `body`, `minutes`.
-- `com.emresunar.Hallning.command` (island → Hållning): `command` is pause30 | resume | check | open.
-- `com.emresunar.DynamicIsland.posture.hello` (island → Hållning): sent on launch and at most every 30 s while receiving state. Hållning answers with a state immediately.
+  - `issue`, `title`, `progress` (0…1), `score` (Int), `todayGood` (0…1), `headPitch` (Double, optional), `neckLimit` (Double), `airpods` (Bool), `interval`, `lastCheck` (epoch), `pausedUntil` (epoch, optional), `version` = 1
+- `com.emresunar.Hallning.alert` (Posture → island): `issue`, `title`, `body`, `minutes`.
+- `com.emresunar.Hallning.command` (island → Posture): `command` is pause30 | resume | check | open.
+- `com.emresunar.DynamicIsland.posture.hello` (island → Posture): sent on launch and at most every 30 s while receiving state. Posture answers with a state immediately.
 
 ## Dynamic Island changes (`../DynamicIsland`)
 
@@ -222,13 +225,13 @@ Alert style setting:
 - `Views/PostureViews.swift`:
   - **PostureTab**:
     - A ring with today's percentage of good posture and the figure inside, which slouches with the status.
-    - The title (status or issue) and "Senaste kontroll för 6 s sedan".
+    - The title (status or issue) and "Last check 6 s ago".
     - The progress bar towards the reminder.
-    - The AirPods angle.
-    - Buttons: Pausa 30 min / Fortsätt, Kontrollera nu, Öppna Hållning.
-  - **PostureAlertView**: the figure with a bounce, the title, and "Dålig hållning i 3 min".
+    - The AirPods angle, orange past the neck limit.
+    - Buttons: Pause 30 min / Resume, Check now, Open Posture.
+  - **PostureAlertView**: the figure with a bounce, the title, and "Poor posture for 3 min" (or "Neck bent for 2 min").
   - **CompactPostureView**.
-- `AppSettings` and `SettingsView`: a "Hållning" section with the toggles showPostureTab, showPostureAlerts and showPostureLiveActivity.
+- `AppSettings` and `SettingsView`: a "Posture" section with the toggles showPostureTab, showPostureAlerts and showPostureLiveActivity.
 - Extend `SnapshotRenderer` with the posture states. Update the README.
 
 ## Signature visual: PostureFigure
@@ -251,34 +254,39 @@ The neck runs from the shoulder towards the head and stops 1.25·r from the head
 ## UI
 
 - **Menu bar panel** (`MenuBarExtra` with `.window`, width 320):
-  - Figure ring with the status title, "Kontrolleras var 10:e s · nyss" and a pause button.
-  - When bad, an orange progress bar with "Påminnelse om 1:20".
-  - Three stat tiles: Idag 86 %, Påminnelser, Nacke 8° (AirPods).
+  - Figure ring with the status title, "Checks every 10 s · just now" and a pause button.
+  - When bad, an orange progress bar with "Reminder in 1:20" ("Bent neck" for the neck rule).
+  - Three stat tiles: Good today 86%, Reminders, Score.
+  - With AirPods, a neck gauge: the angle on a 0–30° scale with the limit marked, green below and orange past it.
   - A small Charts timeline of today.
   - Feedback buttons.
-  - "Öppna Hållning…", a pause menu and "Avsluta".
+  - "Open Posture…", a pause menu and "Quit".
 - **Main window** (`NavigationSplitView`):
-  - **Översikt**:
+  - **Overview**:
     - Status header.
     - Optional live camera card with the skeleton.
     - Today's chart (Charts, 15-minute stacked bars, good and bad).
     - The last 7 days.
     - Issues of the day as horizontal bars.
-  - **Kalibrering**:
+  - **Calibration**:
     - Model quality.
     - The sample grid as skeleton thumbnails, with delete.
-    - "Kalibrera om…".
-  - **Inställningar**: Form `.grouped` with these sections:
-    - Kontroller: interval
-    - Påminnelser: duration, threshold, sensitivity, style, sound
-    - Kamera: picker, keep on, pause during calls
-    - AirPods
+    - "Recalibrate…".
+  - **Settings**: Form `.grouped` with these sections:
+    - Checks: interval
+    - Reminders: duration, threshold, sensitivity, style, sound
+    - Camera: picker, pause during calls
+    - AirPods: use head angle, live neck gauge, maximum neck angle, remind after, neutral position (set now / reset)
     - Dynamic Island: connection status
-    - Allmänt: launch at login with `SMAppService`
-    - Integritet: "Radera all data"
+    - General: open at login with `SMAppService`
+    - Privacy: "Delete all data"
 - Scenes: on macOS 15+, use `.defaultLaunchBehavior(.suppressed)` for the main window. Present onboarding when not calibrated. Use `.restorationBehavior(.disabled)`.
 - Colours: green for good, orange for bad, secondary for away, indigo for paused. The accent is teal.
 
 ## Status
 
-The code for Hållning and the Dynamic Island integration is written, following this plan. It has **not been compiled yet**: the cloud environment is Linux and cannot build AppKit, SwiftUI, Vision or AVFoundation code. The first build on the Mac (`./build.sh --run` in both folders) will probably surface a few compile errors to fix.
+Built and running on the Mac.
+
+- The cloud-written code compiled without changes.
+- The neck rule and the steady camera were added and verified on the Mac: the camera starts once and stays on, and our own session doesn't count as a video call.
+- The app was then translated to English as **Posture**.

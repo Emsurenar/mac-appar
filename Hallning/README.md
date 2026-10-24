@@ -1,58 +1,76 @@
-# Hållning
+# Posture
 
-En menyradsapp för Mac som håller koll på hur du sitter – med kameran, Apples Vision och (om du vill) huvudvinkeln från dina AirPods. Den lär sig just din kropp och säger till när du suttit illa en stund, med ett konkret råd som *Dra bak axlarna*, *Sträck på dig* eller *Dra bakhuvudet bakåt*.
+A Mac menu bar app that watches how you sit, using the camera, Apple's Vision and, if you like, the head angle from your AirPods. It learns your own body. When you have sat badly for a while it tells you, with concrete advice such as *Pull your shoulders back*, *Sit up straight* or *Draw your head back*.
 
-- **Var 10:e sekund** tar appen en kort bildserie (kameran är på ungefär en sekund) och läser av axlar, huvud och ansikte med Vision.
-- **Kalibrering**: du visar 10 bra och 10 dåliga hållningar. Varje dålig hållning hör ihop med ett eget råd.
-- **3-minutersregeln**: när minst 90 % av kontrollerna under 3 minuter visar dålig hållning kommer en påminnelse. Båda värdena går att ändra.
-- **AirPods**: AirPods Pro, Max och 3:e generationen och senare ger nackens vinkel som extra signal. Utan dem används bara kameran.
-- **Dynamic Island**: med [Dynamic Island](../DynamicIsland) igång visas påminnelser och status i ön, annars som notis.
-- **Översikt** med dagens kurva, de senaste 7 dagarna och dagens vanligaste problem.
+- **Every 10 seconds** the app reads your shoulders, head and face with Vision. The camera stays on while it watches, so its light stays steady instead of blinking at every check.
+- **Calibration**: you show 10 good and 10 poor postures, and each poor posture is linked to its own advice.
+- **The 3-minute rule**: you get a reminder when at least 90% of the checks over 3 minutes show poor posture. Both values can be changed.
+- **AirPods neck limit**: with AirPods Pro, AirPods Max or AirPods (3rd generation and later), your neck counts as bent once it is more than 15° below neutral. After 2 minutes like that you get a reminder to lift your head. The angle is sampled every second, and the limit, the time and the neutral position can all be set. Without AirPods only the camera is used.
+- **Dynamic Island**: when [Dynamic Island](../DynamicIsland) is running, reminders and status show in the island; otherwise they come as notifications.
+- **Overview** shows today's chart, the last 7 days and today's most common issues.
 
-## Bygga och köra
+## Build and run
 
-Kräver macOS 26 och Command Line Tools (Xcode behövs inte).
+Requires macOS 26 and the Command Line Tools. Xcode is not needed.
 
 ```bash
 cd Hallning
 ./build.sh --run
 ```
 
-Appen hamnar i `build/Hållning.app`. Första gången ritas ikonen (`Resources/AppIcon.icns`) med `Scripts/make-icon.swift`. Skriptet signerar med den första kodsigneringsidentiteten i nyckelringen (t.ex. *Dagsplan Development*) så att kamerabehörigheten finns kvar mellan byggen. Välj en annan med `SIGN_IDENTITY="…" ./build.sh`.
+The app ends up in `build/Posture.app`.
 
-Appen har ingen Dock-ikon: den bor i menyraden som en sittande figur. Första gången öppnas kalibreringen automatiskt.
+- **Icon**: on the first build, `Scripts/make-icon.swift` draws the icon (`Resources/AppIcon.icns`).
+- **Signing**: the script signs with the first code signing identity in the keychain, so the camera permission survives rebuilds. Pick another one with `SIGN_IDENTITY="…" ./build.sh`.
 
-## Behörigheter
+The app has no Dock icon. It lives in the menu bar as a seated figure, and the first launch opens calibration automatically.
 
-| Behörighet | Varför | |
+## Permissions
+
+| Permission | Why | |
 |---|---|---|
-| Kamera | Läsa av hållningen | Krävs |
-| Notiser | Påminnelser när Dynamic Island inte är igång | Valfri |
-| Rörelse (AirPods) | Nackens vinkel | Valfri |
+| Camera | Reading your posture | Required |
+| Notifications | Reminders when Dynamic Island isn't running | Optional |
+| Motion (AirPods) | The neck angle | Optional |
 
-Går något fel: **Systeminställningar → Integritet och säkerhet → Kamera** (eller **Rörelse och kondition**) och slå på Hållning.
+If something goes wrong, turn Posture on under **System Settings → Privacy & Security → Camera** (or **Motion & Fitness**).
 
-## Så funkar det
+## How it works
 
-1. Vision hittar ledpunkter (öron, ögon, näsa, axlar …) och ansiktets ruta och vinklar.
-2. Av dem räknas ett tiotal mått fram, t.ex. hur högt huvudet sitter över axlarna i förhållande till axelbredden, hur stort ansiktet är (huvudet fram), axlarnas lutning och hur mycket näsan sjunkit. AirPods bidrar med riktningen på tyngdkraften i huvudet.
-3. Måtten jämförs med dina egna kalibrerade hållningar (viktad närmaste-granne, normaliserad mot dina bra hållningar). Liknar ställningen ingenting du kalibrerat räknas den som *osäker* och påverkar inga påminnelser.
-4. Stämmer det inte? Tryck *Det här är bra* eller *Dålig hållning* i menyn, eller *Fel – jag satt bra* i notisen. Kontrollen läggs då till i kalibreringen.
+1. Vision finds joints (ears, eyes, nose, shoulders …) and the face's box and angles.
+2. About ten measures are derived from them. Examples:
+   - how high the head sits above the shoulders relative to shoulder width
+   - how large the face appears, which grows when the head moves forward
+   - the shoulder tilt
+   - how far the nose has dropped
 
-Kontrollerna pausar automatiskt när skärmen är låst eller vilar och (om du vill) under videosamtal, när kameran används av en annan app.
+   The AirPods add the direction of gravity in the head.
+3. The measures are compared with your own calibrated postures, using a weighted nearest neighbour that is normalised against your good postures. A position that matches nothing you calibrated counts as *unsure* and does not affect reminders.
+4. The AirPods neck angle is a hard rule on top of that. Past the limit, a check counts as poor posture whatever the camera says, and the neck has its own shorter reminder window.
+5. Not right? Press *This is good* or *Poor posture* in the menu, or *Wrong – I sat well* in the notification. The check is then added to the calibration.
+
+Checks pause automatically when the screen is locked or asleep and, if you want, during video calls, when another app is using the camera. The camera turns off while paused.
+
+### Neutral position
+
+The neck angle is measured from your calibration, or from a neutral position you set yourself. To set it, sit up straight, look at the screen and press **Settings → AirPods → Neutral position → Set now**.
 
 ## Dynamic Island
 
-Apparna pratar via distribuerade notiser:
+The apps talk over distributed notifications:
 
-- `com.emresunar.Hallning.state` – status vid varje kontroll, vid start och vid avslut.
-- `com.emresunar.Hallning.alert` – en påminnelse.
-- `com.emresunar.Hallning.command` – knapparna i öns flik: `pause30`, `resume`, `check`, `open`.
-- `com.emresunar.DynamicIsland.posture.hello` – ön är igång. Har ön hörts av de senaste 75 sekunderna visas påminnelsen bara där (standard), annars som notis. Det går att ändra under **Inställningar → Påminnelser**.
+- `com.emresunar.Hallning.state`: the status. It is sent on every check, at launch and at quit, and includes the AirPods `headPitch` and `neckLimit`.
+- `com.emresunar.Hallning.alert`: a reminder, with the `issue`, `title`, `body` and `minutes`.
+- `com.emresunar.Hallning.command`: the buttons in the island's tab: `pause30`, `resume`, `check` and `open`.
+- `com.emresunar.DynamicIsland.posture.hello`: the island is running. If the island has been heard from in the last 75 seconds, the reminder shows only there (the default); otherwise it comes as a notification. You can change this under **Settings → Reminders**.
 
-## Integritet
+The names keep the app's original Swedish name, *Hållning*, as do the bundle identifier and the folder. That way existing permissions and data carry over.
 
-- Allt sker lokalt på din Mac. Inget skickas någonstans.
-- **Bilder sparas aldrig.** Varje bild analyseras i minnet och släpps direkt. Bara ledpunkternas koordinater sparas, för kalibreringen och miniatyrerna.
-- Data ligger i `~/Library/Application Support/Hallning/`: `calibration.json` och en fil per dag i `History/` (antal bra och dåliga kontroller per minut, sparas i 30 dagar).
-- **Inställningar → Integritet → Radera all data** tar bort allt.
+## Privacy
+
+- Everything happens locally on your Mac. Nothing is sent anywhere.
+- **Images are never saved.** Each frame is analysed in memory and released straight away. Only joint coordinates are stored, for the calibration and its thumbnails.
+- Data lives in `~/Library/Application Support/Hallning/`:
+  - `calibration.json`
+  - one file per day in `History/`, with the number of good and poor checks per minute, kept for 30 days
+- **Settings → Privacy → Delete all data** removes everything.

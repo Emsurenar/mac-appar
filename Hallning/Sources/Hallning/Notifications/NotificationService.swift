@@ -1,7 +1,7 @@
 import AppKit
 @preconcurrency import UserNotifications
 
-/// Posture reminders through Notification Center, with "Pausa 30 min" and "Fel – jag satt bra".
+/// Posture reminders through Notification Center, with "Pause 30 min" and "Wrong – I sat well".
 final class NotificationService: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
     enum Action {
         case pause, falseAlarm, open
@@ -18,8 +18,8 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, @un
 
     func configure() {
         center.delegate = self
-        let pause = UNNotificationAction(identifier: Self.pauseAction, title: "Pausa 30 min", options: [])
-        let falseAlarm = UNNotificationAction(identifier: Self.falseAlarmAction, title: "Fel – jag satt bra", options: [])
+        let pause = UNNotificationAction(identifier: Self.pauseAction, title: "Pause 30 min", options: [])
+        let falseAlarm = UNNotificationAction(identifier: Self.falseAlarmAction, title: "Wrong – I sat well", options: [])
         let category = UNNotificationCategory(identifier: Self.category, actions: [pause, falseAlarm],
                                               intentIdentifiers: [], options: [])
         center.setNotificationCategories([category])

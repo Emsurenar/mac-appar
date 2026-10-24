@@ -30,27 +30,27 @@ extension PostureStatus {
     /// A one-line explanation under the title.
     var subtitle: String {
         switch self {
-        case .idle: "Kalibrera för att börja"
-        case .good: "Fortsätt så"
+        case .idle: "Calibrate to get started"
+        case .good: "Keep it up"
         case .bad(let issue): issue.label
-        case .uncertain: "Ställningen liknar inget du har kalibrerat"
-        case .away: "Ser ingen framför kameran"
+        case .uncertain: "This position matches nothing you calibrated"
+        case .away: "No one in front of the camera"
         case .paused(let until):
-            if let until { "Fortsätter \(until.formatted(date: .omitted, time: .shortened))" } else { "Skärmen är låst eller vilar" }
-        case .cameraBusy: "Pausar under videosamtal"
-        case .noPermission: "Ge åtkomst i Systeminställningar"
+            if let until { "Resumes at \(until.formatted(date: .omitted, time: .shortened))" } else { "The screen is locked or asleep" }
+        case .cameraBusy: "Paused during a video call"
+        case .noPermission: "Allow access in System Settings"
         case .error(let message): message
         }
     }
 }
 
-/// "nyss", "för 12 s sedan", "för 3 min sedan".
+/// "just now", "12 s ago", "3 min ago".
 func relativeTime(_ date: Date?, now: Date = Date()) -> String {
-    guard let date else { return "aldrig" }
+    guard let date else { return "never" }
     let seconds = Int(now.timeIntervalSince(date))
-    if seconds < 5 { return "nyss" }
-    if seconds < 60 { return "för \(seconds) s sedan" }
-    if seconds < 3600 { return "för \(seconds / 60) min sedan" }
+    if seconds < 5 { return "just now" }
+    if seconds < 60 { return "\(seconds) s ago" }
+    if seconds < 3600 { return "\(seconds / 60) min ago" }
     return date.formatted(date: .omitted, time: .shortened)
 }
 
@@ -62,21 +62,15 @@ func countdown(_ seconds: TimeInterval) -> String {
 
 func percent(_ value: Double?) -> String {
     guard let value else { return "–" }
-    return "\(Int((value * 100).rounded())) %"
+    return "\(Int((value * 100).rounded()))%"
 }
 
-/// "var 10:e s", "varje minut"
+/// "every 10 s", "every minute"
 func intervalText(_ seconds: Double) -> String {
     let s = Int(seconds.rounded())
-    if s == 60 { return "varje minut" }
-    if s % 60 == 0 { return "var \(ordinal(s / 60)) min" }
-    return "var \(ordinal(s)) s"
-}
-
-/// Swedish ordinal: 1:a, 2:a, 3:e, 11:e, 21:a.
-func ordinal(_ n: Int) -> String {
-    let last = n % 10, lastTwo = n % 100
-    return "\(n):" + ((last == 1 || last == 2) && lastTwo != 11 && lastTwo != 12 ? "a" : "e")
+    if s == 60 { return "every minute" }
+    if s % 60 == 0 { return "every \(s / 60) min" }
+    return "every \(s) s"
 }
 
 /// A rounded tile with a value and a caption.
@@ -111,7 +105,7 @@ struct StatTile: View {
 struct ReminderProgress: View {
     var progress: Double
     var remaining: TimeInterval?
-    var title = "Dålig hållning"
+    var title = "Poor posture"
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
@@ -119,7 +113,7 @@ struct ReminderProgress: View {
                 Text(title)
                 Spacer()
                 if let remaining {
-                    Text("Påminnelse om \(countdown(remaining))")
+                    Text("Reminder in \(countdown(remaining))")
                         .monospacedDigit()
                         .contentTransition(.numericText())
                 }
@@ -192,7 +186,7 @@ struct FeatureRow: View {
 }
 
 extension AppModel {
-    /// "Nacke 8° nedåt"
+    /// "8° down"
     var neckText: String {
         guard let angle = neckAngle else { return "–" }
         return neckAngleText(angle)
@@ -200,15 +194,15 @@ extension AppModel {
 
     /// The reminder bar under the status, titled after what is wrong.
     var reminderTitle: String {
-        monitor.status.issue == .neckBent ? "Böjd nacke" : "Dålig hållning"
+        monitor.status.issue == .neckBent ? "Bent neck" : "Poor posture"
     }
 }
 
-/// "Rak", "12° ned", "4° upp"
+/// "Level", "12° down", "4° up"
 func neckAngleText(_ angle: Double) -> String {
     let degrees = Int(abs(angle).rounded())
-    if degrees < 3 { return "Rak" }
-    return "\(degrees)° \(angle > 0 ? "ned" : "upp")"
+    if degrees < 3 { return "Level" }
+    return "\(degrees)° \(angle > 0 ? "down" : "up")"
 }
 
 /// The AirPods neck angle on a scale with the limit marked: green below it, orange past it.
@@ -223,7 +217,7 @@ struct NeckGauge: View {
         let tint: Color = isBent ? .orange : .green
         VStack(alignment: .leading, spacing: 7) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Label("Nacke", systemImage: "airpods.pro")
+                Label("Neck", systemImage: "airpods.pro")
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.secondary)
                 Spacer(minLength: 0)
@@ -258,6 +252,6 @@ struct NeckGauge: View {
         }
         .animation(.spring(response: 0.5, dampingFraction: 0.85), value: angle)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Nackvinkel \(neckAngleText(angle)), gräns \(Int(limit.rounded())) grader")
+        .accessibilityLabel("Neck angle \(neckAngleText(angle)), limit \(Int(limit.rounded())) degrees")
     }
 }

@@ -17,11 +17,11 @@ struct MenuPanel: View {
 
             if model.isCalibrated {
                 HStack(spacing: 8) {
-                    StatTile(title: "Bra i dag", value: percent(model.history.today.goodFraction),
+                    StatTile(title: "Good today", value: percent(model.history.today.goodFraction),
                              symbol: "figure.stand", tint: .green)
-                    StatTile(title: "Påminnelser", value: "\(model.history.today.alerts.count)",
+                    StatTile(title: "Reminders", value: "\(model.history.today.alerts.count)",
                              symbol: "bell.fill", tint: .orange)
-                    StatTile(title: "Poäng", value: "\(Int(monitor.score.rounded()))",
+                    StatTile(title: "Score", value: "\(Int(monitor.score.rounded()))",
                              symbol: "sparkles", tint: .teal)
                 }
 
@@ -50,13 +50,13 @@ struct MenuPanel: View {
 
     private var calibrationPrompt: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Lär Hållning hur du sitter")
+            Text("Teach Posture how you sit")
                 .font(.headline)
-            Text("Under kalibreringen visar du 10 bra och 10 dåliga hållningar. Det tar ungefär tre minuter.")
+            Text("During calibration you show 10 good and 10 poor postures. It takes about three minutes.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            Button("Kalibrera…") { show(AppModel.WindowID.onboarding) }
+            Button("Calibrate…") { show(AppModel.WindowID.onboarding) }
                 .buttonStyle(.glassProminent)
                 .controlSize(.large)
         }
@@ -67,13 +67,13 @@ struct MenuPanel: View {
         let status = model.monitor.status
         if status == .good || status.isBad || status == .uncertain, model.monitor.lastResult?.vectors.isEmpty == false {
             HStack(spacing: 8) {
-                Text("Stämmer inte?")
+                Text("Not right?")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Button("Det här är bra") { model.giveFeedback(.good) }
+                Button("This is good") { model.giveFeedback(.good) }
                     .disabled(status == .good)
-                Button("Dålig hållning") { model.giveFeedback(.bad) }
+                Button("Poor posture") { model.giveFeedback(.bad) }
                     .disabled(status.isBad)
             }
             .buttonStyle(.glass)
@@ -83,10 +83,10 @@ struct MenuPanel: View {
 
     private var footer: some View {
         HStack {
-            Button("Öppna Hållning…") { show(model.isCalibrated ? AppModel.WindowID.main : AppModel.WindowID.onboarding) }
+            Button("Open Posture…") { show(model.isCalibrated ? AppModel.WindowID.main : AppModel.WindowID.onboarding) }
             Spacer()
             PauseMenu()
-            Button("Avsluta") { NSApp.terminate(nil) }
+            Button("Quit") { NSApp.terminate(nil) }
         }
         .buttonStyle(.borderless)
         .font(.callout)
@@ -127,7 +127,7 @@ struct StatusHeader: View {
                     Image(systemName: "play.fill")
                 }
                 .buttonStyle(.glass)
-                .help("Fortsätt")
+                .help("Resume")
             } else if model.isCalibrated {
                 Button { model.monitor.checkNow() } label: {
                     Image(systemName: monitor.isChecking ? "camera.fill" : "arrow.clockwise")
@@ -135,7 +135,7 @@ struct StatusHeader: View {
                 }
                 .buttonStyle(.glass)
                 .disabled(monitor.isChecking)
-                .help("Kontrollera nu")
+                .help("Check now")
             }
         }
     }
@@ -146,7 +146,7 @@ struct StatusHeader: View {
         case .paused, .idle, .noPermission, .error, .cameraBusy:
             return monitor.status.subtitle
         default:
-            return "Kontrolleras \(intervalText(model.settings.interval)) · \(relativeTime(monitor.lastCheck, now: now))"
+            return "Checks \(intervalText(model.settings.interval)) · \(relativeTime(monitor.lastCheck, now: now))"
         }
     }
 }
@@ -155,14 +155,14 @@ struct PauseMenu: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        Menu("Pausa") {
-            Button("15 minuter") { model.monitor.pause(for: 15 * 60) }
-            Button("30 minuter") { model.monitor.pause(for: 30 * 60) }
-            Button("1 timme") { model.monitor.pause(for: 3600) }
-            Button("Resten av dagen") { model.monitor.pause(for: nil) }
+        Menu("Pause") {
+            Button("15 minutes") { model.monitor.pause(for: 15 * 60) }
+            Button("30 minutes") { model.monitor.pause(for: 30 * 60) }
+            Button("1 hour") { model.monitor.pause(for: 3600) }
+            Button("Rest of the day") { model.monitor.pause(for: nil) }
             if model.monitor.status.isPaused {
                 Divider()
-                Button("Fortsätt nu") { model.monitor.resume() }
+                Button("Resume now") { model.monitor.resume() }
             }
         }
         .menuStyle(.button)

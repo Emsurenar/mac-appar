@@ -16,7 +16,7 @@ struct HallningApp: App {
         }
         .menuBarExtraStyle(.window)
 
-        Window("Hållning", id: AppModel.WindowID.main) {
+        Window("Posture", id: AppModel.WindowID.main) {
             MainWindow()
                 .environment(model)
                 .tint(.teal)
@@ -25,7 +25,7 @@ struct HallningApp: App {
         .defaultLaunchBehavior(.suppressed)
         .restorationBehavior(.disabled)
 
-        Window("Välkommen till Hållning", id: AppModel.WindowID.onboarding) {
+        Window("Welcome to Posture", id: AppModel.WindowID.onboarding) {
             OnboardingView()
                 .environment(model)
                 .tint(.teal)
@@ -44,7 +44,7 @@ private struct MenuBarLabel: View {
 
     var body: some View {
         Image(nsImage: PostureFigure.menuBarImage(slouch: PostureFigure.slouch(for: model.monitor.status)))
-            .accessibilityLabel("Hållning")
+            .accessibilityLabel("Posture")
             .task {
                 // First launch: go straight to onboarding.
                 guard !model.isCalibrated else { return }

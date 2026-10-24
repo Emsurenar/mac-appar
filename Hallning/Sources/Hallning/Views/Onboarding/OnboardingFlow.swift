@@ -137,7 +137,7 @@ final class OnboardingFlow {
             }
             if Task.isCancelled { return }
             guard vectors.count >= Self.minimumFrames else {
-                phase = .failed("Jag ser inte dina axlar och ditt huvud. Se till att överkroppen syns i bilden och försök igen.")
+                phase = .failed("I can't see your shoulders and head. Make sure your upper body is in the picture and try again.")
                 return
             }
             let pose = poses.filter(\.isUsable).max { $0.confidence < $1.confidence }

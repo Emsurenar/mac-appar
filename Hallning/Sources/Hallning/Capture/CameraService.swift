@@ -8,9 +8,9 @@ enum CameraError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .noPermission: "Hållning har inte tillgång till kameran."
-        case .noDevice: "Ingen kamera hittades."
-        case .timeout: "Kameran svarade inte."
+        case .noPermission: "Posture doesn't have access to the camera."
+        case .noDevice: "No camera was found."
+        case .timeout: "The camera didn't respond."
         }
     }
 }

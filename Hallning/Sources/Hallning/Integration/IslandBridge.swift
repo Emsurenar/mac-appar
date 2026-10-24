@@ -90,9 +90,9 @@ final class IslandBridge {
         center.postNotificationName(Self.alertName, object: nil, userInfo: info, deliverImmediately: true)
     }
 
-    /// Tells the island that Hållning has quit.
+    /// Tells the island that Posture has quit.
     func sendOff() {
-        let info: [String: Any] = ["status": "off", "title": "Hållning", "progress": 0.0, "score": 0, "todayGood": 0.0,
+        let info: [String: Any] = ["status": "off", "title": "Posture", "progress": 0.0, "score": 0, "todayGood": 0.0,
                                    "airpods": false, "interval": 10.0, "version": 1]
         center.postNotificationName(Self.stateName, object: nil, userInfo: info, deliverImmediately: true)
     }

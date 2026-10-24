@@ -134,7 +134,7 @@ final class HistoryStore {
             let data = try CalibrationStore.encoder.encode(history)
             try data.write(to: Self.directory.appendingPathComponent("\(history.day).json"), options: .atomic)
         } catch {
-            NSLog("Hållning: could not save history: \(error)")
+            NSLog("Posture: could not save history: \(error)")
         }
     }
 

@@ -44,7 +44,7 @@ enum CalibrationStore {
             let data = try encoder.encode(CalibrationFile(samples: samples))
             try data.write(to: url, options: .atomic)
         } catch {
-            NSLog("Hållning: could not save calibration: \(error)")
+            NSLog("Posture: could not save calibration: \(error)")
         }
     }
 

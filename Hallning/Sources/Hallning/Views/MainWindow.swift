@@ -7,9 +7,9 @@ enum MainSection: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .overview: "Översikt"
-        case .calibration: "Kalibrering"
-        case .settings: "Inställningar"
+        case .overview: "Overview"
+        case .calibration: "Calibration"
+        case .settings: "Settings"
         }
     }
 
@@ -61,10 +61,10 @@ struct OverviewView: View {
                                              title: model.reminderTitle)
                         }
                         HStack(spacing: 10) {
-                            StatTile(title: "Bra hållning i dag", value: percent(today.goodFraction), symbol: "figure.stand", tint: .green)
-                            StatTile(title: "Poäng just nu", value: "\(Int(model.monitor.score.rounded()))", symbol: "sparkles", tint: .teal)
-                            StatTile(title: "Påminnelser i dag", value: "\(today.alerts.count)", symbol: "bell.fill", tint: .orange)
-                            StatTile(title: model.neckAngle == nil ? "Inga AirPods – bara kamera" : "Nacke (AirPods)",
+                            StatTile(title: "Good posture today", value: percent(today.goodFraction), symbol: "figure.stand", tint: .green)
+                            StatTile(title: "Score right now", value: "\(Int(model.monitor.score.rounded()))", symbol: "sparkles", tint: .teal)
+                            StatTile(title: "Reminders today", value: "\(today.alerts.count)", symbol: "bell.fill", tint: .orange)
+                            StatTile(title: model.neckAngle == nil ? "No AirPods – camera only" : "Neck (AirPods)",
                                      value: model.neckText, symbol: "airpods.pro",
                                      tint: model.monitor.isNeckBent ? .orange : .blue)
                         }
@@ -80,14 +80,14 @@ struct OverviewView: View {
                         HStack {
                             Text("Live").font(.headline)
                             Spacer()
-                            Toggle("Visa kameran", isOn: $settings.showLiveCamera)
+                            Toggle("Show camera", isOn: $settings.showLiveCamera)
                                 .toggleStyle(.switch)
                                 .controlSize(.small)
                         }
                         if settings.showLiveCamera {
                             LiveCameraView()
                                 .frame(height: 280)
-                            Text("Bilden visas bara här och sparas aldrig.")
+                            Text("The image is only shown here and is never saved.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -96,7 +96,7 @@ struct OverviewView: View {
 
                 card {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("I dag").font(.headline)
+                        Text("Today").font(.headline)
                         DayChart(bins: today.bins(minutes: 15, interval: model.settings.interval))
                             .frame(height: 180)
                     }
@@ -105,17 +105,17 @@ struct OverviewView: View {
                 HStack(alignment: .top, spacing: 18) {
                     card {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("Senaste 7 dagarna").font(.headline)
+                            Text("Last 7 days").font(.headline)
                             WeekChart(days: model.history.days(7))
                                 .frame(height: 150)
                         }
                     }
                     card {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("Dagens problem").font(.headline)
+                            Text("Today's issues").font(.headline)
                             let issues = today.sortedIssues
                             if issues.isEmpty {
-                                Text("Inga dåliga hållningar i dag.")
+                                Text("No poor posture today.")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                                     .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
@@ -128,7 +128,7 @@ struct OverviewView: View {
             }
             .padding(24)
         }
-        .navigationTitle("Översikt")
+        .navigationTitle("Overview")
     }
 
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
@@ -155,36 +155,36 @@ struct CalibrationView: View {
                         .font(.system(size: 30))
                         .foregroundStyle(model.isCalibrated ? Color.green : Color.secondary)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Modellens kvalitet").font(.headline)
+                        Text("Model quality").font(.headline)
                         Text(qualityText)
                             .foregroundStyle(.secondary)
                         let good = model.samples.filter { $0.label == .good }.count
                         let bad = model.samples.count - good
-                        Text("\(good) bra och \(bad) dåliga hållningar · \(model.samples.filter { $0.source == .feedback }.count) från dina rättelser")
+                        Text("\(good) good and \(bad) poor postures · \(model.samples.filter { $0.source == .feedback }.count) from your corrections")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Button("Kalibrera om…") {
+                    Button("Recalibrate…") {
                         openWindow(id: AppModel.WindowID.onboarding)
                         NSApp.activate()
                     }
                     .buttonStyle(.glassProminent)
                 }
 
-                sampleGrid(title: "Bra hållningar", label: .good, color: .green)
-                sampleGrid(title: "Dåliga hållningar", label: .bad, color: .orange)
+                sampleGrid(title: "Good postures", label: .good, color: .green)
+                sampleGrid(title: "Poor postures", label: .bad, color: .orange)
             }
             .padding(24)
         }
-        .navigationTitle("Kalibrering")
+        .navigationTitle("Calibration")
     }
 
     private var qualityText: String {
-        guard model.isCalibrated else { return "Inte kalibrerad än." }
-        if model.isEvaluating { return "Räknar ut träffsäkerheten …" }
-        guard let evaluation = model.evaluation, evaluation.total > 0 else { return "Träffsäkerheten kunde inte beräknas." }
-        return "Träffsäkerhet: \(evaluation.correct) av \(evaluation.total) poser (testad genom att lämna ut en pose i taget)."
+        guard model.isCalibrated else { return "Not calibrated yet." }
+        if model.isEvaluating { return "Working out the accuracy…" }
+        guard let evaluation = model.evaluation, evaluation.total > 0 else { return "The accuracy could not be calculated." }
+        return "Accuracy: \(evaluation.correct) of \(evaluation.total) poses (tested by leaving out one pose at a time)."
     }
 
     @ViewBuilder
@@ -193,7 +193,7 @@ struct CalibrationView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title).font(.headline)
             if samples.isEmpty {
-                Text("Inga än.").foregroundStyle(.secondary)
+                Text("None yet.").foregroundStyle(.secondary)
             } else {
                 LazyVGrid(columns: columns, spacing: 12) {
                     ForEach(samples) { sample in
@@ -228,7 +228,7 @@ private struct SampleCell: View {
                         }
                         .buttonStyle(.plain)
                         .padding(5)
-                        .help("Radera")
+                        .help("Delete")
                     }
                 }
                 .overlay(alignment: .topLeading) {
@@ -236,7 +236,7 @@ private struct SampleCell: View {
                         Image(systemName: "exclamationmark.circle.fill")
                             .foregroundStyle(.yellow)
                             .padding(5)
-                            .help("Den här posen klassades fel när den lämnades ut")
+                            .help("This pose was misclassified when it was left out")
                     }
                 }
             Text(caption)
@@ -246,14 +246,14 @@ private struct SampleCell: View {
         }
         .onHover { isHovering = $0 }
         .contextMenu {
-            Button("Radera", role: .destructive, action: onDelete)
+            Button("Delete", role: .destructive, action: onDelete)
         }
     }
 
     private var caption: String {
         if let issue = sample.issue { return issue.label }
-        if sample.source == .feedback { return "Rättelse" }
+        if sample.source == .feedback { return "Correction" }
         return sample.promptIndex >= 0 && sample.promptIndex < OnboardingPrompt.good.count
-            ? OnboardingPrompt.good[sample.promptIndex].title : "Bra"
+            ? OnboardingPrompt.good[sample.promptIndex].title : "Good"
     }
 }

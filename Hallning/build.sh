@@ -1,9 +1,9 @@
 #!/bin/bash
-# Builds "build/Hållning.app". Usage: [CONFIG=debug] ./build.sh [--run]
+# Builds "build/Posture.app". Usage: [CONFIG=debug] ./build.sh [--run]
 set -euo pipefail
 cd "$(dirname "$0")"
 
-APP="build/Hållning.app"
+APP="build/Posture.app"
 CONFIG="${CONFIG:-release}"
 swift build -c "$CONFIG" --arch arm64
 

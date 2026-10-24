@@ -14,15 +14,15 @@ enum PostureStatus: Equatable {
 
     var title: String {
         switch self {
-        case .idle: "Inte kalibrerad"
-        case .good: "Bra hållning"
+        case .idle: "Not calibrated"
+        case .good: "Good posture"
         case .bad(let issue): issue.title
-        case .uncertain: "Osäker hållning"
-        case .away: "Ingen vid datorn"
-        case .paused: "Pausad"
-        case .cameraBusy: "Kameran används"
-        case .noPermission: "Ingen kameraåtkomst"
-        case .error: "Något gick fel"
+        case .uncertain: "Unsure"
+        case .away: "Away from the computer"
+        case .paused: "Paused"
+        case .cameraBusy: "Camera in use"
+        case .noPermission: "No camera access"
+        case .error: "Something went wrong"
         }
     }
 

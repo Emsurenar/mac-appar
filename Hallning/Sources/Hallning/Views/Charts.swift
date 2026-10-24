@@ -37,17 +37,17 @@ struct DayChart: View {
     var body: some View {
         Chart {
             ForEach(bins) { bin in
-                RectangleMark(xStart: .value("Start", bin.start), xEnd: .value("Slut", bin.end),
-                              yStart: .value("Minuter", 0.0), yEnd: .value("Minuter", bin.good))
-                    .foregroundStyle(by: .value("Hållning", "Bra"))
+                RectangleMark(xStart: .value("Start", bin.start), xEnd: .value("End", bin.end),
+                              yStart: .value("Minutes", 0.0), yEnd: .value("Minutes", bin.good))
+                    .foregroundStyle(by: .value("Posture", "Good"))
                     .cornerRadius(2)
-                RectangleMark(xStart: .value("Start", bin.start), xEnd: .value("Slut", bin.end),
-                              yStart: .value("Minuter", bin.good), yEnd: .value("Minuter", bin.good + bin.bad))
-                    .foregroundStyle(by: .value("Hållning", "Dålig"))
+                RectangleMark(xStart: .value("Start", bin.start), xEnd: .value("End", bin.end),
+                              yStart: .value("Minutes", bin.good), yEnd: .value("Minutes", bin.good + bin.bad))
+                    .foregroundStyle(by: .value("Posture", "Poor"))
                     .cornerRadius(2)
             }
         }
-        .chartForegroundStyleScale(["Bra": Color.green, "Dålig": Color.orange])
+        .chartForegroundStyleScale(["Good": Color.green, "Poor": Color.orange])
         .chartLegend(compact ? .hidden : .automatic)
         .chartYAxis(compact ? .hidden : .automatic)
         .chartXAxis {
@@ -58,7 +58,7 @@ struct DayChart: View {
         }
         .overlay {
             if bins.isEmpty {
-                Text("Ingen data än i dag")
+                Text("No data yet today")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -74,7 +74,7 @@ struct WeekChart: View {
         Chart {
             ForEach(days) { day in
                 if let fraction = day.history?.goodFraction {
-                    BarMark(x: .value("Dag", day.date, unit: .day), y: .value("Bra hållning", fraction * 100))
+                    BarMark(x: .value("Day", day.date, unit: .day), y: .value("Good posture", fraction * 100))
                         .foregroundStyle(fraction >= 0.8 ? Color.green.gradient : (fraction >= 0.6 ? Color.yellow.gradient : Color.orange.gradient))
                         .cornerRadius(5)
                         .annotation(position: .top) {
@@ -89,7 +89,7 @@ struct WeekChart: View {
         .chartYAxis {
             AxisMarks(values: [0, 50, 100]) { value in
                 AxisGridLine()
-                AxisValueLabel { Text("\(value.as(Int.self) ?? 0) %") }
+                AxisValueLabel { Text("\(value.as(Int.self) ?? 0)%") }
             }
         }
         .chartXAxis {
@@ -107,7 +107,7 @@ struct IssuesChart: View {
     var body: some View {
         Chart {
             ForEach(issues) { item in
-                BarMark(x: .value("Antal", item.count), y: .value("Problem", item.issue.label))
+                BarMark(x: .value("Count", item.count), y: .value("Issue", item.issue.label))
                     .foregroundStyle(Color.orange.gradient)
                     .cornerRadius(4)
             }

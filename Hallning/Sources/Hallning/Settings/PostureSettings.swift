@@ -16,9 +16,9 @@ enum Sensitivity: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .low: "Låg"
+        case .low: "Low"
         case .normal: "Normal"
-        case .high: "Hög"
+        case .high: "High"
         }
     }
 }
@@ -30,9 +30,9 @@ enum AlertStyle: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .islandFirst: "Dynamic Island, annars notis"
-        case .both: "Båda"
-        case .notificationOnly: "Endast notis"
+        case .islandFirst: "Dynamic Island, else notification"
+        case .both: "Both"
+        case .notificationOnly: "Notification only"
         }
     }
 }

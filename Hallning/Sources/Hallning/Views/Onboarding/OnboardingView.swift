@@ -83,25 +83,25 @@ private struct WelcomeStep: View {
     let flow: OnboardingFlow
 
     var body: some View {
-        StepLayout(title: "Välkommen till Hållning", subtitle: "Din Mac håller ett öga på hur du sitter – och säger till i tid.") {
+        StepLayout(title: "Welcome to Posture", subtitle: "Your Mac keeps an eye on how you sit – and speaks up in time.") {
             HStack(spacing: 48) {
                 BreathingFigure()
                     .frame(width: 220, height: 220)
                     .padding(28)
                     .glassEffect(.regular.tint(.teal.opacity(0.15)), in: Circle())
                 VStack(alignment: .leading, spacing: 22) {
-                    FeatureRow(symbol: "lock.fill", tint: .blue, title: "Allt sker lokalt",
-                               detail: "Bilderna analyseras direkt på din Mac med Apples Vision och sparas aldrig.")
-                    FeatureRow(symbol: "figure.stand", tint: .teal, title: "Lär sig din kropp",
-                               detail: "Du visar 10 bra och 10 dåliga hållningar, så känner appen igen just dig.")
-                    FeatureRow(symbol: "capsule.fill", tint: .indigo, title: "Fungerar med Dynamic Island",
-                               detail: "Påminnelser och status visas i ön när den är igång – annars som notis.")
+                    FeatureRow(symbol: "lock.fill", tint: .blue, title: "Everything stays local",
+                               detail: "Images are analysed right on your Mac with Apple's Vision and never saved.")
+                    FeatureRow(symbol: "figure.stand", tint: .teal, title: "Learns your body",
+                               detail: "You show 10 good and 10 poor postures, so the app recognises you in particular.")
+                    FeatureRow(symbol: "capsule.fill", tint: .indigo, title: "Works with Dynamic Island",
+                               detail: "Reminders and status appear in the island when it is running – otherwise as a notification.")
                 }
                 .frame(maxWidth: 360)
             }
         } actions: {
             Spacer()
-            Button("Kom igång") { flow.next() }
+            Button("Get started") { flow.next() }
                 .buttonStyle(.glassProminent)
                 .controlSize(.extraLarge)
                 .keyboardShortcut(.defaultAction)
@@ -116,19 +116,19 @@ private struct PermissionsStep: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        StepLayout(title: "Behörigheter", subtitle: "Hållning behöver kameran. Resten är valfritt.") {
+        StepLayout(title: "Permissions", subtitle: "Posture needs the camera. The rest is optional.") {
             VStack(spacing: 12) {
-                PermissionRow(symbol: "web.camera.fill", tint: .teal, title: "Kamera",
-                              detail: "Krävs. En kort bild var 10:e sekund, som aldrig sparas.",
+                PermissionRow(symbol: "web.camera.fill", tint: .teal, title: "Camera",
+                              detail: "Required. The camera stays on while Posture is watching; images are never saved.",
                               state: cameraState) {
                     Task { await flow.requestCamera() }
                 }
-                PermissionRow(symbol: "bell.badge.fill", tint: .red, title: "Notiser",
-                              detail: "För påminnelser när Dynamic Island inte är igång.",
+                PermissionRow(symbol: "bell.badge.fill", tint: .red, title: "Notifications",
+                              detail: "For reminders when Dynamic Island isn't running.",
                               state: notificationState) {
                     Task { await flow.requestNotifications() }
                 }
-                PermissionRow(symbol: "airpods.pro", tint: .blue, title: "AirPods huvudvinkel",
+                PermissionRow(symbol: "airpods.pro", tint: .blue, title: "AirPods head angle",
                               detail: airPodsDetail, state: airPodsState) {
                     model.settings.useAirPods = true
                     model.activateAirPods()
@@ -136,9 +136,9 @@ private struct PermissionsStep: View {
             }
             .frame(maxWidth: 560)
         } actions: {
-            Button("Tillbaka") { flow.back() }
+            Button("Back") { flow.back() }
             Spacer()
-            Button("Fortsätt") { flow.next() }
+            Button("Continue") { flow.next() }
                 .buttonStyle(.glassProminent)
                 .controlSize(.extraLarge)
                 .disabled(flow.cameraStatus != .authorized)
@@ -151,7 +151,7 @@ private struct PermissionsStep: View {
         switch flow.cameraStatus {
         case .authorized: .granted
         case .denied, .restricted: .denied(settingsURL: "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera")
-        default: .request("Tillåt")
+        default: .request("Allow")
         }
     }
 
@@ -159,25 +159,25 @@ private struct PermissionsStep: View {
         switch flow.notificationStatus {
         case .authorized, .provisional: .granted
         case .denied: .denied(settingsURL: "x-apple.systempreferences:com.apple.Notifications-Settings.extension")
-        default: .request("Tillåt")
+        default: .request("Allow")
         }
     }
 
     private var airPodsState: PermissionRow.Status {
         let motion = model.motion
-        if !motion.isAvailable { return .unavailable("Stöds inte") }
+        if !motion.isAvailable { return .unavailable("Not supported") }
         if motion.authorization == .denied || motion.authorization == .restricted {
             return .denied(settingsURL: "x-apple.systempreferences:com.apple.preference.security?Privacy_Motion")
         }
         if motion.isReceiving || (motion.authorization == .authorized && model.settings.useAirPods) { return .granted }
-        return .request("Aktivera")
+        return .request("Turn On")
     }
 
     private var airPodsDetail: String {
         let motion = model.motion
-        if motion.isReceiving { return "Ansluten – huvudvinkeln används tillsammans med kameran." }
-        if motion.isConnected { return "AirPods anslutna." }
-        return "Valfritt. Mäter hur mycket du böjer nacken. Inga AirPods – bara kamera."
+        if motion.isReceiving { return "Connected – the head angle is used together with the camera." }
+        if motion.isConnected { return "AirPods connected." }
+        return "Optional. Measures how much you bend your neck. No AirPods – camera only."
     }
 }
 
@@ -202,7 +202,7 @@ private struct PermissionRow: View {
             Spacer(minLength: 12)
             switch state {
             case .granted:
-                Label("Klart", systemImage: "checkmark.circle.fill")
+                Label("Done", systemImage: "checkmark.circle.fill")
                     .labelStyle(.titleAndIcon)
                     .foregroundStyle(.green)
                     .transition(.scale.combined(with: .opacity))
@@ -210,7 +210,7 @@ private struct PermissionRow: View {
                 Button(title, action: action)
                     .buttonStyle(.glass)
             case .denied(let url):
-                Button("Öppna Inställningar") {
+                Button("Open Settings") {
                     if let url = URL(string: url) { NSWorkspace.shared.open(url) }
                 }
                 .buttonStyle(.glass)
@@ -233,14 +233,14 @@ private struct PlacementStep: View {
         let pose = model.livePose
         let shoulders = pose?.hasShoulders == true
         let face = pose?.face != nil || pose?.hasHead == true
-        StepLayout(title: "Placering", subtitle: "Sitt som vanligt. Kameran behöver se ditt huvud och båda axlarna.") {
+        StepLayout(title: "Position", subtitle: "Sit as usual. The camera needs to see your head and both shoulders.") {
             HStack(spacing: 28) {
                 LiveCameraView(cornerRadius: 20)
                     .frame(width: 440, height: 300)
                 VStack(alignment: .leading, spacing: 16) {
-                    CheckRow(title: "Axlarna syns", isOn: shoulders)
-                    CheckRow(title: "Ansiktet syns", isOn: face)
-                    Text("Tips: sitt ungefär en armlängd från skärmen med kameran i ögonhöjd, och undvik starkt motljus.")
+                    CheckRow(title: "Shoulders visible", isOn: shoulders)
+                    CheckRow(title: "Face visible", isOn: face)
+                    Text("Tip: sit about an arm's length from the screen with the camera at eye level, and avoid strong backlight.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -248,9 +248,9 @@ private struct PlacementStep: View {
                 .frame(width: 240)
             }
         } actions: {
-            Button("Tillbaka") { flow.back() }
+            Button("Back") { flow.back() }
             Spacer()
-            Button("Fortsätt") { flow.next() }
+            Button("Continue") { flow.next() }
                 .buttonStyle(.glassProminent)
                 .controlSize(.extraLarge)
                 .disabled(!(shoulders && face))
@@ -285,9 +285,9 @@ private struct CaptureStep: View {
         let isGood = flow.step == .good
         let tint: Color = isGood ? .green : .orange
         let done = flow.promptIndex >= flow.prompts.count
-        StepLayout(title: isGood ? "10 bra hållningar" : "10 dåliga hållningar",
-                   subtitle: isGood ? "Visa hur du sitter när du sitter bra – i olika vardagliga lägen."
-                                    : "Överdriv gärna lite. Varje hållning kopplas till ett eget råd.") {
+        StepLayout(title: isGood ? "10 good postures" : "10 poor postures",
+                   subtitle: isGood ? "Show how you sit when you sit well – in a few everyday positions."
+                                    : "Exaggerate a little. Each posture is linked to its own advice.") {
             HStack(spacing: 28) {
                 LiveCameraView(cornerRadius: 20)
                     .frame(width: 440, height: 300)
@@ -298,20 +298,20 @@ private struct CaptureStep: View {
                     .animation(.spring(response: 0.45, dampingFraction: 0.85), value: flow.promptIndex)
             }
         } actions: {
-            Button("Tillbaka") { flow.back() }
+            Button("Back") { flow.back() }
                 .disabled(flow.isBusy)
-            Button("Gör om") { flow.redo() }
+            Button("Redo") { flow.redo() }
                 .disabled(flow.isBusy || flow.capturedInStep == 0)
             Spacer()
             ProgressDots(count: flow.prompts.count, done: flow.capturedInStep, tint: tint)
             Spacer()
             if done {
-                Button("Fortsätt") { flow.next() }
+                Button("Continue") { flow.next() }
                     .buttonStyle(.glassProminent)
                     .controlSize(.extraLarge)
                     .keyboardShortcut(.defaultAction)
             } else {
-                Button("Ta bild") { flow.capture() }
+                Button("Take Photo") { flow.capture() }
                     .buttonStyle(.glassProminent)
                     .controlSize(.extraLarge)
                     .disabled(flow.isBusy)
@@ -328,11 +328,11 @@ private struct CaptureStep: View {
                 Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 44))
                     .foregroundStyle(tint)
-                Text("Alla tio klara").font(.title2.weight(.semibold))
-                Text("Bra jobbat. Fortsätt till nästa del.")
+                Text("All ten done").font(.title2.weight(.semibold))
+                Text("Nice work. Continue to the next part.")
                     .foregroundStyle(.secondary)
             } else {
-                Text("\(flow.step == .good ? "Bra" : "Dålig") hållning \(flow.promptIndex + 1) av \(flow.prompts.count)")
+                Text("\(flow.step == .good ? "Good" : "Poor") posture \(flow.promptIndex + 1) of \(flow.prompts.count)")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(tint)
                 HStack(alignment: .bottom, spacing: 10) {
@@ -351,7 +351,7 @@ private struct CaptureStep: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 if let issue = prompt.issue {
-                    Label("Råd: \(issue.title)", systemImage: "lightbulb.fill")
+                    Label("Tip: \(issue.title)", systemImage: "lightbulb.fill")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -361,7 +361,7 @@ private struct CaptureStep: View {
                         .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
-                    Text("Tryck på Ta bild eller mellanslag.")
+                    Text("Press Take Photo or the space bar.")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                 }
@@ -375,7 +375,7 @@ private struct CaptureStep: View {
     }
 }
 
-/// The countdown ring, "Håll stilla" and the checkmark over the camera.
+/// The countdown ring, "Hold still" and the checkmark over the camera.
 private struct CaptureOverlay: View {
     var phase: OnboardingFlow.Phase
     var tint: Color
@@ -398,7 +398,7 @@ private struct CaptureOverlay: View {
                 .frame(width: 120, height: 120)
                 .animation(.easeInOut(duration: 0.9), value: second)
             case .capturing:
-                Label("Håll stilla", systemImage: "camera.fill")
+                Label("Hold still", systemImage: "camera.fill")
                     .font(.title3.weight(.semibold))
                     .padding(.horizontal, 18)
                     .padding(.vertical, 10)
@@ -444,7 +444,7 @@ private struct ReviewStep: View {
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 10)
 
     var body: some View {
-        StepLayout(title: "Klart!", subtitle: evaluationText) {
+        StepLayout(title: "All set!", subtitle: evaluationText) {
             VStack(spacing: 18) {
                 LazyVGrid(columns: columns, spacing: 8) {
                     ForEach(flow.samples) { sample in
@@ -463,8 +463,8 @@ private struct ReviewStep: View {
                     LiveCameraView(cornerRadius: 16)
                         .frame(width: 280, height: 180)
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Testa direkt").font(.headline)
-                        Text("Sitt bra och sedan dåligt – stämmer det?")
+                        Text("Try it now").font(.headline)
+                        Text("Sit well, then poorly – does it match?")
                             .foregroundStyle(.secondary)
                         liveVerdict
                             .padding(.top, 4)
@@ -475,9 +475,9 @@ private struct ReviewStep: View {
                 .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             }
         } actions: {
-            Button("Börja om") { flow.restartCaptures() }
+            Button("Start Over") { flow.restartCaptures() }
             Spacer()
-            Button("Klar") {
+            Button("Done") {
                 model.monitor.start()
                 onDone()
             }
@@ -489,10 +489,10 @@ private struct ReviewStep: View {
     }
 
     private var evaluationText: String {
-        if !model.isCalibrated { return "Det behövs minst en bra och en dålig hållning." }
-        if model.isEvaluating { return "Räknar ut träffsäkerheten …" }
-        guard let evaluation = model.evaluation, evaluation.total > 0 else { return "Hållning har lärt sig hur du sitter." }
-        return "Träffsäkerhet: \(evaluation.correct) av \(evaluation.total) poser"
+        if !model.isCalibrated { return "At least one good and one poor posture are needed." }
+        if model.isEvaluating { return "Working out the accuracy…" }
+        guard let evaluation = model.evaluation, evaluation.total > 0 else { return "Posture has learned how you sit." }
+        return "Accuracy: \(evaluation.correct) of \(evaluation.total) poses"
     }
 
     @ViewBuilder
@@ -504,9 +504,9 @@ private struct ReviewStep: View {
                 FigureRing(progress: 1 - result.badProbability, slouch: isBad ? 0.85 : 0,
                            color: result.isUncertain ? .yellow : (isBad ? .orange : .green), lineWidth: 4, size: 44)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(result.isUncertain ? "Osäker" : (isBad ? (result.issue ?? .slouching).title : "Bra hållning"))
+                    Text(result.isUncertain ? "Unsure" : (isBad ? (result.issue ?? .slouching).title : "Good posture"))
                         .font(.title3.weight(.semibold))
-                    Text("Sannolikhet för dålig hållning: \(percent(result.badProbability))")
+                    Text("Probability of poor posture: \(percent(result.badProbability))")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .monospacedDigit()

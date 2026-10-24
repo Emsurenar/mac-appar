@@ -103,9 +103,13 @@ final class OnboardingFlow {
         captureTask = Task { await runCapture() }
     }
 
-    /// Redoes the previous pose (or the current one after a failure).
+    /// Redoes the previous pose; after a failure it just clears the message.
     func redo() {
         guard !isBusy else { return }
+        if case .failed = phase {
+            phase = .ready
+            return
+        }
         let label: PostureLabel = step == .bad ? .bad : .good
         if let index = samples.lastIndex(where: { $0.label == label }) {
             samples.remove(at: index)

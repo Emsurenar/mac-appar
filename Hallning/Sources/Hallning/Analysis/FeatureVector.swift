@@ -68,13 +68,13 @@ struct FeatureVector: Codable, Equatable, Sendable {
         values = [:]
         gravity = headSample?.gravity
         headPitch = headSample?.pitch
-        self[.neckHeight] = (head.y - mid.y) / width
-        self[.shoulderWidth] = width
+        self[.neckHeight] = Double((head.y - mid.y) / width)
+        self[.shoulderWidth] = Double(width)
         self[.shoulderTilt] = Self.tilt(left, right)
-        self[.shoulderHeight] = mid.y
-        self[.headHeight] = head.y
+        self[.shoulderHeight] = Double(mid.y)
+        self[.headHeight] = Double(head.y)
         let mirrored = left.x < right.x
-        self[.headOffset] = (head.x - mid.x) / width * (mirrored ? -1 : 1)
+        self[.headOffset] = Double((head.x - mid.x) / width) * (mirrored ? -1 : 1)
 
         if let leftEye = pose.point(.leftEye), let rightEye = pose.point(.rightEye) {
             self[.headTilt] = Self.tilt(leftEye, rightEye)
@@ -82,10 +82,10 @@ struct FeatureVector: Codable, Equatable, Sendable {
             self[.headTilt] = roll
         }
         if let earsMid, let nose {
-            self[.noseDrop] = (earsMid.y - nose.y) / width
+            self[.noseDrop] = Double((earsMid.y - nose.y) / width)
         }
         if let face = pose.face {
-            self[.headScale] = face.box.height / width
+            self[.headScale] = Double(face.box.height / width)
             self[.facePitch] = face.pitch
             self[.faceYaw] = face.yaw
         }
@@ -110,7 +110,7 @@ struct FeatureVector: Codable, Equatable, Sendable {
     /// Angle of the line between a left and a right point in degrees; robust to mirroring.
     private static func tilt(_ left: CGPoint, _ right: CGPoint) -> Double {
         let dx = max(abs(left.x - right.x), 1e-4)
-        return atan((left.y - right.y) / dx) * 180 / .pi
+        return Double(atan((left.y - right.y) / dx)) * 180 / .pi
     }
 
     private static func midpoint(_ a: CGPoint?, _ b: CGPoint?) -> CGPoint? {

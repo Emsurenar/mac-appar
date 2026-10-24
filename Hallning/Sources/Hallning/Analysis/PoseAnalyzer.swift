@@ -49,7 +49,7 @@ struct PoseAnalyzer: Sendable {
 
     private static func shoulderWidth(_ pose: BodyPose) -> Double? {
         guard let l = pose.point(.leftShoulder), let r = pose.point(.rightShoulder) else { return nil }
-        return hypot(l.x - r.x, l.y - r.y)
+        return Double(hypot(l.x - r.x, l.y - r.y))
     }
 
     /// The face whose box contains (or lies closest to) this person's head.
@@ -60,7 +60,7 @@ struct PoseAnalyzer: Sendable {
             let box = observation.boundingBox.cgRect
             let distance: Double
             if let head {
-                distance = box.contains(head) ? 0 : hypot(box.midX - head.x, box.midY - head.y)
+                distance = box.contains(head) ? 0 : Double(hypot(box.midX - head.x, box.midY - head.y))
             } else {
                 distance = 1
             }

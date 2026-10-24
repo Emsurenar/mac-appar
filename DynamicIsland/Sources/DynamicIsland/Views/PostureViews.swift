@@ -141,7 +141,8 @@ struct PostureTab: View {
                     }
                 }
                 HStack(spacing: 8) {
-                    if state.isPaused {
+                    // Only a pause the user chose can be resumed; lock screen and calls resume by themselves.
+                    if state.isPaused && state.pausedUntil != nil {
                         CapsuleButton(title: "Fortsätt") { posture.send(.resume) }
                     } else {
                         CapsuleButton(title: "Pausa 30 min") { posture.send(.pause30) }

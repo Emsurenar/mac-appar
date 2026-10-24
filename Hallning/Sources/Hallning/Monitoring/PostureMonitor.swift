@@ -95,6 +95,8 @@ final class PostureMonitor {
     @ObservationIgnored private var loop: Task<Void, Never>?
     @ObservationIgnored private var observers: [(NotificationCenter, NSObjectProtocol)] = []
     @ObservationIgnored private var hasScore = false
+    @ObservationIgnored private var isAsleep = false
+    @ObservationIgnored private var isLocked = false
 
     init(camera: CameraService, analyzer: PoseAnalyzer, motion: HeadphoneMotionService,
          settings: PostureSettings, history: HistoryStore) {
@@ -200,7 +202,9 @@ final class PostureMonitor {
 
             guard let vector = FeatureVector.median(vectors),
                   let result = classifier.classify(vector, threshold: threshold) else {
-                record(CheckResult(date: date, kind: .away, issue: nil, badProbability: 0, vectors: [], pose: pose, head: head))
+                // Someone is there but too little matched the calibration: uncertain, not away.
+                record(CheckResult(date: date, kind: vectors.isEmpty ? .away : .uncertain, issue: nil,
+                                   badProbability: 0, vectors: vectors, pose: pose, head: head))
                 return
             }
             let kind: SampleKind = result.isUncertain ? .uncertain : (result.badProbability >= threshold ? .bad : .good)
@@ -291,17 +295,22 @@ final class PostureMonitor {
     private func observeSystem() {
         let workspace = NSWorkspace.shared.notificationCenter
         let distributed = DistributedNotificationCenter.default()
-        let pairs: [(NotificationCenter, Notification.Name, Bool)] = [
-            (workspace, NSWorkspace.screensDidSleepNotification, true),
-            (workspace, NSWorkspace.screensDidWakeNotification, false),
-            (workspace, NSWorkspace.willSleepNotification, true),
-            (workspace, NSWorkspace.didWakeNotification, false),
-            (distributed, Notification.Name("com.apple.screenIsLocked"), true),
-            (distributed, Notification.Name("com.apple.screenIsUnlocked"), false),
+        // Sleep and lock are tracked separately: the display can wake on the lock screen.
+        let pairs: [(NotificationCenter, Notification.Name, @MainActor (PostureMonitor) -> Void)] = [
+            (workspace, NSWorkspace.screensDidSleepNotification, { $0.isAsleep = true }),
+            (workspace, NSWorkspace.screensDidWakeNotification, { $0.isAsleep = false }),
+            (workspace, NSWorkspace.willSleepNotification, { $0.isAsleep = true }),
+            (workspace, NSWorkspace.didWakeNotification, { $0.isAsleep = false }),
+            (distributed, Notification.Name("com.apple.screenIsLocked"), { $0.isLocked = true }),
+            (distributed, Notification.Name("com.apple.screenIsUnlocked"), { $0.isLocked = false }),
         ]
-        for (center, name, pauses) in pairs {
+        for (center, name, update) in pairs {
             let token = center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.setSystemPaused(pauses) }
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    update(self)
+                    self.setSystemPaused(self.isAsleep || self.isLocked)
+                }
             }
             observers.append((center, token))
         }

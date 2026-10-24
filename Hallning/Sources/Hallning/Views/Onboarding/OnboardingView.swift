@@ -36,6 +36,8 @@ private struct OnboardingContent: View {
         .id(flow.step)
         .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity),
                                 removal: .move(edge: .leading).combined(with: .opacity)))
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .clipped()
         .animation(.spring(response: 0.5, dampingFraction: 0.86), value: flow.step)
         .padding(.top, 28)
     }
@@ -290,8 +292,10 @@ private struct CaptureStep: View {
                 LiveCameraView(cornerRadius: 20)
                     .frame(width: 440, height: 300)
                     .overlay { CaptureOverlay(phase: flow.phase, tint: tint) }
-                promptCard(tint: tint, done: done)
+                ZStack { promptCard(tint: tint, done: done) }
                     .frame(width: 280)
+                    .clipped()
+                    .animation(.spring(response: 0.45, dampingFraction: 0.85), value: flow.promptIndex)
             }
         } actions: {
             Button("Tillbaka") { flow.back() }
@@ -368,7 +372,6 @@ private struct CaptureStep: View {
         .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .id(flow.promptIndex)
         .transition(.push(from: .trailing))
-        .animation(.spring(response: 0.45, dampingFraction: 0.85), value: flow.promptIndex)
     }
 }
 

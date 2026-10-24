@@ -42,6 +42,7 @@ final class AppModel {
     @ObservationIgnored private var lastPreviewAnalysis = Date.distantPast
     @ObservationIgnored private var terminateObserver: NSObjectProtocol?
     @ObservationIgnored private var airPodsActivated = false
+    @ObservationIgnored private var evaluationTask: Task<Void, Never>?
 
     var isCalibrated: Bool { classifier != nil }
 
@@ -131,17 +132,20 @@ final class AppModel {
     private func retrain(evaluate: Bool) {
         classifier = PostureClassifier(samples: samples)
         monitor.classifier = classifier
+        evaluationTask?.cancel()
         guard evaluate, classifier != nil else {
             evaluation = nil
+            isEvaluating = false
             return
         }
         let samples = samples
         let threshold = settings.sensitivity.threshold
         isEvaluating = true
-        Task {
+        evaluationTask = Task {
             let result = await Task.detached(priority: .utility) {
                 PostureClassifier.crossValidate(samples, threshold: threshold)
             }.value
+            guard !Task.isCancelled else { return }
             self.evaluation = result
             self.isEvaluating = false
         }

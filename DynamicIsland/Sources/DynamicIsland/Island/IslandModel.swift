@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 enum IslandTab: Hashable {
-    case media, home, controls
+    case media, home, controls, posture
 }
 
 enum HUDKind: Equatable {
@@ -16,6 +16,10 @@ enum IslandPresentation: Equatable {
     /// Briefly shows the new song after a track change.
     case peek
     case hud(HUDKind)
+    /// A posture reminder from Hållning.
+    case postureAlert
+    /// Live activity: the posture figure and the progress towards a reminder.
+    case postureCompact
     case open
 }
 
@@ -32,6 +36,7 @@ enum IslandLayout {
     static let homeTileSpacing: CGFloat = 8
     static let maxHomeRows = 3
     static let homeEmptyHeight: CGFloat = 112
+    static let postureContentHeight: CGFloat = 150
 }
 
 @MainActor @Observable
@@ -40,6 +45,7 @@ final class IslandModel {
     let audio: AudioService
     let brightness: BrightnessService
     let home: HomeService
+    let posture: PostureService
     let settings: AppSettings
 
     var metrics = NotchMetrics.fallback
@@ -47,6 +53,7 @@ final class IslandModel {
     private(set) var isHovering = false
     private(set) var hud: HUDKind?
     private(set) var isPeeking = false
+    private(set) var isShowingPostureAlert = false
     var tab: IslandTab = .media
 
     @ObservationIgnored var onOpenSettings: (() -> Void)?
@@ -54,17 +61,21 @@ final class IslandModel {
     @ObservationIgnored private var closeTask: Task<Void, Never>?
     @ObservationIgnored private var hudTask: Task<Void, Never>?
     @ObservationIgnored private var peekTask: Task<Void, Never>?
+    @ObservationIgnored private var postureAlertTask: Task<Void, Never>?
     @ObservationIgnored private let keyInterceptor = MediaKeyInterceptor()
     @ObservationIgnored private var permissionPoll: Timer?
 
-    init(media: NowPlayingService, audio: AudioService, brightness: BrightnessService, home: HomeService, settings: AppSettings) {
+    init(media: NowPlayingService, audio: AudioService, brightness: BrightnessService, home: HomeService,
+         posture: PostureService, settings: AppSettings) {
         self.media = media
         self.audio = audio
         self.brightness = brightness
         self.home = home
+        self.posture = posture
         self.settings = settings
 
         media.onTrackChange = { [weak self] in self?.showTrackPeek() }
+        posture.onAlert = { [weak self] _ in self?.showPostureAlert() }
         audio.onExternalVolumeChange = { [weak self] in
             guard let self, self.settings.showVolumeHUD || self.isReplacingSystemHUD else { return }
             self.showHUD(.volume)
@@ -85,10 +96,20 @@ final class IslandModel {
     var presentation: IslandPresentation {
         if isOpen { return .open }
         if let hud { return .hud(hud) }
+        if isShowingPostureAlert && posture.latestAlert != nil { return .postureAlert }
         if isPeeking && media.hasMedia { return .peek }
         if settings.showLiveActivity && media.hasMedia && media.isPlaying { return .compact }
+        if showsPostureCompact { return .postureCompact }
         return .closed
     }
+
+    /// Bad posture for a while, and no music taking the spot.
+    private var showsPostureCompact: Bool {
+        guard settings.showPostureLiveActivity, posture.isConnected, let state = posture.state else { return false }
+        return state.isBad && state.progress >= 0.5 && !(media.hasMedia && media.isPlaying)
+    }
+
+    var showsPostureTab: Bool { settings.showPostureTab && posture.isConnected }
 
     var animation: Animation {
         switch presentation {
@@ -109,8 +130,8 @@ final class IslandModel {
     var earRadius: CGFloat {
         switch presentation {
         case .closed: isHovering ? 6 : 0
-        case .compact, .hud(.volume), .hud(.brightness): 8
-        case .peek, .hud(.outputDevice): 10
+        case .compact, .postureCompact, .hud(.volume), .hud(.brightness): 8
+        case .peek, .postureAlert, .hud(.outputDevice): 10
         case .open: 14
         }
     }
@@ -118,8 +139,9 @@ final class IslandModel {
     var bottomRadius: CGFloat {
         switch presentation {
         case .closed: isHovering ? 12 : 8
-        case .compact, .hud(.volume), .hud(.brightness): 13
+        case .compact, .postureCompact, .hud(.volume), .hud(.brightness): 13
         case .peek, .hud(.outputDevice): 22
+        case .postureAlert: 24
         case .open: 32
         }
     }
@@ -132,8 +154,10 @@ final class IslandModel {
         case .closed:
             if !metrics.hasNotch { return CGSize(width: notch.width, height: isHovering ? 8 : 0) }
             return isHovering ? CGSize(width: notch.width + 16 + ears, height: notch.height + 4) : notch
-        case .compact:
+        case .compact, .postureCompact:
             return CGSize(width: notch.width + compactSideWidth * 2 + ears, height: notch.height)
+        case .postureAlert:
+            return CGSize(width: notch.width + 260 + ears, height: notch.height + 64)
         case .hud(.volume), .hud(.brightness):
             return CGSize(width: notch.width + hudSideWidth * 2 + ears, height: notch.height)
         case .peek:
@@ -145,9 +169,13 @@ final class IslandModel {
         }
     }
 
-    /// The selected tab, falling back to media when the Home tab is turned off.
+    /// The selected tab, falling back to media when the Home or posture tab is hidden.
     var currentTab: IslandTab {
-        tab == .home && !settings.showHomeTab ? .media : tab
+        switch tab {
+        case .home where !settings.showHomeTab: .media
+        case .posture where !showsPostureTab: .media
+        default: tab
+        }
     }
 
     var openContentHeight: CGFloat {
@@ -159,6 +187,8 @@ final class IslandModel {
             guard count > 0 else { return IslandLayout.homeEmptyHeight }
             let rows = CGFloat(min((count + IslandLayout.homeColumns - 1) / IslandLayout.homeColumns, IslandLayout.maxHomeRows))
             return 4 + rows * IslandLayout.homeTileHeight + (rows - 1) * IslandLayout.homeTileSpacing + 18
+        case .posture:
+            return IslandLayout.postureContentHeight
         case .controls:
             let sliders: CGFloat = brightness.isAvailable ? 2 : 1
             let rows = CGFloat(min(audio.devices.count, IslandLayout.maxVisibleDevices))
@@ -214,8 +244,10 @@ final class IslandModel {
         brightness.refresh()
         hudTask?.cancel()
         peekTask?.cancel()
+        postureAlertTask?.cancel()
         hud = nil
         isPeeking = false
+        isShowingPostureAlert = false
         if currentTab == .home { home.refresh() }
         isOpen = true
     }
@@ -253,6 +285,15 @@ final class IslandModel {
         isPeeking = true
         peekTask?.cancel()
         peekTask = schedule(after: 3.2) { $0.isPeeking = false }
+    }
+
+    func showPostureAlert() {
+        guard settings.showPostureAlerts, !isOpen else { return }
+        isPeeking = false
+        isShowingPostureAlert = true
+        performHaptic(.generic)
+        postureAlertTask?.cancel()
+        postureAlertTask = schedule(after: 6) { $0.isShowingPostureAlert = false }
     }
 
     // MARK: Keyboard

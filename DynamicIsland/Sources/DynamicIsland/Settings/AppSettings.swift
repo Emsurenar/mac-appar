@@ -9,6 +9,9 @@ final class AppSettings {
     var showVolumeHUD: Bool { didSet { store(showVolumeHUD, Key.showVolumeHUD) } }
     var showDeviceChanges: Bool { didSet { store(showDeviceChanges, Key.showDeviceChanges) } }
     var showHomeTab: Bool { didSet { store(showHomeTab, Key.showHomeTab) } }
+    var showPostureTab: Bool { didSet { store(showPostureTab, Key.showPostureTab) } }
+    var showPostureAlerts: Bool { didSet { store(showPostureAlerts, Key.showPostureAlerts) } }
+    var showPostureLiveActivity: Bool { didSet { store(showPostureLiveActivity, Key.showPostureLiveActivity) } }
     var homeFolderName: String { didSet { defaults.set(homeFolderName, forKey: Key.homeFolderName) } }
     var replaceSystemHUD: Bool {
         didSet {
@@ -29,6 +32,9 @@ final class AppSettings {
         static let replaceSystemHUD = "replaceSystemHUD"
         static let showHomeTab = "showHomeTab"
         static let homeFolderName = "homeFolderName"
+        static let showPostureTab = "showPostureTab"
+        static let showPostureAlerts = "showPostureAlerts"
+        static let showPostureLiveActivity = "showPostureLiveActivity"
     }
 
     @ObservationIgnored private let defaults = UserDefaults.standard
@@ -44,6 +50,9 @@ final class AppSettings {
             Key.replaceSystemHUD: false,
             Key.showHomeTab: true,
             Key.homeFolderName: "Hem",
+            Key.showPostureTab: true,
+            Key.showPostureAlerts: true,
+            Key.showPostureLiveActivity: true,
         ])
         hoverToOpen = defaults.bool(forKey: Key.hoverToOpen)
         hapticFeedback = defaults.bool(forKey: Key.hapticFeedback)
@@ -53,6 +62,9 @@ final class AppSettings {
         showDeviceChanges = defaults.bool(forKey: Key.showDeviceChanges)
         replaceSystemHUD = defaults.bool(forKey: Key.replaceSystemHUD)
         showHomeTab = defaults.bool(forKey: Key.showHomeTab)
+        showPostureTab = defaults.bool(forKey: Key.showPostureTab)
+        showPostureAlerts = defaults.bool(forKey: Key.showPostureAlerts)
+        showPostureLiveActivity = defaults.bool(forKey: Key.showPostureLiveActivity)
         homeFolderName = defaults.string(forKey: Key.homeFolderName) ?? "Hem"
     }
 

@@ -7,6 +7,7 @@ En Dynamic Island som växer ur notchen på MacBook – byggd i SwiftUI med Appl
 - **Ljud**: volym, ljud av, och val av ljudutgång (AirPods, högtalare, AirPlay …) direkt i ön, samt ljusstyrka.
 - **Hem**: brickor som i Hem-appen för scener och tillbehör, via dina Genvägar (se nedan).
 - **HUD**: volym, ljusstyrka och byte av ljudutgång visas i ön. Kan ersätta systemets volymruta (kräver Hjälpmedel).
+- **Hållning**: med appen [Hållning](../Hallning) igång får ön en egen flik med dagens hållning, påminnelser när du suttit illa en stund och en live-aktivitet när det börjar bli dags.
 
 ## Bygga och köra
 
@@ -24,6 +25,15 @@ HomeKit går inte att använda från vanliga Mac-appar (bara Catalyst-appar med 
 2. Lägg till genvägar med åtgärden **Styr hem** – till exempel "Tänd vardagsrummet" eller en scen som "God natt".
 3. De dyker upp som brickor i ön. Börjar namnet med en emoji blir den ikonen, annars väljs en symbol från namnet (lampa, lås, värme, fläkt …).
 4. Vill du att brickan visar läge: låt genvägen sluta med att returnera texten `på` eller `av`.
+
+## Hållning
+
+Hållning (i `../Hallning`) är en separat menyradsapp som tittar på din kroppshållning med kameran. Apparna pratar med varandra via distribuerade notiser:
+
+- Hållning skickar sin status vid varje kontroll (`com.emresunar.Hallning.state`) och påminnelser (`com.emresunar.Hallning.alert`).
+- Ön säger hej (`com.emresunar.DynamicIsland.posture.hello`) så att Hållning vet att påminnelser kan visas här i stället för som notis, och skickar kommandon från knapparna i fliken (`com.emresunar.Hallning.command`).
+
+Fliken med figuren syns bara när Hållning är igång. Allt går att stänga av under **Hållning** i inställningarna.
 
 ## Så funkar "Nu spelas"
 

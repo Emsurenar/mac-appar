@@ -49,6 +49,12 @@ struct IslandRootView: View {
             case .hud(let kind):
                 HUDView(kind: kind)
                     .transition(.islandContent(scale: 0.8))
+            case .postureAlert:
+                PostureAlertView()
+                    .transition(.islandContent(scale: 0.85))
+            case .postureCompact:
+                CompactPostureView()
+                    .transition(.islandContent(scale: 0.8))
             case .open:
                 OpenIslandView(namespace: namespace)
                     .transition(.islandContent(scale: 0.9))

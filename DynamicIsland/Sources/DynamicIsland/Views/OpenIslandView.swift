@@ -16,6 +16,9 @@ struct OpenIslandView: View {
                 case .home:
                     HomeTab()
                         .transition(.islandContent(scale: 0.97))
+                case .posture:
+                    PostureTab()
+                        .transition(.islandContent(scale: 0.97))
                 case .controls:
                     ControlsTab()
                         .transition(.islandContent(scale: 0.97))
@@ -35,6 +38,9 @@ struct OpenIslandView: View {
                     tabButton(.home, symbol: "house.fill", help: "Hem")
                 }
                 tabButton(.controls, symbol: "switch.2", help: "Ljud och skärm")
+                if model.showsPostureTab {
+                    tabButton(.posture, symbol: "figure.stand", help: "Hållning")
+                }
             }
             Spacer(minLength: model.notch.width + 12)
             Button { model.onOpenSettings?() } label: {

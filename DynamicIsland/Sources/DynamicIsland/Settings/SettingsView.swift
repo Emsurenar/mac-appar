@@ -50,6 +50,24 @@ struct SettingsView: View {
             }
 
             Section {
+                Toggle("Visa Hållning-fliken", isOn: $settings.showPostureTab)
+                Toggle("Visa påminnelser om hållning", isOn: $settings.showPostureAlerts)
+                Toggle("Visa live-aktivitet vid dålig hållning", isOn: $settings.showPostureLiveActivity)
+                HStack {
+                    Label(model.posture.isConnected ? "Hållning är igång" : "Hållning är inte igång",
+                          systemImage: model.posture.isConnected ? "checkmark.circle.fill" : "circle.dashed")
+                        .foregroundStyle(model.posture.isConnected ? Color.green : Color.secondary)
+                    Spacer()
+                    Button("Öppna Hållning") { model.posture.openApp() }
+                }
+            } header: {
+                Text("Hållning")
+            } footer: {
+                Text("Hållning är en separat app som håller koll på hur du sitter. När den är igång visas påminnelser och status här i ön.")
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
                 Toggle("Visa volymändringar i ön", isOn: $settings.showVolumeHUD)
                 Toggle("Ersätt systemets volym- och ljusstyrkeruta", isOn: $settings.replaceSystemHUD)
                 if settings.replaceSystemHUD && !hasAccessibility {

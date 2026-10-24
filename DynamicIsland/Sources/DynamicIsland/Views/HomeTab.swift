@@ -205,7 +205,7 @@ private struct Spinner: View {
     }
 }
 
-private struct CapsuleButton: View {
+struct CapsuleButton: View {
     let title: String
     let action: () -> Void
     @State private var isHovering = false

@@ -28,6 +28,23 @@ enum SnapshotRenderer {
             render("9-open-home-empty", model, directory)
             model.home.showPreviewShortcuts()
             render("10-open-home", model, directory)
+            model.close()
+            model.posture.showPreview(.init(status: "bad", issue: "forwardHead", title: "Dra bakhuvudet bakåt",
+                                            progress: 0.7, score: 42, todayGood: 0.78, headPitch: 14, airpods: true,
+                                            interval: 10, lastCheck: Date().addingTimeInterval(-6), pausedUntil: nil))
+            render("11-posture-compact", model, directory)
+            model.posture.showPreviewAlert(.init(issue: "forwardHead", title: "Dra bakhuvudet bakåt",
+                                                 body: "", minutes: 3))
+            model.showPostureAlert()
+            try? await Task.sleep(for: .seconds(0.5))
+            render("12-posture-alert", model, directory)
+            model.open()
+            model.select(.posture)
+            render("13-open-posture-bad", model, directory)
+            model.posture.showPreview(.init(status: "good", issue: nil, title: "Bra hållning",
+                                            progress: 0, score: 91, todayGood: 0.86, headPitch: 2, airpods: true,
+                                            interval: 10, lastCheck: Date(), pausedUntil: nil))
+            render("14-open-posture-good", model, directory)
             model.select(.media)
             model.close()
             NSApp.terminate(nil)

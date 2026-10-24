@@ -20,6 +20,7 @@ final class IslandBridge {
         var score: Int
         var todayGood: Double
         var headPitch: Double?
+        var neckLimit: Double
         var airpods: Bool
         var interval: Double
         var lastCheck: Date?
@@ -78,13 +79,14 @@ final class IslandBridge {
         ]
         if let issue = state.issue { info["issue"] = issue.rawValue }
         if let pitch = state.headPitch { info["headPitch"] = pitch }
+        info["neckLimit"] = state.neckLimit
         if let date = state.lastCheck { info["lastCheck"] = date.timeIntervalSince1970 }
         if let date = state.pausedUntil { info["pausedUntil"] = date.timeIntervalSince1970 }
         center.postNotificationName(Self.stateName, object: nil, userInfo: info, deliverImmediately: true)
     }
 
-    func sendAlert(issue: PostureIssue, minutes: Int) {
-        let info: [String: Any] = ["issue": issue.rawValue, "title": issue.title, "body": issue.advice, "minutes": minutes]
+    func sendAlert(issue: PostureIssue, body: String, minutes: Int) {
+        let info: [String: Any] = ["issue": issue.rawValue, "title": issue.title, "body": body, "minutes": minutes]
         center.postNotificationName(Self.alertName, object: nil, userInfo: info, deliverImmediately: true)
     }
 

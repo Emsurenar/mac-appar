@@ -1,6 +1,7 @@
 @preconcurrency import AVFoundation
 import CoreImage
 import Foundation
+import os
 
 enum CameraError: LocalizedError {
     case noPermission, noDevice, timeout
@@ -19,8 +20,9 @@ struct CameraDevice: Identifiable, Hashable {
     let name: String
 }
 
-/// Owns the capture session. Checks use short on-demand bursts so the camera is only on
-/// for about a second at a time; onboarding and the live views use a preview stream.
+/// Owns the capture session. While monitoring, the session runs continuously at a low
+/// frame rate so the camera light stays steady instead of blinking at every check; checks
+/// take short bursts from that stream. Onboarding and the live views use a preview stream.
 /// Frames are converted to CGImage and never written anywhere.
 final class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, @unchecked Sendable {
     private struct Burst {
@@ -37,6 +39,7 @@ final class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
     private let sessionQueue = DispatchQueue(label: "com.emresunar.Hallning.session")
     private let videoQueue = DispatchQueue(label: "com.emresunar.Hallning.video", qos: .userInitiated)
     private let context = CIContext(options: [.cacheIntermediates: false])
+    private let log = Logger(subsystem: "com.emresunar.Hallning", category: "camera")
 
     // Shared between the queues, guarded by `lock`.
     private let lock = NSLock()
@@ -50,6 +53,8 @@ final class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
     private var isConfigured = false
     private var currentInput: AVCaptureDeviceInput?
     private var preferredDeviceID: String?
+    /// Whether the preview frame rate (true) or the low monitoring rate (false) is set.
+    private var appliedPreviewRate: Bool?
 
     static var authorization: AVAuthorizationStatus { AVCaptureDevice.authorizationStatus(for: .video) }
 
@@ -73,10 +78,12 @@ final class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
     }
 
     /// True when another app (a video call) is using the selected camera right now.
+    /// Our own session does not count, so this works while the camera is kept running.
     func isInUseByAnotherApplication(deviceID: String?) -> Bool {
         guard let device = Self.device(for: deviceID) else { return false }
-        // Our own running session also counts as "in use", so only trust it while we are idle.
-        return device.isInUseByAnotherApplication && !session.isRunning
+        let inUse = device.isInUseByAnotherApplication
+        if inUse { log.info("Camera is in use by another app") }
+        return inUse
     }
 
     // MARK: Configuration
@@ -88,6 +95,8 @@ final class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
             self.session.beginConfiguration()
             self.attachInput()
             self.session.commitConfiguration()
+            self.appliedPreviewRate = nil
+            self.applyFrameRate()
         }
     }
 
@@ -135,10 +144,35 @@ final class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
             configureIfNeeded()
             if !session.isRunning {
                 lock.withLock { firstFrameAt = nil }
+                appliedPreviewRate = nil
                 session.startRunning()
+                log.info("Camera started")
             }
+            applyFrameRate()
         } else if session.isRunning {
             session.stopRunning()
+            log.info("Camera stopped")
+        }
+    }
+
+    /// 15 fps while only monitoring saves power; the live preview gets the camera's default.
+    private func applyFrameRate() {
+        guard session.isRunning, let device = currentInput?.device else { return }
+        let wantsPreview = lock.withLock { previewHandler != nil }
+        guard appliedPreviewRate != wantsPreview else { return }
+        let duration = wantsPreview ? CMTime.invalid : CMTime(value: 1, timescale: 15)
+        if !wantsPreview {
+            let supported = device.activeFormat.videoSupportedFrameRateRanges.contains { $0.minFrameRate <= 15 && 15 <= $0.maxFrameRate }
+            guard supported else { return }
+        }
+        appliedPreviewRate = wantsPreview
+        do {
+            try device.lockForConfiguration()
+            device.activeVideoMinFrameDuration = duration
+            device.activeVideoMaxFrameDuration = duration
+            device.unlockForConfiguration()
+        } catch {
+            log.error("Could not set the frame rate: \(error.localizedDescription)")
         }
     }
 

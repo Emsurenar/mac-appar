@@ -111,11 +111,12 @@ struct StatTile: View {
 struct ReminderProgress: View {
     var progress: Double
     var remaining: TimeInterval?
+    var title = "Dålig hållning"
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack {
-                Text("Dålig hållning")
+                Text(title)
                 Spacer()
                 if let remaining {
                     Text("Påminnelse om \(countdown(remaining))")
@@ -194,8 +195,69 @@ extension AppModel {
     /// "Nacke 8° nedåt"
     var neckText: String {
         guard let angle = neckAngle else { return "–" }
-        let degrees = Int(abs(angle).rounded())
-        if degrees < 3 { return "Rak" }
-        return "\(degrees)° \(angle > 0 ? "ned" : "upp")"
+        return neckAngleText(angle)
+    }
+
+    /// The reminder bar under the status, titled after what is wrong.
+    var reminderTitle: String {
+        monitor.status.issue == .neckBent ? "Böjd nacke" : "Dålig hållning"
+    }
+}
+
+/// "Rak", "12° ned", "4° upp"
+func neckAngleText(_ angle: Double) -> String {
+    let degrees = Int(abs(angle).rounded())
+    if degrees < 3 { return "Rak" }
+    return "\(degrees)° \(angle > 0 ? "ned" : "upp")"
+}
+
+/// The AirPods neck angle on a scale with the limit marked: green below it, orange past it.
+struct NeckGauge: View {
+    var angle: Double
+    var limit: Double
+
+    private var scale: Double { max(30, limit * 2) }
+
+    var body: some View {
+        let isBent = angle >= limit
+        let tint: Color = isBent ? .orange : .green
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Label("Nacke", systemImage: "airpods.pro")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+                Text(neckAngleText(angle))
+                    .font(.system(.callout, design: .rounded).weight(.semibold).monospacedDigit())
+                    .foregroundStyle(isBent ? Color.orange : Color.primary)
+                    .contentTransition(.numericText())
+                Text("max \(Int(limit.rounded()))°")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            GeometryReader { geometry in
+                let width = geometry.size.width
+                let fraction = min(max(angle, 0) / scale, 1)
+                let limitX = width * min(limit / scale, 1)
+                ZStack(alignment: .leading) {
+                    Capsule().fill(.quaternary)
+                    Capsule()
+                        .fill(tint.gradient)
+                        .frame(width: max(width * fraction, 6))
+                }
+                .frame(height: 6)
+                .overlay(alignment: .leading) {
+                    Capsule()
+                        .fill(.primary.opacity(0.55))
+                        .frame(width: 2, height: 12)
+                        .offset(x: limitX - 1)
+                }
+                .frame(maxHeight: .infinity)
+            }
+            .frame(height: 12)
+        }
+        .animation(.spring(response: 0.5, dampingFraction: 0.85), value: angle)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Nackvinkel \(neckAngleText(angle)), gräns \(Int(limit.rounded())) grader")
     }
 }

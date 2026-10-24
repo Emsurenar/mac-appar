@@ -4,6 +4,8 @@ import Foundation
 enum PostureIssue: String, Codable, CaseIterable, Identifiable, Sendable {
     case slouching, forwardHead, roundedShoulders, lookingDown, tooClose
     case leaningLeft, leaningRight, shrugging, headTilt, chinOnHand
+    /// From the AirPods: the neck bent further down than the limit.
+    case neckBent
 
     var id: String { rawValue }
 
@@ -18,6 +20,7 @@ enum PostureIssue: String, Codable, CaseIterable, Identifiable, Sendable {
         case .shrugging: "Släpp ner axlarna"
         case .headTilt: "Räta upp huvudet"
         case .chinOnHand: "Släpp hakan"
+        case .neckBent: "Lyft huvudet"
         }
     }
 
@@ -33,6 +36,7 @@ enum PostureIssue: String, Codable, CaseIterable, Identifiable, Sendable {
         case .shrugging: "Axlarna är uppdragna mot öronen. Andas ut och låt dem sjunka."
         case .headTilt: "Huvudet lutar åt sidan. Låt det vila rakt ovanpå halsen."
         case .chinOnHand: "Du stöder huvudet i handen. Lägg händerna på bordet och låt nacken bära huvudet."
+        case .neckBent: "Nacken är böjd framåt. Lyft blicken mot skärmen och dra in hakan lätt."
         }
     }
 
@@ -49,11 +53,21 @@ enum PostureIssue: String, Codable, CaseIterable, Identifiable, Sendable {
         case .shrugging: "Uppdragna axlar"
         case .headTilt: "Lutar huvudet"
         case .chinOnHand: "Hakan i handen"
+        case .neckBent: "Böjd nacke"
         }
     }
 
     /// Whether this issue mostly shows as the head bending forward or down.
-    var bendsNeck: Bool { self == .forwardHead || self == .lookingDown }
+    var bendsNeck: Bool { self == .forwardHead || self == .lookingDown || self == .neckBent }
+
+    /// The reminder text: how long it lasted, then the advice.
+    func reminderBody(minutes: Int, neckLimit: Double) -> String {
+        let duration = "\(minutes) \(minutes == 1 ? "minut" : "minuter")"
+        if self == .neckBent {
+            return "Nacken har varit böjd mer än \(Int(neckLimit.rounded()))° i \(duration). Lyft blicken mot skärmen och dra in hakan lätt."
+        }
+        return "Du har suttit med dålig hållning i \(duration). " + advice
+    }
 }
 
 enum PostureLabel: String, Codable, Sendable {

@@ -11,7 +11,7 @@ struct MenuPanel: View {
             StatusHeader()
 
             if monitor.status.isBad {
-                ReminderProgress(progress: monitor.progress, remaining: monitor.remaining)
+                ReminderProgress(progress: monitor.progress, remaining: monitor.remaining, title: model.reminderTitle)
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
 
@@ -21,8 +21,15 @@ struct MenuPanel: View {
                              symbol: "figure.stand", tint: .green)
                     StatTile(title: "Påminnelser", value: "\(model.history.today.alerts.count)",
                              symbol: "bell.fill", tint: .orange)
-                    StatTile(title: model.neckAngle == nil ? "Inga AirPods" : "Nacke",
-                             value: model.neckText, symbol: "airpods.pro", tint: .teal)
+                    StatTile(title: "Poäng", value: "\(Int(monitor.score.rounded()))",
+                             symbol: "sparkles", tint: .teal)
+                }
+
+                if let angle = model.neckAngle {
+                    NeckGauge(angle: angle, limit: model.settings.maxNeckAngle)
+                        .padding(12)
+                        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .transition(.opacity)
                 }
 
                 DayChart(bins: model.history.today.bins(minutes: 15, interval: model.settings.interval), compact: true)

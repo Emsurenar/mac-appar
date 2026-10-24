@@ -57,14 +57,20 @@ struct OverviewView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         StatusHeader(ringSize: 72)
                         if model.monitor.status.isBad {
-                            ReminderProgress(progress: model.monitor.progress, remaining: model.monitor.remaining)
+                            ReminderProgress(progress: model.monitor.progress, remaining: model.monitor.remaining,
+                                             title: model.reminderTitle)
                         }
                         HStack(spacing: 10) {
                             StatTile(title: "Bra hållning i dag", value: percent(today.goodFraction), symbol: "figure.stand", tint: .green)
                             StatTile(title: "Poäng just nu", value: "\(Int(model.monitor.score.rounded()))", symbol: "sparkles", tint: .teal)
                             StatTile(title: "Påminnelser i dag", value: "\(today.alerts.count)", symbol: "bell.fill", tint: .orange)
                             StatTile(title: model.neckAngle == nil ? "Inga AirPods – bara kamera" : "Nacke (AirPods)",
-                                     value: model.neckText, symbol: "airpods.pro", tint: .blue)
+                                     value: model.neckText, symbol: "airpods.pro",
+                                     tint: model.monitor.isNeckBent ? .orange : .blue)
+                        }
+                        if let angle = model.neckAngle {
+                            NeckGauge(angle: angle, limit: model.settings.maxNeckAngle)
+                                .padding(.top, 2)
                         }
                     }
                 }

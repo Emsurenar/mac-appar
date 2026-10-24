@@ -183,9 +183,10 @@ struct PostureClassifier: Sendable {
         return best.key
     }
 
-    /// How far the neck is bent compared with the good calibration, in degrees (positive is down).
-    func neckAngle(pitch: Double) -> Double {
-        let delta = pitch - (goodPitch ?? 0)
+    /// How far the neck is bent compared with `neutral`, or else the good calibration,
+    /// in degrees (positive is down).
+    func neckAngle(pitch: Double, neutral: Double? = nil) -> Double {
+        let delta = pitch - (neutral ?? goodPitch ?? 0)
         return lowerPitchIsDown ? -delta : delta
     }
 

@@ -66,7 +66,7 @@ final class AppModel {
             }
         }
         island.stateProvider = { [weak self] in self?.islandState() ?? IslandBridge.State(
-            status: "idle", title: "Hållning", progress: 0, score: 0, todayGood: 0, airpods: false, interval: 10) }
+            status: "idle", title: "Hållning", progress: 0, score: 0, todayGood: 0, neckLimit: 15, airpods: false, interval: 10) }
         island.onCommand = { [weak self] command in
             guard let self else { return }
             switch command {
@@ -203,10 +203,21 @@ final class AppModel {
 
     // MARK: AirPods
 
-    /// Neck angle in degrees relative to the good calibration (positive is down).
+    /// Neck angle in degrees relative to neutral (positive is down), updated every second.
     var neckAngle: Double? {
-        guard settings.useAirPods, let pitch = motion.latest?.pitch else { return nil }
-        return classifier?.neckAngle(pitch: pitch) ?? -pitch
+        settings.useAirPods ? monitor.neckAngle : nil
+    }
+
+    /// Uses the current head position as neutral (0°).
+    func setNeckNeutral() {
+        guard let pitch = motion.currentSample()?.pitch else { return }
+        settings.neckNeutralPitch = pitch
+        monitor.resetWindow()
+    }
+
+    func resetNeckNeutral() {
+        settings.neckNeutralPitch = nil
+        monitor.resetWindow()
     }
 
     /// Starts AirPods motion; before calibration this waits for onboarding, which explains the prompt.
@@ -221,26 +232,26 @@ final class AppModel {
 
     private func applyCameraSettings() {
         camera.selectDevice(settings.cameraID)
-        camera.setKeepRunning(settings.keepCameraOn)
     }
 
     // MARK: Alerts
 
     private func deliverAlert(issue: PostureIssue, minutes: Int) {
         let islandActive = island.isIslandActive
+        let body = issue.reminderBody(minutes: minutes, neckLimit: settings.maxNeckAngle)
         switch settings.alertStyle {
         case .islandFirst:
             if islandActive {
-                island.sendAlert(issue: issue, minutes: minutes)
+                island.sendAlert(issue: issue, body: body, minutes: minutes)
                 if settings.playSound { notifications.playSoftSound() }
             } else {
-                notifications.postAlert(issue: issue, minutes: minutes)
+                notifications.postAlert(issue: issue, body: body)
             }
         case .both:
-            if islandActive { island.sendAlert(issue: issue, minutes: minutes) }
-            notifications.postAlert(issue: issue, minutes: minutes)
+            if islandActive { island.sendAlert(issue: issue, body: body, minutes: minutes) }
+            notifications.postAlert(issue: issue, body: body)
         case .notificationOnly:
-            notifications.postAlert(issue: issue, minutes: minutes)
+            notifications.postAlert(issue: issue, body: body)
         }
     }
 
@@ -256,6 +267,7 @@ final class AppModel {
             score: Int(monitor.score.rounded()),
             todayGood: history.today.goodFraction ?? 0,
             headPitch: neckAngle,
+            neckLimit: settings.maxNeckAngle,
             airpods: motion.isReceiving,
             interval: settings.interval,
             lastCheck: monitor.lastCheck,

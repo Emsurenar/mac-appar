@@ -21,7 +21,7 @@ struct SettingsView: View {
             } header: {
                 Text("Kontroller")
             } footer: {
-                Text("Kameran är bara på ungefär en sekund per kontroll.")
+                Text("Kameran är på hela tiden medan Hållning bevakar, så lampan blinkar inte. Den stängs av när du pausar, låser skärmen eller är i ett videosamtal.")
                     .foregroundStyle(.secondary)
             }
 
@@ -62,17 +62,46 @@ struct SettingsView: View {
                     Text("Automatisk").tag(String?.none)
                     ForEach(cameras) { Text($0.name).tag(Optional($0.id)) }
                 }
-                Toggle("Håll kameran igång", isOn: $settings.keepCameraOn)
                 Toggle("Pausa under videosamtal", isOn: $settings.pauseDuringCalls)
             }
 
             Section {
                 Toggle("Använd huvudvinkeln från AirPods", isOn: $settings.useAirPods)
                 LabeledContent("Status", value: airPodsStatus)
+                if let angle = model.neckAngle {
+                    NeckGauge(angle: angle, limit: settings.maxNeckAngle)
+                        .padding(.vertical, 4)
+                }
+                Group {
+                    LabeledContent("Högsta nackvinkel") {
+                        Stepper(value: $settings.maxNeckAngle, in: 5...35, step: 1) {
+                            Text("\(Int(settings.maxNeckAngle))° ned")
+                                .monospacedDigit()
+                        }
+                    }
+                    LabeledContent("Påminn efter") {
+                        Stepper(value: $settings.neckAlertMinutes, in: 1...10, step: 1) {
+                            Text("\(Int(settings.neckAlertMinutes)) min")
+                                .monospacedDigit()
+                        }
+                    }
+                    LabeledContent("Neutralläge") {
+                        HStack(spacing: 8) {
+                            Text(settings.neckNeutralPitch == nil ? "Automatiskt" : "Inställt")
+                                .foregroundStyle(.secondary)
+                            if settings.neckNeutralPitch != nil {
+                                Button("Återställ") { model.resetNeckNeutral() }
+                            }
+                            Button("Ställ in nu") { model.setNeckNeutral() }
+                                .disabled(!model.motion.isReceiving)
+                        }
+                    }
+                }
+                .disabled(!settings.useAirPods)
             } header: {
                 Text("AirPods")
             } footer: {
-                Text("AirPods Pro, AirPods Max och AirPods (3:e generationen och senare) mäter huvudets lutning. Utan dem används bara kameran.")
+                Text("Du får en påminnelse när nacken har varit böjd mer än \(Int(settings.maxNeckAngle))° i \(Int(settings.neckAlertMinutes)) min. Sitt rakt och titta på skärmen när du ställer in neutralläget – vinkeln räknas därifrån. Fungerar med AirPods Pro, AirPods Max och AirPods (3:e generationen och senare).")
                     .foregroundStyle(.secondary)
             }
 

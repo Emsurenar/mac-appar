@@ -12,6 +12,8 @@ final class PostureService {
         var score: Int
         var todayGood: Double
         var headPitch: Double?
+        /// Degrees down the neck may bend before it counts as bad.
+        var neckLimit: Double = 15
         var airpods: Bool
         var interval: Double
         var lastCheck: Date?
@@ -19,6 +21,7 @@ final class PostureService {
 
         var isBad: Bool { status == "bad" }
         var isPaused: Bool { status == "paused" }
+        var isNeckBent: Bool { (headPitch ?? 0) >= neckLimit }
     }
 
     struct Alert: Equatable {
@@ -125,6 +128,7 @@ final class PostureService {
             score: (info["score"] as? NSNumber)?.intValue ?? 0,
             todayGood: double("todayGood") ?? 0,
             headPitch: double("headPitch"),
+            neckLimit: double("neckLimit") ?? 15,
             airpods: (info["airpods"] as? NSNumber)?.boolValue ?? false,
             interval: double("interval") ?? 10,
             lastCheck: double("lastCheck").map { Date(timeIntervalSince1970: $0) },

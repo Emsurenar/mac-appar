@@ -15,7 +15,7 @@ struct OnboardingPrompt: Identifiable {
         switch issue {
         case .slouching: return 1
         case .lookingDown: return 0.75
-        case .forwardHead, .chinOnHand: return 0.6
+        case .forwardHead, .chinOnHand, .neckBent: return 0.6
         case .roundedShoulders: return 0.5
         case .tooClose: return 0.4
         case .leaningLeft, .leaningRight, .shrugging, .headTilt: return 0.2

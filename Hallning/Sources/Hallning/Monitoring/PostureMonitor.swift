@@ -64,6 +64,8 @@ struct CheckResult {
 
 /// Takes a burst every `interval` seconds, classifies it and keeps the sliding window
 /// that decides when to remind: bad for `threshold` of the checks over `duration`.
+/// Alongside it, the AirPods neck angle is sampled every second against its own limit
+/// and shorter window.
 @MainActor @Observable
 final class PostureMonitor {
     private(set) var status: PostureStatus = .idle
@@ -78,8 +80,14 @@ final class PostureMonitor {
     private(set) var pausedUntil: Date?
     private(set) var isChecking = false
     private(set) var isSystemPaused = false
+    /// Degrees the neck is bent down from neutral (AirPods), updated every second.
+    private(set) var neckAngle: Double?
+    /// The neck is past the limit (with a little hysteresis so it does not flicker).
+    private(set) var isNeckBent = false
 
-    @ObservationIgnored var classifier: PostureClassifier?
+    @ObservationIgnored var classifier: PostureClassifier? {
+        didSet { updateCamera() }
+    }
     @ObservationIgnored var onAlert: ((PostureIssue, Int) -> Void)?
     /// Called after every status change, so the island can be updated.
     @ObservationIgnored var onUpdate: (() -> Void)?
@@ -92,6 +100,16 @@ final class PostureMonitor {
 
     @ObservationIgnored private var window: [(date: Date, kind: SampleKind, issue: PostureIssue?)] = []
     @ObservationIgnored private var windowStart = Date()
+    @ObservationIgnored private var neckWindow: [(date: Date, bent: Bool)] = []
+    @ObservationIgnored private var neckTimer: Timer?
+    @ObservationIgnored private var neckTicks = 0
+    /// What the camera checks (or the system) say, before the neck is taken into account.
+    @ObservationIgnored private var baseStatus: PostureStatus = .idle
+    @ObservationIgnored private var cameraProgress = 0.0
+    @ObservationIgnored private var cameraRemaining: TimeInterval?
+    @ObservationIgnored private var neckProgress = 0.0
+    @ObservationIgnored private var neckRemaining: TimeInterval?
+    @ObservationIgnored private var wantsCamera = false
     @ObservationIgnored private var loop: Task<Void, Never>?
     @ObservationIgnored private var observers: [(NotificationCenter, NSObjectProtocol)] = []
     @ObservationIgnored private var hasScore = false
@@ -120,11 +138,20 @@ final class PostureMonitor {
                 try? await Task.sleep(for: .seconds(max(self.settings.interval, 3)))
             }
         }
+        if neckTimer == nil {
+            neckTimer = Timer.scheduledTimer(withTimeInterval: Self.neckTick, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated { self?.tickNeck() }
+            }
+        }
+        updateCamera()
     }
 
     func stop() {
         loop?.cancel()
         loop = nil
+        neckTimer?.invalidate()
+        neckTimer = nil
+        updateCamera()
     }
 
     func checkNow() {
@@ -134,10 +161,8 @@ final class PostureMonitor {
     func pause(for duration: TimeInterval?) {
         let until = duration.map { Date().addingTimeInterval($0) } ?? endOfDay()
         pausedUntil = until
-        status = .paused(until: until)
-        progress = 0
-        remaining = nil
-        onUpdate?()
+        resetWindow()
+        setStatus(.paused(until: until))
     }
 
     func resume() {
@@ -146,12 +171,21 @@ final class PostureMonitor {
         checkNow()
     }
 
-    /// The next reminder needs a full new window.
+    /// The next reminder needs a full new window, for both the camera and the neck.
     func resetWindow() {
         windowStart = Date()
         window.removeAll()
-        progress = 0
-        remaining = nil
+        neckWindow.removeAll()
+        cameraProgress = 0
+        cameraRemaining = nil
+        neckProgress = 0
+        neckRemaining = nil
+        isNeckBent = false
+        refreshStatus()
+    }
+
+    private var isPausedNow: Bool {
+        isSystemPaused || (pausedUntil.map { $0 > Date() } ?? false)
     }
 
     // MARK: Check
@@ -207,8 +241,14 @@ final class PostureMonitor {
                                    badProbability: 0, vectors: vectors, pose: pose, head: head))
                 return
             }
-            let kind: SampleKind = result.isUncertain ? .uncertain : (result.badProbability >= threshold ? .bad : .good)
-            record(CheckResult(date: date, kind: kind, issue: kind == .bad ? result.issue ?? .slouching : nil,
+            var kind: SampleKind = result.isUncertain ? .uncertain : (result.badProbability >= threshold ? .bad : .good)
+            var issue = kind == .bad ? result.issue ?? .slouching : nil
+            // The neck limit is a hard rule: a bent neck is bad posture whatever the camera thinks.
+            if kind == .good && isNeckBent {
+                kind = .bad
+                issue = .neckBent
+            }
+            record(CheckResult(date: date, kind: kind, issue: issue,
                                badProbability: result.badProbability, vectors: vectors, pose: pose, head: head))
         } catch {
             lastCheck = Date()
@@ -233,12 +273,13 @@ final class PostureMonitor {
         }
 
         switch result.kind {
-        case .good: status = .good
-        case .bad: status = .bad(result.issue ?? .slouching)
-        case .uncertain: status = .uncertain
-        case .away: status = .away
+        case .good: baseStatus = .good
+        case .bad: baseStatus = .bad(result.issue ?? .slouching)
+        case .uncertain: baseStatus = .uncertain
+        case .away: baseStatus = .away
         }
         evaluateWindow(now: result.date, latestIsBad: result.kind == .bad)
+        refreshStatus()
         onUpdate?()
     }
 
@@ -256,11 +297,11 @@ final class PostureMonitor {
         let requiredSpan = duration - 1.5 * interval
 
         if latestIsBad {
-            progress = min(Double(badCount) / needed, 1)
-            remaining = max(max(needed - Double(badCount), 0) * interval, requiredSpan - span, 0)
+            cameraProgress = min(Double(badCount) / needed, 1)
+            cameraRemaining = max(max(needed - Double(badCount), 0) * interval, requiredSpan - span, 0)
         } else {
-            progress = 0
-            remaining = nil
+            cameraProgress = 0
+            cameraRemaining = nil
         }
 
         let fraction = window.isEmpty ? 0 : Double(badCount) / Double(window.count)
@@ -269,25 +310,136 @@ final class PostureMonitor {
         var counts: [PostureIssue: Int] = [:]
         for sample in window { if let issue = sample.issue { counts[issue, default: 0] += 1 } }
         let issue = counts.max { $0.value < $1.value }?.key ?? .slouching
-        history.recordAlert(issue, at: now)
+        remind(issue, minutes: duration, at: now)
+    }
+
+    private func remind(_ issue: PostureIssue, minutes duration: TimeInterval, at date: Date) {
+        history.recordAlert(issue, at: date)
         resetWindow()
         onAlert?(issue, max(Int((duration / 60).rounded()), 1))
     }
 
     private func setStatus(_ status: PostureStatus) {
-        self.status = status
-        if status.isPaused || status == .noPermission || status == .idle {
-            progress = 0
-            remaining = nil
+        baseStatus = status
+        if status.isPaused || status == .noPermission || status == .idle || status == .cameraBusy {
+            cameraProgress = 0
+            cameraRemaining = nil
         }
+        refreshStatus()
         onUpdate?()
     }
 
     /// Drops the latest bad checks after the user said the posture was fine.
     func forgiveRecentBad() {
         resetWindow()
-        if status.isBad { status = .good }
+        if baseStatus.isBad { baseStatus = .good }
+        refreshStatus()
         onUpdate?()
+    }
+
+    /// Combines the camera status with the neck, and the two reminder countdowns.
+    private func refreshStatus() {
+        var combined = baseStatus
+        switch baseStatus {
+        case .good, .uncertain, .away:
+            if isNeckBent { combined = .bad(.neckBent) }
+        case .bad:
+            if isNeckBent && neckProgress >= cameraProgress { combined = .bad(.neckBent) }
+        default:
+            break
+        }
+        if combined != status { status = combined }
+
+        let cameraActive = baseStatus.isBad
+        let neckActive = isNeckBent
+        let newProgress = max(cameraActive ? cameraProgress : 0, neckActive ? neckProgress : 0)
+        let newRemaining = [cameraActive ? cameraRemaining : nil, neckActive ? neckRemaining : nil].compactMap { $0 }.min()
+        if newProgress != progress { progress = newProgress }
+        if newRemaining != remaining { remaining = newRemaining }
+        updateCamera()
+    }
+
+    // MARK: Neck (AirPods)
+
+    static let neckTick: TimeInterval = 1
+
+    /// The neck angle for an AirPods pitch, relative to the neutral position.
+    func neckAngle(pitch: Double) -> Double {
+        let neutral = settings.neckNeutralPitch
+        return classifier?.neckAngle(pitch: pitch, neutral: neutral) ?? -(pitch - (neutral ?? 0))
+    }
+
+    private func tickNeck() {
+        let now = Date()
+        guard settings.useAirPods, let sample = motion.currentSample(now: now) else {
+            if neckAngle != nil || isNeckBent {
+                neckAngle = nil
+                clearNeck()
+            }
+            return
+        }
+        let angle = neckAngle(pitch: sample.pitch)
+        neckAngle = angle
+        guard !isPausedNow else {
+            if isNeckBent { clearNeck() }
+            return
+        }
+
+        let limit = settings.maxNeckAngle
+        let wasBent = isNeckBent
+        isNeckBent = wasBent ? angle >= limit - 2 : angle >= limit
+        neckWindow.append((now, angle >= limit))
+        evaluateNeck(now: now)
+        refreshStatus()
+
+        // Keep the island current without posting every second.
+        neckTicks += 1
+        if wasBent != isNeckBent || (isNeckBent && neckTicks % 5 == 0) { onUpdate?() }
+    }
+
+    private func clearNeck() {
+        isNeckBent = false
+        neckProgress = 0
+        neckRemaining = nil
+        refreshStatus()
+        onUpdate?()
+    }
+
+    private func evaluateNeck(now: Date) {
+        let duration = settings.neckAlertDuration
+        let threshold = settings.alertThreshold
+        let start = max(windowStart, now.addingTimeInterval(-duration))
+        neckWindow.removeAll { $0.date < start }
+
+        let expected = max(duration / Self.neckTick, 1)
+        let needed = max(ceil(threshold * expected), 1)
+        let bentCount = neckWindow.filter(\.bent).count
+        let span = neckWindow.first.map { now.timeIntervalSince($0.date) } ?? 0
+        let requiredSpan = duration - 2 * Self.neckTick
+
+        if isNeckBent {
+            neckProgress = min(Double(bentCount) / needed, 1)
+            neckRemaining = max(max(needed - Double(bentCount), 0) * Self.neckTick, requiredSpan - span, 0)
+        } else {
+            neckProgress = 0
+            neckRemaining = nil
+        }
+
+        let fraction = neckWindow.isEmpty ? 0 : Double(bentCount) / Double(neckWindow.count)
+        guard span >= requiredSpan, Double(neckWindow.count) >= 0.6 * expected, fraction >= threshold else { return }
+        remind(.neckBent, minutes: duration, at: now)
+    }
+
+    // MARK: Camera
+
+    /// The camera stays on for as long as checks run, so its light never blinks. It turns
+    /// off while paused, locked, during video calls and before calibration.
+    private func updateCamera() {
+        let wanted = loop != nil && classifier != nil && !isPausedNow && baseStatus != .cameraBusy
+            && CameraService.authorization == .authorized
+        guard wanted != wantsCamera else { return }
+        wantsCamera = wanted
+        camera.setKeepRunning(wanted)
     }
 
     // MARK: System
@@ -320,6 +472,7 @@ final class PostureMonitor {
         guard paused != isSystemPaused else { return }
         isSystemPaused = paused
         if paused {
+            resetWindow()
             setStatus(.paused(until: nil))
         } else {
             resetWindow()

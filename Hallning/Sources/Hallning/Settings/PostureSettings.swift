@@ -49,9 +49,14 @@ final class PostureSettings {
     var alertStyle: AlertStyle { didSet { defaults.set(alertStyle.rawValue, forKey: Key.alertStyle) } }
     var playSound: Bool { didSet { store(playSound, Key.playSound) } }
     var cameraID: String? { didSet { defaults.set(cameraID, forKey: Key.cameraID); onCameraChange?() } }
-    var keepCameraOn: Bool { didSet { store(keepCameraOn, Key.keepCameraOn); onCameraChange?() } }
     var pauseDuringCalls: Bool { didSet { store(pauseDuringCalls, Key.pauseDuringCalls) } }
     var useAirPods: Bool { didSet { store(useAirPods, Key.useAirPods); onAirPodsChange?() } }
+    /// Degrees down from neutral that the AirPods still count as a good head position.
+    var maxNeckAngle: Double { didSet { defaults.set(maxNeckAngle, forKey: Key.maxNeckAngle) } }
+    /// Minutes with the neck bent past `maxNeckAngle` before a reminder.
+    var neckAlertMinutes: Double { didSet { defaults.set(neckAlertMinutes, forKey: Key.neckAlertMinutes) } }
+    /// AirPods pitch (degrees) with the head held straight; nil uses the calibration.
+    var neckNeutralPitch: Double? { didSet { defaults.set(neckNeutralPitch, forKey: Key.neckNeutralPitch) } }
     var showLiveCamera: Bool { didSet { store(showLiveCamera, Key.showLiveCamera) } }
 
     @ObservationIgnored var onTimingChange: (() -> Void)?
@@ -66,9 +71,11 @@ final class PostureSettings {
         static let alertStyle = "alertStyle"
         static let playSound = "playSound"
         static let cameraID = "cameraID"
-        static let keepCameraOn = "keepCameraOn"
         static let pauseDuringCalls = "pauseDuringCalls"
         static let useAirPods = "useAirPods"
+        static let maxNeckAngle = "maxNeckAngle"
+        static let neckAlertMinutes = "neckAlertMinutes"
+        static let neckNeutralPitch = "neckNeutralPitch"
         static let showLiveCamera = "showLiveCamera"
     }
 
@@ -82,9 +89,10 @@ final class PostureSettings {
             Key.sensitivity: Sensitivity.normal.rawValue,
             Key.alertStyle: AlertStyle.islandFirst.rawValue,
             Key.playSound: true,
-            Key.keepCameraOn: false,
             Key.pauseDuringCalls: true,
             Key.useAirPods: true,
+            Key.maxNeckAngle: 15.0,
+            Key.neckAlertMinutes: 2.0,
             Key.showLiveCamera: false,
         ])
         interval = defaults.double(forKey: Key.interval)
@@ -94,13 +102,16 @@ final class PostureSettings {
         alertStyle = AlertStyle(rawValue: defaults.string(forKey: Key.alertStyle) ?? "") ?? .islandFirst
         playSound = defaults.bool(forKey: Key.playSound)
         cameraID = defaults.string(forKey: Key.cameraID)
-        keepCameraOn = defaults.bool(forKey: Key.keepCameraOn)
         pauseDuringCalls = defaults.bool(forKey: Key.pauseDuringCalls)
         useAirPods = defaults.bool(forKey: Key.useAirPods)
+        maxNeckAngle = defaults.double(forKey: Key.maxNeckAngle)
+        neckAlertMinutes = defaults.double(forKey: Key.neckAlertMinutes)
+        neckNeutralPitch = defaults.object(forKey: Key.neckNeutralPitch) as? Double
         showLiveCamera = defaults.bool(forKey: Key.showLiveCamera)
     }
 
     var alertDuration: TimeInterval { alertMinutes * 60 }
+    var neckAlertDuration: TimeInterval { neckAlertMinutes * 60 }
 
     private func store(_ value: Bool, _ key: String) {
         defaults.set(value, forKey: key)

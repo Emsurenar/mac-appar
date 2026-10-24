@@ -135,9 +135,11 @@ struct PostureTab: View {
                                 .font(.system(size: 15, weight: .medium))
                             Text(neckText(pitch))
                                 .font(.system(size: 11, weight: .semibold).monospacedDigit())
+                                .contentTransition(.numericText())
                         }
-                        .foregroundStyle(.white.opacity(0.75))
-                        .help("Nackens vinkel från AirPods")
+                        .foregroundStyle(state.isNeckBent ? Color.orange : Color.white.opacity(0.75))
+                        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: state.isNeckBent)
+                        .help("Nackens vinkel från AirPods – högst \(Int(state.neckLimit.rounded()))° ned")
                     }
                 }
                 HStack(spacing: 8) {
@@ -217,7 +219,8 @@ struct PostureAlertView: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.white)
                         .lineLimit(1)
-                    Text("Dålig hållning i \(alert?.minutes ?? 3) min")
+                    Text(alert?.issue == "neckBent" ? "Nacken böjd i \(alert?.minutes ?? 2) min"
+                                                     : "Dålig hållning i \(alert?.minutes ?? 3) min")
                         .font(.system(size: 12))
                         .foregroundStyle(.white.opacity(0.55))
                         .lineLimit(1)

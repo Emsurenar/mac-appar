@@ -29,12 +29,12 @@ enum SnapshotRenderer {
             model.home.showPreviewShortcuts()
             render("10-open-home", model, directory)
             model.close()
-            model.posture.showPreview(.init(status: "bad", issue: "forwardHead", title: "Dra bakhuvudet bakåt",
-                                            progress: 0.7, score: 42, todayGood: 0.78, headPitch: 14, airpods: true,
+            model.posture.showPreview(.init(status: "bad", issue: "neckBent", title: "Lyft huvudet",
+                                            progress: 0.7, score: 42, todayGood: 0.78, headPitch: 22, airpods: true,
                                             interval: 10, lastCheck: Date().addingTimeInterval(-6), pausedUntil: nil))
             render("11-posture-compact", model, directory)
-            model.posture.showPreviewAlert(.init(issue: "forwardHead", title: "Dra bakhuvudet bakåt",
-                                                 body: "", minutes: 3))
+            model.posture.showPreviewAlert(.init(issue: "neckBent", title: "Lyft huvudet",
+                                                 body: "", minutes: 2))
             model.showPostureAlert()
             try? await Task.sleep(for: .seconds(0.5))
             render("12-posture-alert", model, directory)

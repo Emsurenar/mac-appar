@@ -33,10 +33,10 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, @un
         await center.notificationSettings().authorizationStatus
     }
 
-    func postAlert(issue: PostureIssue, minutes: Int) {
+    func postAlert(issue: PostureIssue, body: String) {
         let content = UNMutableNotificationContent()
         content.title = issue.title
-        content.body = "Du har suttit med dålig hållning i \(minutes) \(minutes == 1 ? "minut" : "minuter"). " + issue.advice
+        content.body = body
         content.sound = .default
         content.categoryIdentifier = Self.category
         content.threadIdentifier = Self.category

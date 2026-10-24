@@ -41,6 +41,7 @@ final class AppModel {
     @ObservationIgnored private var isAnalyzingPreview = false
     @ObservationIgnored private var lastPreviewAnalysis = Date.distantPast
     @ObservationIgnored private var terminateObserver: NSObjectProtocol?
+    @ObservationIgnored private var airPodsActivated = false
 
     var isCalibrated: Bool { classifier != nil }
 
@@ -99,6 +100,7 @@ final class AppModel {
         self.samples = samples
         CalibrationStore.save(samples)
         retrain(evaluate: true)
+        applyAirPodsSetting()
         monitor.resetWindow()
         monitor.checkNow()
     }
@@ -203,8 +205,14 @@ final class AppModel {
         return classifier?.neckAngle(pitch: pitch) ?? -pitch
     }
 
+    /// Starts AirPods motion; before calibration this waits for onboarding, which explains the prompt.
+    func activateAirPods() {
+        airPodsActivated = true
+        applyAirPodsSetting()
+    }
+
     private func applyAirPodsSetting() {
-        if settings.useAirPods { motion.start() } else { motion.stop() }
+        if settings.useAirPods && (isCalibrated || airPodsActivated) { motion.start() } else { motion.stop() }
     }
 
     private func applyCameraSettings() {

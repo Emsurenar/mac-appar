@@ -35,6 +35,13 @@ struct DayHistory: Codable, Equatable, Sendable {
     }
 }
 
+struct DayEntry: Identifiable {
+    var date: Date
+    var history: DayHistory?
+
+    var id: Date { date }
+}
+
 /// One JSON file per day in Application Support/Hallning/History, kept for 30 days.
 @MainActor @Observable
 final class HistoryStore {
@@ -87,9 +94,9 @@ final class HistoryStore {
     }
 
     /// The last `count` days, oldest first, including today.
-    func days(_ count: Int) -> [(date: Date, history: DayHistory?)] {
+    func days(_ count: Int) -> [DayEntry] {
         let start = calendar.startOfDay(for: Date())
-        var result: [(date: Date, history: DayHistory?)] = []
+        var result: [DayEntry] = []
         for offset in (0..<count).reversed() {
             guard let date = calendar.date(byAdding: .day, value: -offset, to: start) else { continue }
             let key = Self.dayFormatter.string(from: date)
@@ -102,7 +109,7 @@ final class HistoryStore {
                 history = Self.read(key)
                 if let history { cache[key] = history }
             }
-            result.append((date: date, history: history))
+            result.append(DayEntry(date: date, history: history))
         }
         return result
     }

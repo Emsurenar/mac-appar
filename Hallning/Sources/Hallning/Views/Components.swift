@@ -1,0 +1,201 @@
+import AppKit
+import SwiftUI
+
+extension PostureStatus {
+    var color: Color {
+        switch self {
+        case .good: .green
+        case .bad: .orange
+        case .uncertain: .yellow
+        case .away, .idle, .cameraBusy: .secondary
+        case .paused: .indigo
+        case .noPermission, .error: .red
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .good: "checkmark.seal.fill"
+        case .bad: "exclamationmark.triangle.fill"
+        case .uncertain: "questionmark.circle.fill"
+        case .away: "person.fill.questionmark"
+        case .idle: "sparkles"
+        case .paused: "pause.circle.fill"
+        case .cameraBusy: "video.fill"
+        case .noPermission: "web.camera.fill"
+        case .error: "exclamationmark.octagon.fill"
+        }
+    }
+
+    /// A one-line explanation under the title.
+    var subtitle: String {
+        switch self {
+        case .idle: "Kalibrera för att börja"
+        case .good: "Fortsätt så"
+        case .bad(let issue): issue.label
+        case .uncertain: "Ställningen liknar inget du har kalibrerat"
+        case .away: "Ser ingen framför kameran"
+        case .paused(let until):
+            if let until { "Fortsätter \(until.formatted(date: .omitted, time: .shortened))" } else { "Skärmen är låst eller vilar" }
+        case .cameraBusy: "Pausar under videosamtal"
+        case .noPermission: "Ge åtkomst i Systeminställningar"
+        case .error(let message): message
+        }
+    }
+}
+
+/// "nyss", "för 12 s sedan", "för 3 min sedan".
+func relativeTime(_ date: Date?, now: Date = Date()) -> String {
+    guard let date else { return "aldrig" }
+    let seconds = Int(now.timeIntervalSince(date))
+    if seconds < 5 { return "nyss" }
+    if seconds < 60 { return "för \(seconds) s sedan" }
+    if seconds < 3600 { return "för \(seconds / 60) min sedan" }
+    return date.formatted(date: .omitted, time: .shortened)
+}
+
+/// "1:20"
+func countdown(_ seconds: TimeInterval) -> String {
+    let total = max(Int(seconds.rounded(.up)), 0)
+    return String(format: "%d:%02d", total / 60, total % 60)
+}
+
+func percent(_ value: Double?) -> String {
+    guard let value else { return "–" }
+    return "\(Int((value * 100).rounded())) %"
+}
+
+/// "var 10:e s", "varje minut"
+func intervalText(_ seconds: Double) -> String {
+    let s = Int(seconds.rounded())
+    if s == 60 { return "varje minut" }
+    if s % 60 == 0 { return "var \(ordinal(s / 60)) min" }
+    return "var \(ordinal(s)) s"
+}
+
+/// Swedish ordinal: 1:a, 2:a, 3:e, 11:e, 21:a.
+func ordinal(_ n: Int) -> String {
+    let last = n % 10, lastTwo = n % 100
+    return "\(n):" + ((last == 1 || last == 2) && lastTwo != 11 && lastTwo != 12 ? "a" : "e")
+}
+
+/// A rounded tile with a value and a caption.
+struct StatTile: View {
+    var title: String
+    var value: String
+    var symbol: String
+    var tint: Color = .accentColor
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Image(systemName: symbol)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(tint)
+            Text(value)
+                .font(.system(size: 17, weight: .semibold, design: .rounded).monospacedDigit())
+                .contentTransition(.numericText())
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+}
+
+/// The orange bar towards the next reminder.
+struct ReminderProgress: View {
+    var progress: Double
+    var remaining: TimeInterval?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack {
+                Text("Dålig hållning")
+                Spacer()
+                if let remaining {
+                    Text("Påminnelse om \(countdown(remaining))")
+                        .monospacedDigit()
+                        .contentTransition(.numericText())
+                }
+            }
+            .font(.caption.weight(.medium))
+            .foregroundStyle(.orange)
+            ProgressView(value: min(max(progress, 0), 1))
+                .tint(.orange)
+        }
+        .animation(.spring(response: 0.5, dampingFraction: 0.85), value: progress)
+    }
+}
+
+/// The mirrored live camera image with the skeleton on top.
+struct LiveCameraView: View {
+    @Environment(AppModel.self) private var model
+    var cornerRadius: CGFloat = 16
+
+    var body: some View {
+        ZStack {
+            Rectangle().fill(.black.opacity(0.85))
+            if let image = model.previewImage {
+                let aspect = CGFloat(image.width) / CGFloat(max(image.height, 1))
+                ZStack {
+                    Image(decorative: image, scale: 1)
+                        .resizable()
+                        .scaleEffect(x: -1, y: 1)
+                    SkeletonView(pose: model.livePose, color: skeletonColor)
+                }
+                .aspectRatio(aspect, contentMode: .fit)
+            } else {
+                ProgressView().controlSize(.small)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        .onAppear { model.beginPreview() }
+        .onDisappear { model.endPreview() }
+    }
+
+    private var skeletonColor: Color {
+        guard let result = model.liveResult else { return .teal }
+        if result.isUncertain { return .yellow }
+        return result.badProbability >= model.settings.sensitivity.threshold ? .orange : .green
+    }
+}
+
+/// A row with a symbol in a tinted circle, a title and a detail line.
+struct FeatureRow: View {
+    var symbol: String
+    var tint: Color
+    var title: String
+    var detail: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: symbol)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 40, height: 40)
+                .background(Circle().fill(tint.gradient))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.headline)
+                Text(detail)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+}
+
+extension AppModel {
+    /// "Nacke 8° nedåt"
+    var neckText: String {
+        guard let angle = neckAngle else { return "–" }
+        let degrees = Int(abs(angle).rounded())
+        if degrees < 3 { return "Rak" }
+        return "\(degrees)° \(angle > 0 ? "ned" : "upp")"
+    }
+}

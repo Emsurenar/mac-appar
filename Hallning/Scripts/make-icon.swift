@@ -40,10 +40,10 @@ func render(_ px: Int) -> NSBitmapImageRep {
     lines.lineJoinStyle = .round
     lines.move(to: p(0.74, 0.97)); lines.line(to: p(0.74, 0.72)); lines.line(to: p(0.36, 0.72))
     lines.curve(to: p(0.40, 0.34), controlPoint1: p(0.36, 0.52), controlPoint2: p(0.36, 0.52))
-    let head = p(0.44, 0.15), shoulder = p(0.40, 0.34), r = 0.10 * size
+    let head = p(0.44, 0.15), shoulder = p(0.40, 0.34), r = 0.10 * size, gap = r * 1.25 + lines.lineWidth / 2
     let dx = head.x - shoulder.x, dy = head.y - shoulder.y, length = hypot(dx, dy)
     lines.move(to: shoulder)
-    lines.line(to: NSPoint(x: head.x - dx / length * r * 1.25, y: head.y - dy / length * r * 1.25))
+    lines.line(to: NSPoint(x: head.x - dx / length * gap, y: head.y - dy / length * gap))
     lines.move(to: shoulder); lines.line(to: p(0.44, 0.55)); lines.line(to: p(0.66, 0.52))
 
     NSGraphicsContext.saveGraphicsState()

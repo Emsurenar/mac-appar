@@ -2,22 +2,24 @@ name: Build
 
 on:
   push:
-    branches: [main-iseyqr]
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 jobs:
   build:
+    name: Build ${{ matrix.app }}
     runs-on: macos-26
     strategy:
       fail-fast: false
       matrix:
-        app: [Hallning, DynamicIsland]
+        app: [DynamicIsland, Hallning]
     steps:
       - uses: actions/checkout@v4
       - name: Toolchain
         run: |
           xcode-select -p
           swift --version
-      - name: Build ${{ matrix.app }}
+      - name: Build
         working-directory: ${{ matrix.app }}
-        run: swift build -c debug --arch arm64 2>&1 | grep -E "error:|warning: .*(will be an error|is an error)|Compiling|Build complete" | grep -v "^\[" ; exit ${PIPESTATUS[0]}
+        run: swift build -c release --arch arm64

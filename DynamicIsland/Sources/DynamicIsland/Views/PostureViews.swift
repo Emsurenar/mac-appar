@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Figure
 
-/// The seated figure from Hållning, facing right. `slouch` animates from upright (0) to slouched (1).
+/// The seated figure from the Posture app, facing right. `slouch` animates from upright (0) to slouched (1).
 struct PostureFigure: Shape {
     var slouch: Double
 
@@ -139,25 +139,25 @@ struct PostureTab: View {
                         }
                         .foregroundStyle(state.isNeckBent ? Color.orange : Color.white.opacity(0.75))
                         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: state.isNeckBent)
-                        .help("Nackens vinkel från AirPods – högst \(Int(state.neckLimit.rounded()))° ned")
+                        .help("Neck angle from AirPods – at most \(Int(state.neckLimit.rounded()))° down")
                     }
                 }
                 HStack(spacing: 8) {
                     // Only a pause the user chose can be resumed; lock screen and calls resume by themselves.
                     if state.isPaused && state.pausedUntil != nil {
-                        CapsuleButton(title: "Fortsätt") { posture.send(.resume) }
+                        CapsuleButton(title: "Resume") { posture.send(.resume) }
                     } else {
-                        CapsuleButton(title: "Pausa 30 min") { posture.send(.pause30) }
+                        CapsuleButton(title: "Pause 30 min") { posture.send(.pause30) }
                     }
-                    CapsuleButton(title: "Kontrollera nu") { posture.send(.check) }
+                    CapsuleButton(title: "Check now") { posture.send(.check) }
                         .disabled(state.isPaused)
                     Spacer(minLength: 0)
-                    CapsuleButton(title: "Öppna Hållning") { posture.openApp() }
+                    CapsuleButton(title: "Open Posture") { posture.openApp() }
                 }
             }
             .padding(.top, 6)
         } else {
-            Text("Hållning är inte igång")
+            Text("Posture is not running")
                 .font(.system(size: 13))
                 .foregroundStyle(.white.opacity(0.55))
                 .frame(maxWidth: .infinity, minHeight: 100)
@@ -166,19 +166,19 @@ struct PostureTab: View {
 
     private func detail(_ state: PostureService.State, now: Date) -> String {
         if state.isPaused {
-            if let until = state.pausedUntil { return "Pausad till \(until.formatted(date: .omitted, time: .shortened))" }
-            return "Pausad"
+            if let until = state.pausedUntil { return "Paused until \(until.formatted(date: .omitted, time: .shortened))" }
+            return "Paused"
         }
-        guard let lastCheck = state.lastCheck else { return "Ingen kontroll än" }
+        guard let lastCheck = state.lastCheck else { return "No check yet" }
         let seconds = max(Int(now.timeIntervalSince(lastCheck)), 0)
-        if seconds < 5 { return "Senaste kontroll nyss" }
-        if seconds < 60 { return "Senaste kontroll för \(seconds) s sedan" }
-        return "Senaste kontroll för \(seconds / 60) min sedan"
+        if seconds < 5 { return "Last checked just now" }
+        if seconds < 60 { return "Last checked \(seconds) s ago" }
+        return "Last checked \(seconds / 60) min ago"
     }
 
     private func neckText(_ pitch: Double) -> String {
         let degrees = Int(abs(pitch).rounded())
-        return degrees < 3 ? "Rak" : "\(degrees)° \(pitch > 0 ? "ned" : "upp")"
+        return degrees < 3 ? "Level" : "\(degrees)° \(pitch > 0 ? "down" : "up")"
     }
 }
 
@@ -200,7 +200,7 @@ private struct ReminderBar: View {
 
 // MARK: - Live activities
 
-/// Shown for a few seconds when Hållning sends a reminder.
+/// Shown for a few seconds when the Posture app sends a reminder.
 struct PostureAlertView: View {
     @Environment(IslandModel.self) private var model
     @State private var bounce = false
@@ -215,12 +215,12 @@ struct PostureAlertView: View {
                     .frame(width: 38, height: 38)
                     .animation(.spring(response: 0.7, dampingFraction: 0.5).delay(0.35), value: bounce)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(alert?.title ?? "Dålig hållning")
+                    Text(alert?.title ?? "Poor posture")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.white)
                         .lineLimit(1)
-                    Text(alert?.issue == "neckBent" ? "Nacken böjd i \(alert?.minutes ?? 2) min"
-                                                     : "Dålig hållning i \(alert?.minutes ?? 3) min")
+                    Text(alert?.issue == "neckBent" ? "Neck bent for \(alert?.minutes ?? 2) min"
+                                                     : "Poor posture for \(alert?.minutes ?? 3) min")
                         .font(.system(size: 12))
                         .foregroundStyle(.white.opacity(0.55))
                         .lineLimit(1)

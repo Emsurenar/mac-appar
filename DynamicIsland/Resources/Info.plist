@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>sv</string>
+	<string>en</string>
 	<key>CFBundleDisplayName</key>
 	<string>Dynamic Island</string>
 	<key>CFBundleExecutable</key>

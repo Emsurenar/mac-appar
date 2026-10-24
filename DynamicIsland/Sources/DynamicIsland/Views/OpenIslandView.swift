@@ -33,13 +33,13 @@ struct OpenIslandView: View {
     private var header: some View {
         HStack(spacing: 0) {
             HStack(spacing: 2) {
-                tabButton(.media, symbol: "music.note", help: "Nu spelas")
+                tabButton(.media, symbol: "music.note", help: "Now Playing")
                 if model.settings.showHomeTab {
-                    tabButton(.home, symbol: "house.fill", help: "Hem")
+                    tabButton(.home, symbol: "house.fill", help: "Home")
                 }
-                tabButton(.controls, symbol: "switch.2", help: "Ljud och skärm")
+                tabButton(.controls, symbol: "switch.2", help: "Sound and display")
                 if model.showsPostureTab {
-                    tabButton(.posture, symbol: "figure.stand", help: "Hållning")
+                    tabButton(.posture, symbol: "figure.stand", help: "Posture")
                 }
             }
             Spacer(minLength: model.notch.width + 12)
@@ -47,7 +47,7 @@ struct OpenIslandView: View {
                 Image(systemName: "gearshape.fill").font(.system(size: 12, weight: .semibold))
             }
             .buttonStyle(IslandButtonStyle(diameter: 26))
-            .help("Inställningar")
+            .help("Settings")
         }
         .padding(.horizontal, IslandLayout.contentPadding - 6)
         .frame(height: model.notch.height)
@@ -90,9 +90,9 @@ private struct MediaTab: View {
             HStack(spacing: 14) {
                 artwork
                 VStack(alignment: .leading, spacing: 2) {
-                    MarqueeText(text: media.hasMedia ? media.title : "Inget spelas",
+                    MarqueeText(text: media.hasMedia ? media.title : "Not Playing",
                                 font: .system(size: 15, weight: .semibold))
-                    MarqueeText(text: media.hasMedia ? media.subtitle : "Spela upp något i valfri app",
+                    MarqueeText(text: media.hasMedia ? media.subtitle : "Play something in any app",
                                 font: .system(size: 13), color: .white.opacity(0.55))
                     Spacer(minLength: 0)
                     transportControls
@@ -135,7 +135,7 @@ private struct MediaTab: View {
                 }
             }
             .onTapGesture { media.openPlayer() }
-            .help(media.bundleIdentifier == nil ? "" : "Öppna spelaren")
+            .help(media.bundleIdentifier == nil ? "" : "Open the player")
     }
 
     private var transportControls: some View {
@@ -169,7 +169,7 @@ private struct MediaTab: View {
                 .contentTransition(.symbolEffect(.replace))
         }
         .buttonStyle(IslandButtonStyle(diameter: 30))
-        .help(model.audio.currentDevice?.name ?? "Ljudutgång")
+        .help(model.audio.currentDevice?.name ?? "Audio output")
     }
 
     private var progressRow: some View {
@@ -247,7 +247,7 @@ private struct ControlsTab: View {
                 .frame(height: IslandLayout.sliderRowHeight)
             }
 
-            Text("Ljudutgång")
+            Text("Audio output")
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.45))
                 .frame(height: IslandLayout.sectionHeaderHeight, alignment: .bottomLeading)

@@ -49,7 +49,7 @@ final class AppSettings {
             Key.showDeviceChanges: true,
             Key.replaceSystemHUD: false,
             Key.showHomeTab: true,
-            Key.homeFolderName: "Hem",
+            Key.homeFolderName: "Home",
             Key.showPostureTab: true,
             Key.showPostureAlerts: true,
             Key.showPostureLiveActivity: true,
@@ -65,7 +65,7 @@ final class AppSettings {
         showPostureTab = defaults.bool(forKey: Key.showPostureTab)
         showPostureAlerts = defaults.bool(forKey: Key.showPostureAlerts)
         showPostureLiveActivity = defaults.bool(forKey: Key.showPostureLiveActivity)
-        homeFolderName = defaults.string(forKey: Key.homeFolderName) ?? "Hem"
+        homeFolderName = defaults.string(forKey: Key.homeFolderName) ?? "Home"
     }
 
     private func store(_ value: Bool, _ key: String) {

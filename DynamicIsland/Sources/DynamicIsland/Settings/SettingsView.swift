@@ -13,75 +13,75 @@ struct SettingsView: View {
         @Bindable var settings = model.settings
         Form {
             Section {
-                Toggle("Starta vid inloggning", isOn: $launchAtLogin)
+                Toggle("Launch at login", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, enabled in setLaunchAtLogin(enabled) }
-                Toggle("Öppna när pekaren vilar på notchen", isOn: $settings.hoverToOpen)
-                Toggle("Haptisk återkoppling", isOn: $settings.hapticFeedback)
+                Toggle("Open when the pointer rests on the notch", isOn: $settings.hoverToOpen)
+                Toggle("Haptic feedback", isOn: $settings.hapticFeedback)
             } header: {
-                Text("Allmänt")
+                Text("General")
             } footer: {
                 Text(settings.hoverToOpen
-                     ? "Haptiken känns när pekaren når notchen och när ett reglage dras till ändläget – bara med fingret på styrplattan."
-                     : "Klicka på notchen för att öppna ön. Haptiken känns när ett reglage dras till ändläget.")
+                     ? "You feel a tap when the pointer reaches the notch and when a slider hits its end – only with a finger on the trackpad."
+                     : "Click the notch to open the island. You feel a tap when a slider hits its end.")
                     .foregroundStyle(.secondary)
             }
 
-            Section("Live-aktiviteter") {
-                Toggle("Visa musik som spelas", isOn: $settings.showLiveActivity)
-                Toggle("Visa låtbyten", isOn: $settings.showTrackChanges)
-                Toggle("Visa byte av ljudutgång", isOn: $settings.showDeviceChanges)
+            Section("Live activities") {
+                Toggle("Show what’s playing", isOn: $settings.showLiveActivity)
+                Toggle("Show track changes", isOn: $settings.showTrackChanges)
+                Toggle("Show audio output changes", isOn: $settings.showDeviceChanges)
             }
 
             Section {
-                Toggle("Visa Hem-fliken", isOn: $settings.showHomeTab)
-                TextField("Mapp i Genvägar", text: $settings.homeFolderName)
+                Toggle("Show Home tab", isOn: $settings.showHomeTab)
+                TextField("Shortcuts folder", text: $settings.homeFolderName)
                     .onSubmit { model.home.refresh() }
                     .disabled(!settings.showHomeTab)
                 HStack {
                     Text(homeStatus).foregroundStyle(.secondary)
                     Spacer()
-                    Button("Öppna Genvägar") { HomeService.openShortcutsApp() }
+                    Button("Open Shortcuts") { HomeService.openShortcutsApp() }
                 }
             } header: {
-                Text("Hem")
+                Text("Home")
             } footer: {
-                Text("Skapa genvägar med åtgärden Styr hem (t.ex. tänd lampor eller aktivera en scen) och lägg dem i mappen. Börjar namnet med en emoji blir den ikonen. Returnerar genvägen ”på” eller ”av” visas brickan som tänd eller släckt.")
+                Text("Create shortcuts with the Control Home action (for example, turn on lights or set a scene) and put them in this folder. A leading emoji becomes the tile’s icon. If a shortcut outputs “on” or “off”, its tile shows that state.")
                     .foregroundStyle(.secondary)
             }
 
             Section {
-                Toggle("Visa Hållning-fliken", isOn: $settings.showPostureTab)
-                Toggle("Visa påminnelser om hållning", isOn: $settings.showPostureAlerts)
-                Toggle("Visa live-aktivitet vid dålig hållning", isOn: $settings.showPostureLiveActivity)
+                Toggle("Show Posture tab", isOn: $settings.showPostureTab)
+                Toggle("Show posture reminders", isOn: $settings.showPostureAlerts)
+                Toggle("Show a live activity for poor posture", isOn: $settings.showPostureLiveActivity)
                 HStack {
-                    Label(model.posture.isConnected ? "Hållning är igång" : "Hållning är inte igång",
+                    Label(model.posture.isConnected ? "Posture is running" : "Posture is not running",
                           systemImage: model.posture.isConnected ? "checkmark.circle.fill" : "circle.dashed")
                         .foregroundStyle(model.posture.isConnected ? Color.green : Color.secondary)
                     Spacer()
-                    Button("Öppna Hållning") { model.posture.openApp() }
+                    Button("Open Posture") { model.posture.openApp() }
                 }
             } header: {
-                Text("Hållning")
+                Text("Posture")
             } footer: {
-                Text("Hållning är en separat app som håller koll på hur du sitter. När den är igång visas påminnelser och status här i ön.")
+                Text("Posture is a companion app that watches how you sit. While it runs, its reminders and status appear in the island.")
                     .foregroundStyle(.secondary)
             }
 
             Section {
-                Toggle("Visa volymändringar i ön", isOn: $settings.showVolumeHUD)
-                Toggle("Ersätt systemets volym- och ljusstyrkeruta", isOn: $settings.replaceSystemHUD)
+                Toggle("Show volume changes in the island", isOn: $settings.showVolumeHUD)
+                Toggle("Replace the system volume and brightness HUD", isOn: $settings.replaceSystemHUD)
                 if settings.replaceSystemHUD && !hasAccessibility {
                     HStack {
-                        Label("Kräver behörighet för Hjälpmedel", systemImage: "exclamationmark.triangle.fill")
+                        Label("Requires Accessibility permission", systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                         Spacer()
-                        Button("Öppna Inställningar…") { openAccessibilitySettings() }
+                        Button("Open Settings…") { openAccessibilitySettings() }
                     }
                 }
             } header: {
-                Text("Volym och ljusstyrka")
+                Text("Volume and brightness")
             } footer: {
-                Text("Volym- och ljusstyrketangenterna visas då bara i ön. Håll ned ⌥⇧ för finare steg.")
+                Text("The volume and brightness keys then show only in the island. Hold ⌥⇧ for finer steps.")
                     .foregroundStyle(.secondary)
             }
 
@@ -94,7 +94,7 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Button("Avsluta") { NSApp.terminate(nil) }
+                    Button("Quit") { NSApp.terminate(nil) }
                 }
             }
         }
@@ -109,8 +109,8 @@ struct SettingsView: View {
 
     private var homeStatus: String {
         let home = model.home
-        if !home.folderExists { return "Mappen finns inte än" }
-        return home.shortcuts.count == 1 ? "1 genväg" : "\(home.shortcuts.count) genvägar"
+        if !home.folderExists { return "Folder not found" }
+        return home.shortcuts.count == 1 ? "1 shortcut" : "\(home.shortcuts.count) shortcuts"
     }
 
     private func setLaunchAtLogin(_ enabled: Bool) {

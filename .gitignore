@@ -1,4 +1,14 @@
+# macOS
 .DS_Store
+
+# Swift Package Manager
 .build/
+.swiftpm/
+
+# App bundles produced by build.sh
 build/
+
+# Xcode
 *.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/

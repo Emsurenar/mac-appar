@@ -29,7 +29,7 @@ struct HomeTab: View {
                             home.run(shortcut)
                         }
                         .contextMenu {
-                            Button("Redigera i Genvägar") { home.reveal(shortcut) }
+                            Button("Edit in Shortcuts") { home.reveal(shortcut) }
                         }
                     }
                     ForEach(row.count..<columns, id: \.self) { _ in
@@ -64,16 +64,16 @@ struct HomeTab: View {
             .frame(width: 58, height: 58)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(home.folderExists ? "Mappen ”\(folder)” är tom" : "Styr ditt hem härifrån")
+                Text(home.folderExists ? "The “\(folder)” folder is empty" : "Control your home from here")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.white)
-                Text("Skapa genvägar med Styr hem i Genvägar och lägg dem i mappen ”\(folder)”.")
+                Text("Create shortcuts with Control Home in Shortcuts and put them in a folder named “\(folder)”.")
                     .font(.system(size: 12))
                     .foregroundStyle(.white.opacity(0.55))
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 8) {
-                    CapsuleButton(title: "Öppna Genvägar") { HomeService.openShortcutsApp() }
-                    CapsuleButton(title: "Öppna Hem") { HomeService.openHomeApp() }
+                    CapsuleButton(title: "Open Shortcuts") { HomeService.openShortcutsApp() }
+                    CapsuleButton(title: "Open Home") { HomeService.openHomeApp() }
                 }
                 .padding(.top, 7)
             }
@@ -101,6 +101,7 @@ private struct HomeTile: View {
                 Text(shortcut.title)
                     .font(.system(size: 12, weight: .semibold))
                     .lineLimit(1)
+                    .minimumScaleFactor(0.85)
                 if let status {
                     Text(status)
                         .font(.system(size: 11))
@@ -131,10 +132,10 @@ private struct HomeTile: View {
 
     private var status: String? {
         switch state {
-        case .running: "Kör…"
-        case .failed: "Misslyckades"
-        case .succeeded: isOn.map { $0 ? "På" : "Av" } ?? "Klart"
-        case .idle: isOn.map { $0 ? "På" : "Av" }
+        case .running: "Running…"
+        case .failed: "Failed"
+        case .succeeded: isOn.map { $0 ? "On" : "Off" } ?? "Done"
+        case .idle: isOn.map { $0 ? "On" : "Off" }
         }
     }
 

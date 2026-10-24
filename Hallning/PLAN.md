@@ -18,7 +18,7 @@ The app was first built in Swedish under the name *Hållning*; all UI text is no
 
 - macOS 26.6.2 on an Apple M2, FaceTime HD Camera.
 - Command Line Tools only (no Xcode): Swift 6.3.3, macOS SDK 26.5. Build with SwiftPM plus a `build.sh` that assembles the `.app` bundle, the same way `../DynamicIsland/build.sh` does.
-- Code signing identity: `"Dagsplan Development"`. `build.sh` picks the first identity, so camera and other permissions survive rebuilds.
+- Code signing: `build.sh` signs with the first code-signing identity in the keychain (or `SIGN_IDENTITY`), so camera and other permissions survive rebuilds.
 - Frameworks in the SDK: Vision (with the macOS 15+ Swift API), CoreMotion `CMHeadphoneMotionManager` (macOS 14+), Charts, UserNotifications, AVFoundation.
 - Liquid Glass is in the SDK (SwiftUICore): `.glassEffect(_ glass: Glass = .regular, in: some Shape)`, `Glass.regular/.clear`, `.tint(_:)`, `.interactive()`, `GlassEffectContainer`, `.glassEffectID(_:in:)`, `.buttonStyle(.glass)` and `.buttonStyle(.glassProminent)`.
 - Vision Swift API (verified signatures):

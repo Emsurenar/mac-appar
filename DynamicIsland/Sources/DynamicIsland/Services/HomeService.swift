@@ -119,7 +119,7 @@ final class HomeService {
 
     #if DEBUG
     func showPreviewShortcuts() {
-        shortcuts = ["💡 Vardagsrum", "Taklampa kök", "God natt", "Lås ytterdörren", "Värme", "Kom hem"].enumerated().map {
+        shortcuts = ["💡 Living Room", "Kitchen Light", "Good Night", "Front Door", "Heating", "Arrive Home"].enumerated().map {
             HomeShortcut(id: UUID().uuidString, name: $0.element)
         }
         toggleStates = [shortcuts[0].id: true, shortcuts[3].id: true]

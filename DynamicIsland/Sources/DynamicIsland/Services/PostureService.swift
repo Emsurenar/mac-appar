@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-/// Follows the Hållning posture app over distributed notifications.
+/// Follows the Posture companion app (Hallning/) over distributed notifications.
 @MainActor @Observable
 final class PostureService {
     struct State: Equatable {
@@ -66,7 +66,7 @@ final class PostureService {
                 self.onAlert?(alert)
             }
         })
-        // Re-evaluates the connection when Hållning goes quiet (e.g. it crashed).
+        // Re-evaluates the connection when Posture goes quiet (e.g. it crashed).
         timer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.refreshConnection() }
         }
@@ -84,7 +84,7 @@ final class PostureService {
                                     deliverImmediately: true)
     }
 
-    /// Opens Hållning even if it is not running.
+    /// Opens Posture even if it is not running.
     func openApp() {
         if isConnected {
             send(.open)
@@ -123,7 +123,7 @@ final class PostureService {
         return State(
             status: status,
             issue: info["issue"] as? String,
-            title: info["title"] as? String ?? "Hållning",
+            title: info["title"] as? String ?? "Posture",
             progress: double("progress") ?? 0,
             score: (info["score"] as? NSNumber)?.intValue ?? 0,
             todayGood: double("todayGood") ?? 0,

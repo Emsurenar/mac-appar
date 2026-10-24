@@ -16,7 +16,7 @@ enum IslandPresentation: Equatable {
     /// Briefly shows the new song after a track change.
     case peek
     case hud(HUDKind)
-    /// A posture reminder from Hållning.
+    /// A reminder from the Posture app.
     case postureAlert
     /// Live activity: the posture figure and the progress towards a reminder.
     case postureCompact

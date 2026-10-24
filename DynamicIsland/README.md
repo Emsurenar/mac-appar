@@ -1,50 +1,184 @@
-# Dynamic Island för Mac
+<p align="center">
+  <img src="Screenshots/icon.png" width="128" alt="Dynamic Island app icon">
+</p>
 
-En Dynamic Island som växer ur notchen på MacBook – byggd i SwiftUI med Apples egna fjäderanimationer.
+<h1 align="center">Dynamic Island for Mac</h1>
 
-- **Nu spelas** från alla appar (Musik, Spotify, Safari, Chrome, Podcasts …): omslag, titel, artist, spola, spela/pausa, nästa/föregående.
-- **Live-aktivitet**: omslag och equalizer i omslagets färg på var sida om notchen medan musik spelas, och en kort titt vid låtbyte.
-- **Ljud**: volym, ljud av, och val av ljudutgång (AirPods, högtalare, AirPlay …) direkt i ön, samt ljusstyrka.
-- **Hem**: brickor som i Hem-appen för scener och tillbehör, via dina Genvägar (se nedan).
-- **HUD**: volym, ljusstyrka och byte av ljudutgång visas i ön. Kan ersätta systemets volymruta (kräver Hjälpmedel).
-- **Hållning**: med appen [Hållning](../Hallning) igång får ön en egen flik med dagens hållning, påminnelser när du suttit illa en stund och en live-aktivitet när det börjar bli dags.
+<p align="center">
+  A native Dynamic Island that grows out of your MacBook's notch.<br>
+  Now Playing from any app, sound, brightness and Apple Home, animated with real SwiftUI springs.
+</p>
 
-## Bygga och köra
+<p align="center">
+  <img src="https://img.shields.io/badge/macOS-14%2B-black?logo=apple" alt="macOS 14+">
+  <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6">
+  <img src="https://img.shields.io/badge/SwiftUI-native-0A84FF" alt="SwiftUI">
+  <a href="../LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license"></a>
+</p>
+
+<p align="center">
+  <img src="Screenshots/hero.png" alt="The island open under the menu bar, playing a song">
+</p>
+
+## Highlights
+
+- **Now Playing from any app.** Music, Spotify, Podcasts, Safari, Chrome and anything else that reports to Control Center. Artwork, title, artist, scrubbing, play/pause and skip.
+- **Live activities.** While music plays, the artwork and an equalizer tinted by the album art sit on either side of the notch. A new song gets a short peek.
+- **Sound and display.** Volume, mute, brightness and a one-click audio output switcher for speakers, AirPods and AirPlay, like Control Center.
+- **HUDs in the notch.** Volume, brightness and output changes appear in the island. It can also replace the system's volume and brightness overlay.
+- **Apple Home.** Tap tiles to run your Home scenes and accessories through Shortcuts.
+- **Posture companion.** With the [Posture](../Hallning) app running, the island shows your posture and nudges you when you slouch.
+- **Feels like a Mac.** Spring animations, blur-and-scale transitions, rubber-band sliders, SF Symbols and trackpad haptics. It never steals focus from the app you're using.
+
+## Gallery
+
+| | |
+|:---:|:---:|
+| <img src="Screenshots/live-activity.png" alt="Live activity with artwork and equalizer"><br>**Live activity** while music plays | <img src="Screenshots/track-change.png" alt="Track change peek"><br>**Track change** peek |
+| <img src="Screenshots/volume-hud.png" alt="Volume HUD"><br>**Volume** HUD in the notch | <img src="Screenshots/output-device.png" alt="Audio output changed"><br>**Audio output** changed |
+| <img src="Screenshots/sound-and-display.png" alt="Sound and display controls"><br>**Sound and display** controls | <img src="Screenshots/home.png" alt="Home tiles"><br>**Home** scenes and accessories |
+| <img src="Screenshots/posture.png" alt="Posture tab"><br>**Posture** tab | <img src="Screenshots/posture-reminder.png" alt="Posture reminder"><br>**Posture** reminder |
+
+## Requirements
+
+- A Mac with Apple silicon. It's designed for MacBooks with a notch. Other displays get a virtual notch at the top center (untested).
+- macOS 14 Sonoma or later. Developed and tested on macOS 26 Tahoe.
+- Xcode 16 or later, or just the Command Line Tools (`xcode-select --install`).
+
+## Install
+
+There's no prebuilt download yet. Building from source takes a minute or two:
 
 ```bash
+git clone https://github.com/Emsurenar/mac-appar.git
+cd mac-appar/DynamicIsland
 ./build.sh --run
 ```
 
-Appen hamnar i `build/Dynamic Island.app`. Den har ingen Dock-ikon – högerklicka på ön eller använd kugghjulet för inställningar och för att avsluta.
+This builds `build/Dynamic Island.app` and launches it. Move it to `/Applications` if you want to keep it, then turn on **Launch at login** in its settings.
 
-## Hem
+The script signs the app with the first code-signing identity in your keychain, or ad hoc if there is none. A stable identity keeps the Accessibility permission across rebuilds. Choose one with `SIGN_IDENTITY="Your Identity" ./build.sh`.
 
-HomeKit går inte att använda från vanliga Mac-appar (bara Catalyst-appar med ett betalt utvecklarkonto), så ön kör dina genvägar i stället:
+## Using it
 
-1. Öppna **Genvägar** och skapa en mapp som heter **Hem** (namnet går att ändra i inställningarna).
-2. Lägg till genvägar med åtgärden **Styr hem** – till exempel "Tänd vardagsrummet" eller en scen som "God natt".
-3. De dyker upp som brickor i ön. Börjar namnet med en emoji blir den ikonen, annars väljs en symbol från namnet (lampa, lås, värme, fläkt …).
-4. Vill du att brickan visar läge: låt genvägen sluta med att returnera texten `på` eller `av`.
+- **Hover** over the notch to open the island. Move the pointer away to close it. If you prefer clicking, turn off hover in settings.
+- **Tabs** in the top-left corner switch between Now Playing, Home, Sound and display, and Posture.
+- **Click the artwork** to bring the playing app to the front. Click the output icon to jump to the output picker.
+- **Right-click** the island, or use the gear, for **Settings** and **Quit**. The app has no Dock icon.
 
-## Hållning
+### Apple Home
 
-Hållning (i `../Hallning`) är en separat menyradsapp som tittar på din kroppshållning med kameran. Apparna pratar med varandra via distribuerade notiser:
+Native Mac apps can't use HomeKit. It's only available to Mac Catalyst apps with a paid developer entitlement. So the island runs your **Shortcuts** instead:
 
-- Hållning skickar sin status vid varje kontroll (`com.emresunar.Hallning.state`) och påminnelser (`com.emresunar.Hallning.alert`).
-- Ön säger hej (`com.emresunar.DynamicIsland.posture.hello`) så att Hållning vet att påminnelser kan visas här i stället för som notis, och skickar kommandon från knapparna i fliken (`com.emresunar.Hallning.command`).
+1. In **Shortcuts**, create a folder named **Home**. You can pick another name in settings.
+2. Add shortcuts that use the **Control Home** action, for example *Living Room Lights On* or a *Good Night* scene.
+3. They appear as tiles in the Home tab. A leading emoji becomes the tile's icon. Otherwise an SF Symbol is picked from the name: light, lamp, lock, door, heat, fan, blinds, TV, night, morning and more, in English or Swedish.
+4. To make a tile show **On/Off**, end the shortcut by outputting the text `on` or `off`.
 
-Fliken med figuren syns bara när Hållning är igång. Allt går att stänga av under **Hållning** i inställningarna.
+<img src="Screenshots/home-setup.png" width="480" alt="Home tab before any shortcuts exist">
 
-## Så funkar "Nu spelas"
+### Replacing the system volume HUD
 
-Sedan macOS 15.4 svarar MediaRemote bara Apple-signerade processer. `Bridge/NowPlayingBridge.m` laddas därför in i `/usr/bin/perl` och pratar med appen via stdin/stdout (JSON-rader ut, kommandon in).
+Turn on **Replace the system volume and brightness HUD** in settings and grant **Accessibility** access when asked. The volume and brightness keys then show only in the island. Hold <kbd>⌥</kbd><kbd>⇧</kbd> for quarter steps, like on macOS.
 
-## Felsökning
+### Posture
 
-`CONFIG=debug ./build.sh` bygger en debug-version som kan rendera alla lägen till bilder:
+[Posture](../Hallning) is a companion menu bar app in this repository. While it runs, the island gets a Posture tab with today's score, the neck angle from AirPods, and buttons to pause or check now. When you've slouched for a while, a reminder appears in the notch instead of as a notification.
 
-```bash
-"build/Dynamic Island.app/Contents/MacOS/DynamicIsland" --snapshots /tmp/island
+## Permissions and privacy
+
+| Permission | Used for | Required |
+|---|---|:---:|
+| Accessibility | Replacing the system volume and brightness HUD | Optional |
+
+Everything else, like Now Playing, volume, outputs and brightness, works without any prompts. Shortcuts may ask for access to Home the first time a Home shortcut runs.
+
+The app has no network code, analytics or accounts. Everything stays on your Mac.
+
+## How it works
+
+<details>
+<summary><b>The notch window</b></summary>
+
+The island is a borderless, transparent `NSPanel` placed above the menu bar on every Space, including over full-screen apps. It's non-activating, so it never takes focus. `NSScreen.auxiliaryTopLeftArea` and `auxiliaryTopRightArea` give the exact notch rectangle, and a black shape of that size sits over the hardware cutout, where it's invisible. When the shape grows, it looks like the notch itself expands.
+
+The panel is much larger than the island, so it lets clicks through (`ignoresMouseEvents`) unless the pointer is inside the island's hover zone. A global mouse monitor follows the pointer. Watching mouse movement needs no permission. Short delays (90 ms to open, 220 ms to close) keep it from flickering when the pointer brushes past.
+</details>
+
+<details>
+<summary><b>Shape and motion</b></summary>
+
+`NotchShape` is an animatable SwiftUI `Shape` with concave "ears" where it meets the top of the screen and rounded bottom corners. Both radii animate together with the size, so the outline morphs between states instead of cross-fading. Every state has its own spring: a slight bounce when opening and a calm, critically damped close. Content enters with a blur and scale from the notch, and the artwork moves between states with `matchedGeometryEffect`.
+
+A single computed property, `IslandModel.presentation`, decides what the island shows by picking the most important state: open, HUD, posture reminder, track peek, music live activity, posture live activity, and finally closed.
+</details>
+
+<details>
+<summary><b>Now Playing</b></summary>
+
+The system-wide Now Playing state lives in Apple's private **MediaRemote** framework. Since macOS 15.4, MediaRemote only answers processes signed by Apple. To get around that, `Bridge/NowPlayingBridge.m` is compiled into a small dynamic library that is loaded into `/usr/bin/perl`, an Apple-signed binary, through Perl's `DynaLoader`. The bridge talks to the app over stdio. It writes one JSON line per change (artwork as base64, only when it changes) and reads commands like `toggle`, `next` and `seek 42.5`. It exits when the app quits.
+
+This technique was pioneered by [ungive/mediaremote-adapter](https://github.com/ungive/mediaremote-adapter).
+</details>
+
+<details>
+<summary><b>Sound, brightness and keys</b></summary>
+
+- **Core Audio** provides output devices, volume and mute as properties. The app subscribes to them with property listeners, so external changes, like the keyboard, show up instantly without polling. Switching outputs sets the system's default output device.
+- **Brightness** uses the private `DisplayServices` framework to read and set the built-in display's brightness.
+- **Replacing the HUD** uses a `CGEventTap` for `NX_SYSDEFINED` media-key events. The tap handles volume and brightness keys itself and swallows them before the system shows its overlay.
+- **Haptics** use `NSHapticFeedbackManager`. They fire on the pointer movement that reaches the notch, and when a slider hits its end, because the trackpad only plays them while a finger is on it.
+</details>
+
+<details>
+<summary><b>Home and Posture</b></summary>
+
+- **Home** shells out to `/usr/bin/shortcuts`. It lists the shortcuts in the chosen folder and runs one with `--output-path`, so the shortcut's output can set the tile's on/off state.
+- **Posture** talks to the companion app over `DistributedNotificationCenter`. Posture broadcasts its state and reminders. The island says hello, so Posture shows reminders in the notch instead of as notifications, and sends button presses back as commands.
+</details>
+
+## Project structure
+
+```
+DynamicIsland/
+├── build.sh                    # Builds, bundles and signs the .app
+├── Package.swift
+├── Bridge/NowPlayingBridge.m   # MediaRemote bridge, runs inside /usr/bin/perl
+├── Resources/                  # Info.plist, app icon
+├── Scripts/make-icon.swift     # Draws AppIcon.icns
+└── Sources/DynamicIsland/
+    ├── App/                    # Entry point and app delegate
+    ├── Island/                 # Window, notch geometry, state model
+    ├── Services/               # Now Playing, audio, brightness, keys, Home, Posture
+    ├── Settings/               # Preferences and settings window
+    ├── Views/                  # Island shape, live activities, tabs, components
+    └── Debug/                  # Snapshot renderer (debug builds only)
 ```
 
-`--trace` skriver ut varje tillståndsbyte.
+## Development
+
+```bash
+CONFIG=debug ./build.sh            # debug build
+"build/Dynamic Island.app/Contents/MacOS/DynamicIsland" --snapshots /tmp/island   # render every state to PNG
+"build/Dynamic Island.app/Contents/MacOS/DynamicIsland" --trace    # log every state change
+swift Scripts/make-icon.swift .    # redraw the app icon
+```
+
+The screenshots in this README come from `--snapshots`.
+
+## Known limitations
+
+- The app uses private frameworks (MediaRemote, DisplayServices), so it can't be sandboxed or ship on the App Store, and a macOS update could break those parts.
+- A Home tile's on/off state reflects the last time the island ran that shortcut, not changes made elsewhere.
+- Trackpad haptics need a Force Touch trackpad and a finger on it.
+- The interface is in English only.
+
+## Acknowledgements
+
+Inspired by the iPhone's Dynamic Island and by Mac notch apps like [NotchNook](https://lo.cafe/notchnook), [Alcove](https://tryalcove.com) and [boring.notch](https://github.com/TheBoredTeam/boring.notch). Thanks to [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter) for showing the way around the MediaRemote restrictions.
+
+## License
+
+[MIT](../LICENSE)
+
+*Not affiliated with Apple. Dynamic Island, Mac and HomeKit are trademarks of Apple Inc.*

@@ -117,11 +117,11 @@ private struct OutputDeviceHUD: View {
                     .symbolEffect(.bounce, value: bounce)
                     .frame(width: 30)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(device?.name ?? "Ljudutgång")
+                    Text(device?.name ?? "Audio output")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.white)
                         .lineLimit(1)
-                    Text(device?.isWireless == true ? "Ansluten" : "Ljudutgång")
+                    Text(device?.isWireless == true ? "Connected" : "Audio output")
                         .font(.system(size: 11))
                         .foregroundStyle(.white.opacity(0.55))
                 }

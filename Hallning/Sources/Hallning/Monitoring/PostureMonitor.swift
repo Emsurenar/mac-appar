@@ -158,8 +158,10 @@ final class PostureMonitor {
         Task { await check() }
     }
 
+    /// Pauses for `duration`, until the end of the day when nil, or until resumed when infinite.
     func pause(for duration: TimeInterval?) {
-        let until = duration.map { Date().addingTimeInterval($0) } ?? endOfDay()
+        let until: Date
+        if let duration { until = duration.isFinite ? Date().addingTimeInterval(duration) : .distantFuture } else { until = endOfDay() }
         pausedUntil = until
         resetWindow()
         setStatus(.paused(until: until))
@@ -441,6 +443,22 @@ final class PostureMonitor {
         wantsCamera = wanted
         camera.setKeepRunning(wanted)
     }
+
+    /// Monitoring is on: not paused by the user (the screen lock does not count).
+    var isMonitoring: Bool { pausedUntil.map { $0 <= Date() } ?? true }
+
+    #if DEBUG
+    /// Snapshots: show a state without running any checks.
+    func showPreview(_ status: PostureStatus, neckAngle: Double?, progress: Double = 0, remaining: TimeInterval? = nil) {
+        self.status = status
+        self.neckAngle = neckAngle
+        isNeckBent = (neckAngle ?? 0) >= settings.maxNeckAngle
+        self.progress = progress
+        self.remaining = remaining
+        lastCheck = Date()
+        score = status.isBad ? 46 : 88
+    }
+    #endif
 
     // MARK: System
 

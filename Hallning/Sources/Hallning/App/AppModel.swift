@@ -46,6 +46,10 @@ final class AppModel {
 
     var isCalibrated: Bool { classifier != nil }
 
+    /// `--snapshots <dir>` (debug builds): render the windows to images without touching
+    /// the camera, AirPods, notifications or saved data.
+    static let isSnapshotting = CommandLine.arguments.contains("--snapshots")
+
     init() {
         monitor = PostureMonitor(camera: camera, analyzer: analyzer, motion: motion, settings: settings, history: history)
         samples = CalibrationStore.load()
@@ -77,6 +81,7 @@ final class AppModel {
             }
         }
 
+        guard !Self.isSnapshotting else { return }
         notifications.configure()
         island.start()
         applyCameraSettings()
@@ -98,6 +103,7 @@ final class AppModel {
     // MARK: Calibration
 
     func replaceCalibration(with samples: [CalibrationSample]) {
+        guard !Self.isSnapshotting else { return }
         self.samples = samples
         CalibrationStore.save(samples)
         retrain(evaluate: true)
@@ -164,6 +170,7 @@ final class AppModel {
     // MARK: Live preview
 
     func beginPreview() {
+        guard !Self.isSnapshotting else { return }
         previewClients += 1
         guard previewClients == 1 else { return }
         camera.startPreview { [weak self] image in self?.handlePreviewFrame(image) }

@@ -13,6 +13,18 @@ extension PostureStatus {
         }
     }
 
+    /// The colour of the figure icon for this status.
+    var figureColor: Color {
+        switch self {
+        case .good: .green
+        case .bad: .orange
+        case .uncertain: .yellow
+        case .paused: .indigo
+        case .noPermission, .error: .red
+        default: .gray
+        }
+    }
+
     var symbol: String {
         switch self {
         case .good: "checkmark.seal.fill"
@@ -36,7 +48,8 @@ extension PostureStatus {
         case .uncertain: "This position matches nothing you calibrated"
         case .away: "No one in front of the camera"
         case .paused(let until):
-            if let until { "Resumes at \(until.formatted(date: .omitted, time: .shortened))" } else { "The screen is locked or asleep" }
+            if let until, until < .distantFuture { "Resumes at \(until.formatted(date: .omitted, time: .shortened))" }
+            else if until != nil { "Turn it on again to resume" } else { "The screen is locked or asleep" }
         case .cameraBusy: "Paused during a video call"
         case .noPermission: "Allow access in System Settings"
         case .error(let message): message
@@ -120,8 +133,15 @@ struct ReminderProgress: View {
             }
             .font(.caption.weight(.medium))
             .foregroundStyle(.orange)
-            ProgressView(value: min(max(progress, 0), 1))
-                .tint(.orange)
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(.quaternary)
+                    Capsule()
+                        .fill(Color.orange.gradient)
+                        .frame(width: max(geometry.size.width * CGFloat(min(max(progress, 0), 1)), 6))
+                }
+            }
+            .frame(height: 6)
         }
         .animation(.spring(response: 0.5, dampingFraction: 0.85), value: progress)
     }
@@ -160,7 +180,7 @@ struct LiveCameraView: View {
     }
 }
 
-/// A row with a symbol in a tinted circle, a title and a detail line.
+/// A feature on a welcome screen: a large tinted symbol, a title and a description.
 struct FeatureRow: View {
     var symbol: String
     var tint: Color
@@ -168,16 +188,16 @@ struct FeatureRow: View {
     var detail: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
+        HStack(alignment: .center, spacing: 18) {
             Image(systemName: symbol)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 40, height: 40)
-                .background(Circle().fill(tint.gradient))
+                .font(.system(size: 30, weight: .regular))
+                .foregroundStyle(tint)
+                .frame(width: 44)
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.headline)
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
                 Text(detail)
-                    .font(.subheadline)
+                    .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -196,6 +216,22 @@ extension AppModel {
     var reminderTitle: String {
         monitor.status.issue == .neckBent ? "Bent neck" : "Poor posture"
     }
+
+    /// "Checked just now · every 10 s", or why nothing is being checked.
+    func statusDetail(now: Date) -> String {
+        switch monitor.status {
+        case .paused, .idle, .noPermission, .error, .cameraBusy:
+            return monitor.status.subtitle
+        default:
+            return "Checked \(relativeTime(monitor.lastCheck, now: now)) · \(intervalText(settings.interval))"
+        }
+    }
+
+    /// The on/off switch: off pauses until it is turned on again.
+    var monitoringBinding: Binding<Bool> {
+        Binding(get: { self.monitor.isMonitoring },
+                set: { $0 ? self.monitor.resume() : self.monitor.pause(for: .infinity) })
+    }
 }
 
 /// "Level", "12° down", "4° up"
@@ -209,6 +245,8 @@ func neckAngleText(_ angle: Double) -> String {
 struct NeckGauge: View {
     var angle: Double
     var limit: Double
+    /// Off where a row above already shows the angle.
+    var showsHeader = true
 
     private var scale: Double { max(30, limit * 2) }
 
@@ -216,6 +254,7 @@ struct NeckGauge: View {
         let isBent = angle >= limit
         let tint: Color = isBent ? .orange : .green
         VStack(alignment: .leading, spacing: 7) {
+            if showsHeader {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Label("Neck", systemImage: "airpods.pro")
                     .font(.caption.weight(.medium))
@@ -228,6 +267,7 @@ struct NeckGauge: View {
                 Text("max \(Int(limit.rounded()))°")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
             }
             GeometryReader { geometry in
                 let width = geometry.size.width

@@ -9,7 +9,6 @@ struct HallningApp: App {
         MenuBarExtra {
             MenuPanel()
                 .environment(model)
-                .tint(.teal)
         } label: {
             MenuBarLabel()
                 .environment(model)
@@ -19,7 +18,6 @@ struct HallningApp: App {
         Window("Posture", id: AppModel.WindowID.main) {
             MainWindow()
                 .environment(model)
-                .tint(.teal)
         }
         .defaultSize(width: 920, height: 700)
         .defaultLaunchBehavior(.suppressed)
@@ -28,7 +26,6 @@ struct HallningApp: App {
         Window("Welcome to Posture", id: AppModel.WindowID.onboarding) {
             OnboardingView()
                 .environment(model)
-                .tint(.teal)
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
@@ -46,6 +43,13 @@ private struct MenuBarLabel: View {
         Image(nsImage: PostureFigure.menuBarImage(slouch: PostureFigure.slouch(for: model.monitor.status)))
             .accessibilityLabel("Posture")
             .task {
+                #if DEBUG
+                if AppModel.isSnapshotting, let flag = CommandLine.arguments.firstIndex(of: "--snapshots"),
+                   flag + 1 < CommandLine.arguments.count {
+                    SnapshotRenderer.run(model: model, directory: URL(fileURLWithPath: CommandLine.arguments[flag + 1]))
+                    return
+                }
+                #endif
                 // First launch: go straight to onboarding.
                 guard !model.isCalibrated else { return }
                 try? await Task.sleep(for: .seconds(0.6))

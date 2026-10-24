@@ -123,22 +123,6 @@ struct FigureRing: View {
     }
 }
 
-/// The hero animation: the figure slowly slouches and straightens again.
-struct BreathingFigure: View {
-    var color: Color = .teal
-
-    var body: some View {
-        TimelineView(.animation) { context in
-            let t = context.date.timeIntervalSinceReferenceDate
-            // Hold upright, slouch, hold, straighten: a smooth 6 s loop.
-            let phase = (sin(t * .pi / 3) + 1) / 2
-            let eased = phase * phase * (3 - 2 * phase)
-            PostureFigure(slouch: eased)
-                .fill(LinearGradient(colors: [color, .blue], startPoint: .top, endPoint: .bottom))
-        }
-    }
-}
-
 /// Draws a body pose as a skeleton. `mirrored` matches a selfie-style preview.
 struct SkeletonView: View {
     var pose: BodyPose?
@@ -186,18 +170,42 @@ struct PoseThumbnail: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(color.opacity(0.1))
-            if let pose {
-                SkeletonView(pose: pose, color: color, lineWidth: 2)
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.primary.opacity(0.05))
+            if let pose = pose?.croppedToBody() {
+                SkeletonView(pose: pose, color: color, lineWidth: 2.2)
                     .aspectRatio(pose.aspect, contentMode: .fit)
-                    .padding(6)
+                    .padding(8)
             } else {
                 Image(systemName: "person.fill.viewfinder")
                     .font(.title2)
-                    .foregroundStyle(color.opacity(0.6))
+                    .foregroundStyle(.tertiary)
             }
         }
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(color.opacity(0.35), lineWidth: 1))
+    }
+}
+
+extension BodyPose {
+    /// The same pose re-normalised to a square around the detected joints, so thumbnails
+    /// show the person instead of the whole camera frame.
+    func croppedToBody(margin: Double = 0.18) -> BodyPose? {
+        let points = joints.values.map { CGPoint(x: $0.x * aspect, y: $0.y) }
+        guard let minX = points.map(\.x).min(), let maxX = points.map(\.x).max(),
+              let minY = points.map(\.y).min(), let maxY = points.map(\.y).max() else { return nil }
+        var side = max(maxX - minX, maxY - minY)
+        side = max(side * (1 + margin * 2), 0.05)
+        let origin = CGPoint(x: (minX + maxX - side) / 2, y: (minY + maxY - side) / 2)
+        func map(_ p: CGPoint) -> CGPoint {
+            CGPoint(x: (p.x * aspect - origin.x) / side, y: (p.y - origin.y) / side)
+        }
+        var cropped = self
+        cropped.joints = joints.mapValues(map)
+        cropped.aspect = 1
+        if let face {
+            let a = map(CGPoint(x: face.box.minX, y: face.box.minY))
+            let b = map(CGPoint(x: face.box.maxX, y: face.box.maxY))
+            cropped.face?.box = CGRect(x: a.x, y: a.y, width: b.x - a.x, height: b.y - a.y)
+        }
+        return cropped
     }
 }

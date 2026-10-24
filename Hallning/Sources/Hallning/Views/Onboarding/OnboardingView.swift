@@ -3,6 +3,8 @@ import SwiftUI
 struct OnboardingView: View {
     @Environment(AppModel.self) private var model
     @State private var flow: OnboardingFlow?
+    /// Debug snapshots start at a later step.
+    var initialStep: OnboardingFlow.Step = .welcome
 
     var body: some View {
         Group {
@@ -14,7 +16,12 @@ struct OnboardingView: View {
         }
         .frame(width: 860, height: 640)
         .background(.background)
-        .onAppear { if flow == nil { flow = OnboardingFlow(model: model) } }
+        .onAppear {
+            guard flow == nil else { return }
+            let flow = OnboardingFlow(model: model)
+            if initialStep != .welcome { flow.go(to: initialStep) }
+            self.flow = flow
+        }
     }
 }
 
@@ -79,33 +86,51 @@ private struct StepLayout<Content: View, Actions: View>: View {
 
 // MARK: - Welcome
 
+/// Laid out like Apple's own welcome screens: the app icon, the title, three features
+/// and one prominent button.
 private struct WelcomeStep: View {
     let flow: OnboardingFlow
 
     var body: some View {
-        StepLayout(title: "Welcome to Posture", subtitle: "Your Mac keeps an eye on how you sit – and speaks up in time.") {
-            HStack(spacing: 48) {
-                BreathingFigure()
-                    .frame(width: 220, height: 220)
-                    .padding(28)
-                    .glassEffect(.regular.tint(.teal.opacity(0.15)), in: Circle())
-                VStack(alignment: .leading, spacing: 22) {
-                    FeatureRow(symbol: "lock.fill", tint: .blue, title: "Everything stays local",
-                               detail: "Images are analysed right on your Mac with Apple's Vision and never saved.")
-                    FeatureRow(symbol: "figure.stand", tint: .teal, title: "Learns your body",
-                               detail: "You show 10 good and 10 poor postures, so the app recognises you in particular.")
-                    FeatureRow(symbol: "capsule.fill", tint: .indigo, title: "Works with Dynamic Island",
-                               detail: "Reminders and status appear in the island when it is running – otherwise as a notification.")
-                }
-                .frame(maxWidth: 360)
+        VStack(spacing: 0) {
+            Spacer(minLength: 8)
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 112, height: 112)
+            Text("Welcome to Posture")
+                .font(.system(size: 30, weight: .bold))
+                .padding(.top, 10)
+            Text("Your Mac keeps an eye on how you sit – and speaks up in time.")
+                .font(.title3)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.top, 4)
+
+            VStack(alignment: .leading, spacing: 26) {
+                FeatureRow(symbol: "hand.raised.fill", tint: .blue, title: "Private by design",
+                           detail: "Images are analysed on your Mac with Apple's Vision framework and never saved.")
+                FeatureRow(symbol: "person.fill.viewfinder", tint: .teal, title: "Learns how you sit",
+                           detail: "Show 10 good and 10 poor postures, and Posture recognises yours.")
+                FeatureRow(symbol: "airpods.pro", tint: .indigo, title: "AirPods and Dynamic Island",
+                           detail: "Your AirPods add the angle of your neck, and reminders appear in Dynamic Island.")
             }
-        } actions: {
-            Spacer()
-            Button("Get started") { flow.next() }
-                .buttonStyle(.glassProminent)
-                .controlSize(.extraLarge)
-                .keyboardShortcut(.defaultAction)
+            .frame(maxWidth: 460, alignment: .leading)
+            .padding(.top, 40)
+
+            Spacer(minLength: 20)
+            Button {
+                flow.next()
+            } label: {
+                Text("Continue").frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.glassProminent)
+            .controlSize(.extraLarge)
+            .frame(width: 260)
+            .keyboardShortcut(.defaultAction)
+            .padding(.bottom, 34)
         }
+        .padding(.horizontal, 60)
     }
 }
 

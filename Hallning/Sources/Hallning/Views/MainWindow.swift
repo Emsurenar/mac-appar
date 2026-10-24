@@ -1,43 +1,87 @@
 import SwiftUI
 
+/// The panes of the main window, grouped like the System Settings sidebar.
 enum MainSection: String, CaseIterable, Identifiable {
-    case overview, calibration, settings
+    case overview, calibration, reminders, airPods, camera, general
 
     var id: String { rawValue }
+
+    static let groups: [[MainSection]] = [[.overview, .calibration], [.reminders, .airPods, .camera], [.general]]
 
     var title: String {
         switch self {
         case .overview: "Overview"
         case .calibration: "Calibration"
-        case .settings: "Settings"
+        case .reminders: "Reminders"
+        case .airPods: "AirPods"
+        case .camera: "Camera"
+        case .general: "General"
         }
     }
 
     var symbol: String {
         switch self {
-        case .overview: "chart.bar.xaxis"
+        case .overview: "figure.stand"
         case .calibration: "person.fill.viewfinder"
-        case .settings: "gearshape"
+        case .reminders: "bell.badge.fill"
+        case .airPods: "airpods.pro"
+        case .camera: "web.camera.fill"
+        case .general: "gearshape.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .overview: .teal
+        case .calibration: .green
+        case .reminders: .red
+        case .airPods: .blue
+        case .camera: Color(white: 0.45)
+        case .general: .gray
         }
     }
 }
 
 struct MainWindow: View {
-    @State private var section: MainSection? = .overview
+    @State private var section: MainSection?
+
+    init(section: MainSection = .overview) {
+        _section = State(initialValue: section)
+    }
 
     var body: some View {
         NavigationSplitView {
-            List(MainSection.allCases, selection: $section) { section in
-                Label(section.title, systemImage: section.symbol)
-                    .tag(section)
+            List(selection: $section) {
+                ForEach(Array(MainSection.groups.enumerated()), id: \.offset) { _, group in
+                    Section {
+                        ForEach(group) { item in
+                            Label {
+                                Text(item.title)
+                            } icon: {
+                                if item == .overview {
+                                    FigureIcon(size: 20)
+                                } else {
+                                    SettingsIcon(item.symbol, color: item.color)
+                                }
+                            }
+                            .tag(item)
+                        }
+                    }
+                }
             }
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200, max: 240)
+            .navigationSplitViewColumnWidth(min: 200, ideal: 215, max: 260)
         } detail: {
-            switch section ?? .overview {
-            case .overview: OverviewView()
-            case .calibration: CalibrationView()
-            case .settings: SettingsView()
+            Group {
+                switch section ?? .overview {
+                case .overview: OverviewPane()
+                case .calibration: CalibrationPane()
+                case .reminders: RemindersPane()
+                case .airPods: AirPodsPane()
+                case .camera: CameraPane()
+                case .general: GeneralPane()
+                }
             }
+            .navigationTitle((section ?? .overview).title)
         }
         .frame(minWidth: 760, minHeight: 540)
     }
@@ -45,157 +89,189 @@ struct MainWindow: View {
 
 // MARK: - Overview
 
-struct OverviewView: View {
+struct OverviewPane: View {
     @Environment(AppModel.self) private var model
+    @State private var range: Range = .today
+
+    enum Range: Hashable { case today, week }
 
     var body: some View {
-        @Bindable var settings = model.settings
+        let monitor = model.monitor
+        let status = monitor.status
         let today = model.history.today
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                card {
-                    VStack(alignment: .leading, spacing: 12) {
-                        StatusHeader(ringSize: 72)
-                        if model.monitor.status.isBad {
-                            ReminderProgress(progress: model.monitor.progress, remaining: model.monitor.remaining,
-                                             title: model.reminderTitle)
-                        }
-                        HStack(spacing: 10) {
-                            StatTile(title: "Good posture today", value: percent(today.goodFraction), symbol: "figure.stand", tint: .green)
-                            StatTile(title: "Score right now", value: "\(Int(model.monitor.score.rounded()))", symbol: "sparkles", tint: .teal)
-                            StatTile(title: "Reminders today", value: "\(today.alerts.count)", symbol: "bell.fill", tint: .orange)
-                            StatTile(title: model.neckAngle == nil ? "No AirPods – camera only" : "Neck (AirPods)",
-                                     value: model.neckText, symbol: "airpods.pro",
-                                     tint: model.monitor.isNeckBent ? .orange : .blue)
-                        }
-                        if let angle = model.neckAngle {
-                            NeckGauge(angle: angle, limit: model.settings.maxNeckAngle)
-                                .padding(.top, 2)
-                        }
+        Form {
+            Section {
+                PaneHeader(title: status.title) {
+                    FigureIcon(slouch: PostureFigure.slouch(for: status), color: status.figureColor, size: 40)
+                } detail: {
+                    TimelineView(.periodic(from: .now, by: 1)) { context in
+                        Text(model.statusDetail(now: context.date))
+                            .monospacedDigit()
                     }
+                } trailing: {
+                    Toggle("Posture", isOn: model.monitoringBinding)
+                        .toggleStyle(.switch)
+                        .labelsHidden()
                 }
+                if status.isBad {
+                    ReminderProgress(progress: monitor.progress, remaining: monitor.remaining, title: model.reminderTitle)
+                        .padding(.vertical, 2)
+                }
+            }
 
-                card {
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            Text("Live").font(.headline)
-                            Spacer()
-                            Toggle("Show camera", isOn: $settings.showLiveCamera)
-                                .toggleStyle(.switch)
-                                .controlSize(.small)
-                        }
-                        if settings.showLiveCamera {
-                            LiveCameraView()
-                                .frame(height: 280)
-                            Text("The image is only shown here and is never saved.")
-                                .font(.caption)
+            Section {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(range == .today ? "Good posture today" : "Daily average")
+                                .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
+                            Text(percent(range == .today ? today.goodFraction : weekAverage))
+                                .font(.system(size: 24, weight: .semibold, design: .rounded))
+                                .monospacedDigit()
+                                .contentTransition(.numericText())
                         }
+                        Spacer()
+                        Picker("Range", selection: $range) {
+                            Text("Today").tag(Range.today)
+                            Text("Last 7 Days").tag(Range.week)
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        .fixedSize()
                     }
-                }
-
-                card {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Today").font(.headline)
-                        DayChart(bins: today.bins(minutes: 15, interval: model.settings.interval))
-                            .frame(height: 180)
-                    }
-                }
-
-                HStack(alignment: .top, spacing: 18) {
-                    card {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Last 7 days").font(.headline)
+                    Group {
+                        if range == .today {
+                            DayChart(bins: today.bins(minutes: 60, interval: model.settings.interval))
+                        } else {
                             WeekChart(days: model.history.days(7))
-                                .frame(height: 150)
                         }
                     }
-                    card {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Today's issues").font(.headline)
-                            let issues = today.sortedIssues
-                            if issues.isEmpty {
-                                Text("No poor posture today.")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                    .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
-                            } else {
-                                IssuesChart(issues: Array(issues.prefix(5)))
-                            }
+                    .frame(height: 150)
+                    if range == .today { PostureLegend() }
+                }
+                .padding(.vertical, 6)
+            }
+
+            Section("Today") {
+                LabeledContent {
+                    Text("\(today.alerts.count)")
+                } label: {
+                    IconLabel(title: "Reminders", symbol: "bell.fill", color: .red)
+                }
+                LabeledContent {
+                    Text("\(Int(monitor.score.rounded()))")
+                } label: {
+                    IconLabel(title: "Score right now", symbol: "gauge.with.dots.needle.67percent", color: .teal)
+                }
+                if let angle = model.neckAngle {
+                    VStack(spacing: 10) {
+                        LabeledContent {
+                            Text("\(neckAngleText(angle)) · max \(Int(model.settings.maxNeckAngle))°")
+                                .foregroundStyle(monitor.isNeckBent ? Color.orange : Color.secondary)
+                                .monospacedDigit()
+                        } label: {
+                            IconLabel(title: "Neck angle", symbol: "airpods.pro", color: .blue)
                         }
+                        NeckGauge(angle: angle, limit: model.settings.maxNeckAngle, showsHeader: false)
+                            .padding(.leading, 30)
+                    }
+                    .padding(.vertical, 2)
+                }
+            }
+
+            Section("Most common issues") {
+                let issues = today.sortedIssues
+                if issues.isEmpty {
+                    Text("No poor posture today.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    let top = issues.first?.count ?? 1
+                    ForEach(issues.prefix(5)) { item in
+                        IssueRow(item: item, maximum: top)
                     }
                 }
             }
-            .padding(24)
         }
-        .navigationTitle("Overview")
+        .formStyle(.grouped)
     }
 
-    private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        content()
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
-            .background(.background.secondary, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    private var weekAverage: Double? {
+        let values = model.history.days(7).compactMap { $0.history?.goodFraction }
+        return values.isEmpty ? nil : values.reduce(0, +) / Double(values.count)
+    }
+}
+
+/// An issue with a bar for how often it happened today, like Screen Time's app list.
+private struct IssueRow: View {
+    var item: IssueCount
+    var maximum: Int
+
+    var body: some View {
+        HStack(spacing: 10) {
+            SettingsIcon(item.issue.symbol, color: .orange)
+            Text(item.issue.label)
+                .frame(width: 170, alignment: .leading)
+            GeometryReader { geometry in
+                Capsule()
+                    .fill(Color.orange.opacity(0.85))
+                    .frame(width: max(geometry.size.width * CGFloat(item.count) / CGFloat(max(maximum, 1)), 4), height: 6)
+                    .frame(maxHeight: .infinity)
+            }
+            .frame(height: 20)
+            Text(item.count == 1 ? "1 check" : "\(item.count) checks")
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+                .frame(width: 70, alignment: .trailing)
+        }
     }
 }
 
 // MARK: - Calibration
 
-struct CalibrationView: View {
+struct CalibrationPane: View {
     @Environment(AppModel.self) private var model
     @Environment(\.openWindow) private var openWindow
 
-    private let columns = [GridItem(.adaptive(minimum: 96), spacing: 12)]
+    private let columns = [GridItem(.adaptive(minimum: 92, maximum: 120), spacing: 12, alignment: .top)]
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                HStack(alignment: .top, spacing: 16) {
-                    Image(systemName: model.isCalibrated ? "checkmark.seal.fill" : "person.fill.viewfinder")
-                        .font(.system(size: 30))
-                        .foregroundStyle(model.isCalibrated ? Color.green : Color.secondary)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Model quality").font(.headline)
-                        Text(qualityText)
-                            .foregroundStyle(.secondary)
-                        let good = model.samples.filter { $0.label == .good }.count
-                        let bad = model.samples.count - good
-                        Text("\(good) good and \(bad) poor postures · \(model.samples.filter { $0.source == .feedback }.count) from your corrections")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
+        Form {
+            Section {
+                PaneHeader(title: "Calibration") {
+                    SettingsIcon("person.fill.viewfinder", color: .green, size: 40)
+                } detail: {
+                    Text(qualityText)
+                } trailing: {
                     Button("Recalibrate…") {
                         openWindow(id: AppModel.WindowID.onboarding)
                         NSApp.activate()
                     }
-                    .buttonStyle(.glassProminent)
                 }
-
-                sampleGrid(title: "Good postures", label: .good, color: .green)
-                sampleGrid(title: "Poor postures", label: .bad, color: .orange)
             }
-            .padding(24)
+            sampleSection(title: "Good postures", label: .good, color: .green)
+            sampleSection(title: "Poor postures", label: .bad, color: .orange)
         }
-        .navigationTitle("Calibration")
+        .formStyle(.grouped)
     }
 
     private var qualityText: String {
-        guard model.isCalibrated else { return "Not calibrated yet." }
-        if model.isEvaluating { return "Working out the accuracy…" }
-        guard let evaluation = model.evaluation, evaluation.total > 0 else { return "The accuracy could not be calculated." }
-        return "Accuracy: \(evaluation.correct) of \(evaluation.total) poses (tested by leaving out one pose at a time)."
+        let good = model.samples.filter { $0.label == .good }.count
+        let corrections = model.samples.filter { $0.source == .feedback }.count
+        let counts = "\(good) good and \(model.samples.count - good) poor postures" + (corrections > 0 ? ", \(corrections) from your corrections." : ".")
+        guard model.isCalibrated else { return "Posture hasn't learned how you sit yet." }
+        if model.isEvaluating { return counts + " Working out the accuracy…" }
+        guard let evaluation = model.evaluation, evaluation.total > 0 else { return counts }
+        return counts + " Recognises \(evaluation.correct) of \(evaluation.total) when each is left out in turn."
     }
 
-    @ViewBuilder
-    private func sampleGrid(title: String, label: PostureLabel, color: Color) -> some View {
+    private func sampleSection(title: String, label: PostureLabel, color: Color) -> some View {
         let samples = model.samples.filter { $0.label == label }
-        VStack(alignment: .leading, spacing: 10) {
-            Text(title).font(.headline)
+        return Section {
             if samples.isEmpty {
                 Text("None yet.").foregroundStyle(.secondary)
             } else {
-                LazyVGrid(columns: columns, spacing: 12) {
+                LazyVGrid(columns: columns, alignment: .leading, spacing: 14) {
                     ForEach(samples) { sample in
                         SampleCell(sample: sample, color: color,
                                    missed: model.evaluation?.misses.contains(sample.id) == true) {
@@ -203,6 +279,16 @@ struct CalibrationView: View {
                         }
                     }
                 }
+                .padding(.vertical, 6)
+            }
+        } header: {
+            Text(title)
+        } footer: {
+            if samples.contains(where: { model.evaluation?.misses.contains($0.id) == true }) {
+                Label("Marked postures were mistaken for the opposite when left out. Recalibrating them can help.",
+                      systemImage: "exclamationmark.circle.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -216,9 +302,9 @@ private struct SampleCell: View {
     @State private var isHovering = false
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 5) {
             PoseThumbnail(pose: sample.pose, color: color)
-                .frame(height: 96)
+                .frame(height: 88)
                 .overlay(alignment: .topTrailing) {
                     if isHovering {
                         Button(action: onDelete) {
@@ -236,13 +322,14 @@ private struct SampleCell: View {
                         Image(systemName: "exclamationmark.circle.fill")
                             .foregroundStyle(.yellow)
                             .padding(5)
-                            .help("This pose was misclassified when it was left out")
+                            .help("This posture was mistaken for the opposite when it was left out")
                     }
                 }
             Text(caption)
-                .font(.caption2)
+                .font(.system(size: 11))
                 .foregroundStyle(.secondary)
-                .lineLimit(1)
+                .multilineTextAlignment(.center)
+                .lineLimit(2, reservesSpace: true)
         }
         .onHover { isHovering = $0 }
         .contextMenu {

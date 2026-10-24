@@ -166,7 +166,10 @@ struct PostureTab: View {
 
     private func detail(_ state: PostureService.State, now: Date) -> String {
         if state.isPaused {
-            if let until = state.pausedUntil { return "Paused until \(until.formatted(date: .omitted, time: .shortened))" }
+            // Posture's on/off switch pauses with no end date.
+            if let until = state.pausedUntil, until.timeIntervalSinceNow < 7 * 24 * 3600 {
+                return "Paused until \(until.formatted(date: .omitted, time: .shortened))"
+            }
             return "Paused"
         }
         guard let lastCheck = state.lastCheck else { return "No check yet" }

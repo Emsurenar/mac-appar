@@ -57,6 +57,23 @@ enum PostureIssue: String, Codable, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// A symbol for lists.
+    var symbol: String {
+        switch self {
+        case .slouching: "arrow.down"
+        case .forwardHead: "arrow.forward"
+        case .roundedShoulders: "arrow.uturn.down"
+        case .lookingDown: "iphone"
+        case .tooClose: "arrow.up.left.and.arrow.down.right"
+        case .leaningLeft: "arrow.down.left"
+        case .leaningRight: "arrow.down.right"
+        case .shrugging: "arrow.up.and.down"
+        case .headTilt: "arrow.uturn.backward"
+        case .chinOnHand: "hand.raised.fill"
+        case .neckBent: "airpods.pro"
+        }
+    }
+
     /// Whether this issue mostly shows as the head bending forward or down.
     var bendsNeck: Bool { self == .forwardHead || self == .lookingDown || self == .neckBent }
 

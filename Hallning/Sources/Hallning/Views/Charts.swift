@@ -29,31 +29,42 @@ extension DayHistory {
     }
 }
 
-/// Good and bad minutes over the day as stacked bars.
+/// Good and poor minutes per hour over the day, like the Screen Time chart.
 struct DayChart: View {
     var bins: [TimeBin]
     var compact = false
+    var day = Date()
 
     var body: some View {
+        let start = Calendar.current.startOfDay(for: day)
+        let end = start.addingTimeInterval(24 * 3600)
         Chart {
             ForEach(bins) { bin in
-                RectangleMark(xStart: .value("Start", bin.start), xEnd: .value("End", bin.end),
-                              yStart: .value("Minutes", 0.0), yEnd: .value("Minutes", bin.good))
+                BarMark(x: .value("Hour", bin.start, unit: .hour), y: .value("Minutes", bin.good))
                     .foregroundStyle(by: .value("Posture", "Good"))
-                    .cornerRadius(2)
-                RectangleMark(xStart: .value("Start", bin.start), xEnd: .value("End", bin.end),
-                              yStart: .value("Minutes", bin.good), yEnd: .value("Minutes", bin.good + bin.bad))
+                    .cornerRadius(compact ? 1.5 : 2.5, style: .continuous)
+                BarMark(x: .value("Hour", bin.start, unit: .hour), y: .value("Minutes", bin.bad))
                     .foregroundStyle(by: .value("Posture", "Poor"))
-                    .cornerRadius(2)
+                    .cornerRadius(compact ? 1.5 : 2.5, style: .continuous)
             }
         }
         .chartForegroundStyleScale(["Good": Color.green, "Poor": Color.orange])
-        .chartLegend(compact ? .hidden : .automatic)
-        .chartYAxis(compact ? .hidden : .automatic)
+        .chartLegend(.hidden)
+        .chartXScale(domain: start...end)
+        .chartYScale(domain: 0...60)
         .chartXAxis {
-            AxisMarks(values: .stride(by: .hour, count: compact ? 3 : 2)) { _ in
-                AxisGridLine()
-                AxisValueLabel(format: .dateTime.hour())
+            AxisMarks(values: .stride(by: .hour, count: 6)) { _ in
+                if !compact { AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3])) }
+                AxisValueLabel(format: .dateTime.hour(.twoDigits(amPM: .omitted)), anchor: .topLeading)
+                    .font(.system(size: compact ? 9 : 10))
+            }
+        }
+        .chartYAxis {
+            AxisMarks(position: .trailing, values: compact ? [0] : [0, 30, 60]) { value in
+                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: compact ? [] : [2, 3]))
+                if !compact {
+                    AxisValueLabel { Text("\(value.as(Int.self) ?? 0)m").font(.system(size: 10)) }
+                }
             }
         }
         .overlay {
@@ -66,54 +77,62 @@ struct DayChart: View {
     }
 }
 
-/// Share of good posture per day.
+/// Share of good posture per day, with the average as a dashed line.
 struct WeekChart: View {
     var days: [DayEntry]
 
     var body: some View {
+        let values = days.compactMap { $0.history?.goodFraction }
+        let average = values.isEmpty ? nil : values.reduce(0, +) / Double(values.count)
         Chart {
             ForEach(days) { day in
                 if let fraction = day.history?.goodFraction {
-                    BarMark(x: .value("Day", day.date, unit: .day), y: .value("Good posture", fraction * 100))
-                        .foregroundStyle(fraction >= 0.8 ? Color.green.gradient : (fraction >= 0.6 ? Color.yellow.gradient : Color.orange.gradient))
-                        .cornerRadius(5)
-                        .annotation(position: .top) {
-                            Text("\(Int((fraction * 100).rounded()))")
-                                .font(.caption2.weight(.medium))
-                                .foregroundStyle(.secondary)
-                        }
+                    BarMark(x: .value("Day", day.date, unit: .day), y: .value("Good posture", fraction * 100), width: .ratio(0.55))
+                        .foregroundStyle(Color.green)
+                        .cornerRadius(3, style: .continuous)
                 }
+            }
+            if let average {
+                RuleMark(y: .value("Average", average * 100))
+                    .foregroundStyle(Color.green.opacity(0.8))
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                    .annotation(position: .top, alignment: .leading) {
+                        Text("avg").font(.system(size: 10, weight: .medium)).foregroundStyle(.green)
+                    }
             }
         }
         .chartYScale(domain: 0...100)
         .chartYAxis {
-            AxisMarks(values: [0, 50, 100]) { value in
-                AxisGridLine()
-                AxisValueLabel { Text("\(value.as(Int.self) ?? 0)%") }
+            AxisMarks(position: .trailing, values: [0, 50, 100]) { value in
+                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
+                AxisValueLabel { Text("\(value.as(Int.self) ?? 0)%").font(.system(size: 10)) }
             }
         }
         .chartXAxis {
             AxisMarks(values: .stride(by: .day)) { _ in
-                AxisValueLabel(format: .dateTime.weekday(.abbreviated))
+                AxisValueLabel(format: .dateTime.weekday(.abbreviated), centered: true)
+                    .font(.system(size: 10))
             }
         }
     }
 }
 
-/// Today's issues as horizontal bars.
-struct IssuesChart: View {
-    var issues: [IssueCount]
-
+/// The legend under the day chart.
+struct PostureLegend: View {
     var body: some View {
-        Chart {
-            ForEach(issues) { item in
-                BarMark(x: .value("Count", item.count), y: .value("Issue", item.issue.label))
-                    .foregroundStyle(Color.orange.gradient)
-                    .cornerRadius(4)
-            }
+        HStack(spacing: 14) {
+            item("Good", .green)
+            item("Poor", .orange)
         }
-        .chartXAxis(.hidden)
-        .frame(height: CGFloat(max(issues.count, 1)) * 28)
+        .font(.system(size: 11))
+        .foregroundStyle(.secondary)
+    }
+
+    private func item(_ title: String, _ color: Color) -> some View {
+        HStack(spacing: 5) {
+            Circle().fill(color).frame(width: 7, height: 7)
+            Text(title)
+        }
     }
 }
 

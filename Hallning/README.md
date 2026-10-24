@@ -25,6 +25,13 @@ The app ends up in `build/Posture.app`.
 
 The app has no Dock icon. It lives in the menu bar as a seated figure, and the first launch opens calibration automatically.
 
+The design follows macOS itself:
+
+- **Menu bar window**: laid out like a Control Center module.
+- **Main window**: laid out like System Settings, with Overview, Calibration, Reminders, AirPods, Camera and General.
+
+Open the main window with **Posture Settings…** in the menu.
+
 ## Permissions
 
 | Permission | Why | |
@@ -47,13 +54,13 @@ If something goes wrong, turn Posture on under **System Settings → Privacy & S
    The AirPods add the direction of gravity in the head.
 3. The measures are compared with your own calibrated postures, using a weighted nearest neighbour that is normalised against your good postures. A position that matches nothing you calibrated counts as *unsure* and does not affect reminders.
 4. The AirPods neck angle is a hard rule on top of that. Past the limit, a check counts as poor posture whatever the camera says, and the neck has its own shorter reminder window.
-5. Not right? Press *This is good* or *Poor posture* in the menu, or *Wrong – I sat well* in the notification. The check is then added to the calibration.
+5. Not right? Choose *Mark as Good Posture* or *Mark as Poor Posture* in the menu, or *Wrong – I sat well* in the notification. The check is then added to the calibration.
 
 Checks pause automatically when the screen is locked or asleep and, if you want, during video calls, when another app is using the camera. The camera turns off while paused.
 
 ### Neutral position
 
-The neck angle is measured from your calibration, or from a neutral position you set yourself. To set it, sit up straight, look at the screen and press **Settings → AirPods → Neutral position → Set now**.
+The neck angle is measured from your calibration, or from a neutral position you set yourself. To set it, sit up straight, look at the screen and click **Set Now** next to **Neutral position** in the **AirPods** pane.
 
 ## Dynamic Island
 
@@ -62,7 +69,7 @@ The apps talk over distributed notifications:
 - `com.emresunar.Hallning.state`: the status. It is sent on every check, at launch and at quit, and includes the AirPods `headPitch` and `neckLimit`.
 - `com.emresunar.Hallning.alert`: a reminder, with the `issue`, `title`, `body` and `minutes`.
 - `com.emresunar.Hallning.command`: the buttons in the island's tab: `pause30`, `resume`, `check` and `open`.
-- `com.emresunar.DynamicIsland.posture.hello`: the island is running. If the island has been heard from in the last 75 seconds, the reminder shows only there (the default); otherwise it comes as a notification. You can change this under **Settings → Reminders**.
+- `com.emresunar.DynamicIsland.posture.hello`: the island is running. If the island has been heard from in the last 75 seconds, the reminder shows only there (the default); otherwise it comes as a notification. You can change this in the **Reminders** pane.
 
 The names keep the app's original Swedish name, *Hållning*, as do the bundle identifier and the folder. That way existing permissions and data carry over.
 
@@ -73,4 +80,4 @@ The names keep the app's original Swedish name, *Hållning*, as do the bundle id
 - Data lives in `~/Library/Application Support/Hallning/`:
   - `calibration.json`
   - one file per day in `History/`, with the number of good and poor checks per minute, kept for 30 days
-- **Settings → Privacy → Delete all data** removes everything.
+- **Delete All Data…** in the **General** pane removes everything.

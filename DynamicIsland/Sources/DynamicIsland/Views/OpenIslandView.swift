@@ -70,6 +70,8 @@ struct OpenIslandView: View {
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        // Pages switch as soon as the pointer rests on a tab, no click needed.
+        .onHover { if $0 { model.select(tab) } }
         .help(help)
     }
 }

@@ -29,6 +29,10 @@ enum SnapshotRenderer {
             render("9-open-home-empty", model, directory)
             model.home.showPreviewShortcuts()
             render("10-open-home", model, directory)
+            model.setChoosingShortcuts(true)
+            model.home.showPreviewShortcuts(limit: 5)
+            render("10b-home-picker", model, directory)
+            model.setChoosingShortcuts(false)
             model.close()
             model.posture.showPreview(.init(status: "bad", issue: "neckBent", title: "Lift your head",
                                             progress: 0.7, score: 42, todayGood: 0.78, headPitch: 22, airpods: true,

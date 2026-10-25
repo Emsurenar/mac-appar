@@ -26,7 +26,7 @@
 - **Live activities.** While music plays, the artwork and an equalizer tinted by the album art sit on either side of the notch. A new song gets a short peek.
 - **Sound and display.** Volume, mute, brightness and a one-click audio output switcher for speakers, AirPods and AirPlay, like Control Center.
 - **HUDs in the notch.** Volume, brightness and output changes appear in the island. It can also replace the system's volume and brightness overlay.
-- **Apple Home.** Tap tiles to run your Home scenes and accessories through Shortcuts.
+- **Apple Home and Shortcuts.** Pick any shortcut, like a Home scene, and run it with one click from a tile.
 - **Posture companion.** With the [Posture](../Hallning) app running, the island shows your posture and nudges you when you slouch.
 - **Feels like a Mac.** Spring animations, blur-and-scale transitions, rubber-band sliders, SF Symbols and trackpad haptics. It never steals focus from the app you're using.
 
@@ -66,16 +66,20 @@ The script signs the app with the first code-signing identity in your keychain, 
 - **Click the artwork** to bring the playing app to the front. Click the output icon to jump to the output picker.
 - **Right-click** the island, or use the gear, for **Settings** and **Quit**. The app has no Dock icon.
 
-### Apple Home
+### Apple Home and Shortcuts
 
-Native Mac apps can't use HomeKit. It's only available to Mac Catalyst apps with a paid developer entitlement. So the island runs your **Shortcuts** instead:
+Native Mac apps can't use HomeKit. It's only available to Mac Catalyst apps with a paid developer entitlement. So the island runs your **Shortcuts** instead. They can be Home scenes that use the **Control Home** action, or anything else:
 
-1. In **Shortcuts**, create a folder named **Home**. You can pick another name in settings.
-2. Add shortcuts that use the **Control Home** action, for example *Living Room Lights On* or a *Good Night* scene.
-3. They appear as tiles in the Home tab. A leading emoji becomes the tile's icon. Otherwise an SF Symbol is picked from the name: light, lamp, lock, door, heat, fan, blinds, TV, night, morning and more, in English or Swedish.
+1. Open the **Home** tab and click **Choose Shortcuts**, or the **+** tile once you have tiles.
+2. Tick the shortcuts you want. Each one becomes a tile, and clicking a tile runs its shortcut.
+3. A leading emoji becomes the tile's icon. Otherwise an SF Symbol is picked from the name: light, lamp, lock, door, heat, fan, blinds, TV, night, morning and more, in English or Swedish.
 4. To make a tile show **On/Off**, end the shortcut by outputting the text `on` or `off`.
 
-<img src="Screenshots/home-setup.png" width="480" alt="Home tab before any shortcuts exist">
+Right-click a tile to remove it or to edit it in Shortcuts. Shortcuts in a folder named **Home** also get a tile automatically. You can change or clear that folder name in settings.
+
+| | |
+|:---:|:---:|
+| <img src="Screenshots/home-setup.png" alt="Home tab before any shortcuts are picked"><br>Before you pick any | <img src="Screenshots/home-picker.png" alt="Choosing shortcuts"><br>Choosing shortcuts |
 
 ### Replacing the system volume HUD
 
@@ -133,7 +137,7 @@ This technique was pioneered by [ungive/mediaremote-adapter](https://github.com/
 <details>
 <summary><b>Home and Posture</b></summary>
 
-- **Home** shells out to `/usr/bin/shortcuts`. It lists the shortcuts in the chosen folder and runs one with `--output-path`, so the shortcut's output can set the tile's on/off state.
+- **Home** shells out to `/usr/bin/shortcuts`. It lists all your shortcuts (and those in the optional folder), remembers the ones you picked by identifier, and runs one with `--output-path`, so the shortcut's output can set the tile's on/off state.
 - **Posture** talks to the companion app over `DistributedNotificationCenter`. Posture broadcasts its state and reminders. The island says hello, so Posture shows reminders in the notch instead of as notifications, and sends button presses back as commands.
 </details>
 

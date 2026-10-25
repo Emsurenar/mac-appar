@@ -53,6 +53,8 @@ final class IslandModel {
     private(set) var isHovering = false
     private(set) var hud: HUDKind?
     private(set) var isPeeking = false
+    /// The Home tab is showing the list for picking shortcuts.
+    private(set) var isChoosingShortcuts = false
     private(set) var isShowingPostureAlert = false
     var tab: IslandTab = .media
 
@@ -183,9 +185,15 @@ final class IslandModel {
         case .media:
             return IslandLayout.mediaContentHeight
         case .home:
+            if isChoosingShortcuts {
+                let rows = CGFloat(min(max(home.allShortcuts.count, 1), IslandLayout.maxVisibleDevices))
+                return 4 + IslandLayout.sectionHeaderHeight + 6 + rows * IslandLayout.deviceRowHeight + 16
+            }
             let count = home.shortcuts.count
             guard count > 0 else { return IslandLayout.homeEmptyHeight }
-            let rows = CGFloat(min((count + IslandLayout.homeColumns - 1) / IslandLayout.homeColumns, IslandLayout.maxHomeRows))
+            // One extra slot for the "+" tile.
+            let tiles = count + 1
+            let rows = CGFloat(min((tiles + IslandLayout.homeColumns - 1) / IslandLayout.homeColumns, IslandLayout.maxHomeRows))
             return 4 + rows * IslandLayout.homeTileHeight + (rows - 1) * IslandLayout.homeTileSpacing + 18
         case .posture:
             return IslandLayout.postureContentHeight
@@ -260,12 +268,19 @@ final class IslandModel {
     func close() {
         guard isOpen else { return }
         isOpen = false
+        isChoosingShortcuts = false
+    }
+
+    func setChoosingShortcuts(_ choosing: Bool) {
+        if choosing { home.refresh() }
+        withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) { isChoosingShortcuts = choosing }
     }
 
     func toggle() { isOpen ? close() : open() }
 
     func select(_ tab: IslandTab) {
         if tab == .home { home.refresh() }
+        isChoosingShortcuts = false
         guard tab != self.tab else { return }
         withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { self.tab = tab }
     }

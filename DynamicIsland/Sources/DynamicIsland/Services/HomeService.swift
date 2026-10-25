@@ -55,10 +55,15 @@ enum HomeRunState: Equatable {
 }
 
 /// Apple Home through the user's Shortcuts: HomeKit itself is unavailable to
-/// native macOS apps, but shortcuts using "Control Home" can be run from here.
+/// native macOS apps, but any shortcut — "Control Home" ones included — can be run from here.
 @MainActor @Observable
 final class HomeService {
-    private(set) var shortcuts: [HomeShortcut] = []
+    /// Every shortcut in the Shortcuts app, for choosing which ones get a tile.
+    private(set) var allShortcuts: [HomeShortcut] = []
+    /// Shortcuts the user picked in the island, in the order they were added.
+    private(set) var pinnedIDs: [String]
+    /// Shortcuts in the folder from settings; they get a tile automatically.
+    private(set) var folderShortcuts: [HomeShortcut] = []
     private(set) var folderExists = false
     private(set) var runStates: [String: HomeRunState] = [:]
     /// Last on/off state reported by a shortcut's output ("på"/"av", "on"/"off" …).
@@ -67,10 +72,30 @@ final class HomeService {
     @ObservationIgnored private let settings: AppSettings
     @ObservationIgnored private var isRefreshing = false
     @ObservationIgnored private static let toggleStatesKey = "homeToggleStates"
+    @ObservationIgnored private static let pinnedKey = "pinnedShortcuts"
 
     init(settings: AppSettings) {
         self.settings = settings
         toggleStates = UserDefaults.standard.dictionary(forKey: Self.toggleStatesKey) as? [String: Bool] ?? [:]
+        pinnedIDs = UserDefaults.standard.stringArray(forKey: Self.pinnedKey) ?? []
+    }
+
+    /// The tiles: picked shortcuts first, then the rest of the folder.
+    var shortcuts: [HomeShortcut] {
+        let pinned = pinnedIDs.compactMap { id in allShortcuts.first { $0.id == id } }
+        return pinned + folderShortcuts.filter { !pinnedIDs.contains($0.id) }
+    }
+
+    func isPinned(_ shortcut: HomeShortcut) -> Bool { pinnedIDs.contains(shortcut.id) }
+    func isInFolder(_ shortcut: HomeShortcut) -> Bool { folderShortcuts.contains { $0.id == shortcut.id } }
+
+    func togglePin(_ shortcut: HomeShortcut) {
+        if let index = pinnedIDs.firstIndex(of: shortcut.id) {
+            pinnedIDs.remove(at: index)
+        } else {
+            pinnedIDs.append(shortcut.id)
+        }
+        UserDefaults.standard.set(pinnedIDs, forKey: Self.pinnedKey)
     }
 
     func refresh() {
@@ -78,6 +103,9 @@ final class HomeService {
         isRefreshing = true
         let wanted = settings.homeFolderName.trimmingCharacters(in: .whitespaces)
         Task.detached {
+            let all = Self.execute(["list", "--show-identifiers"]).output.split(separator: "\n")
+                .compactMap { Self.parse(String($0)) }
+                .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
             // `shortcuts list --folder-name` silently lists everything for an unknown
             // folder, so look the folder up first.
             let folders = Self.execute(["list", "--folders"]).output.split(separator: "\n").map(String.init)
@@ -88,10 +116,17 @@ final class HomeService {
                     if let shortcut = Self.parse(String(line)) { found.append(shortcut) }
                 }
             }
-            await MainActor.run { [found] in
+            await MainActor.run { [all, found] in
                 self.isRefreshing = false
                 self.folderExists = folder != nil
-                if found != self.shortcuts { self.shortcuts = found }
+                if all != self.allShortcuts { self.allShortcuts = all }
+                if found != self.folderShortcuts { self.folderShortcuts = found }
+                // Forget picks whose shortcut has been deleted.
+                let known = Set(all.map(\.id))
+                if !all.isEmpty, self.pinnedIDs.contains(where: { !known.contains($0) }) {
+                    self.pinnedIDs.removeAll { !known.contains($0) }
+                    UserDefaults.standard.set(self.pinnedIDs, forKey: Self.pinnedKey)
+                }
             }
         }
     }
@@ -118,12 +153,15 @@ final class HomeService {
     static func openHomeApp() { openApp("com.apple.Home") }
 
     #if DEBUG
-    func showPreviewShortcuts() {
-        shortcuts = ["💡 Living Room", "Kitchen Light", "Good Night", "Front Door", "Heating", "Arrive Home"].enumerated().map {
-            HomeShortcut(id: UUID().uuidString, name: $0.element)
-        }
-        toggleStates = [shortcuts[0].id: true, shortcuts[3].id: true]
-        runStates = [shortcuts[1].id: .running, shortcuts[4].id: .failed]
+    func showPreviewShortcuts(limit: Int = .max) {
+        allShortcuts = ["💡 Living Room", "Kitchen Light", "Good Night", "Front Door", "Heating", "Arrive Home", "Focus Music"]
+            .prefix(limit)
+            .map { HomeShortcut(id: UUID().uuidString, name: $0) }
+        pinnedIDs = allShortcuts.dropLast().map(\.id)
+        folderShortcuts = []
+        let tiles = shortcuts
+        toggleStates = Dictionary(uniqueKeysWithValues: [0, 3].filter { $0 < tiles.count }.map { (tiles[$0].id, true) })
+        runStates = tiles.count > 4 ? [tiles[1].id: .running, tiles[4].id: .failed] : [:]
     }
     #endif
 

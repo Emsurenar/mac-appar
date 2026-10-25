@@ -1,35 +1,63 @@
 import AppKit
 import SwiftUI
 
-/// Apple Home scenes and accessories, as tiles that run the user's shortcuts.
+/// Apple Home scenes and accessories — or any other shortcut — as tiles.
 struct HomeTab: View {
     @Environment(IslandModel.self) private var model
 
     var body: some View {
-        if model.home.shortcuts.isEmpty {
-            emptyState
-        } else {
-            tiles
+        ZStack(alignment: .top) {
+            if model.isChoosingShortcuts {
+                ShortcutPicker()
+                    .transition(.islandContent(scale: 0.97))
+            } else if model.home.shortcuts.isEmpty {
+                emptyState
+                    .transition(.islandContent(scale: 0.97))
+            } else {
+                tiles
+                    .transition(.islandContent(scale: 0.97))
+            }
+        }
+    }
+
+    private enum Item: Identifiable {
+        case shortcut(HomeShortcut)
+        case add
+
+        var id: String {
+            switch self {
+            case .shortcut(let shortcut): shortcut.id
+            case .add: "add"
+            }
         }
     }
 
     private var tiles: some View {
         let home = model.home
         let columns = IslandLayout.homeColumns
-        let rows = stride(from: 0, to: home.shortcuts.count, by: columns).map {
-            Array(home.shortcuts[$0..<min($0 + columns, home.shortcuts.count)])
+        let items = home.shortcuts.map(Item.shortcut) + [.add]
+        let rows = stride(from: 0, to: items.count, by: columns).map {
+            Array(items[$0..<min($0 + columns, items.count)])
         }
         let grid = VStack(spacing: IslandLayout.homeTileSpacing) {
             ForEach(rows, id: \.first?.id) { row in
                 HStack(spacing: IslandLayout.homeTileSpacing) {
-                    ForEach(row) { shortcut in
-                        HomeTile(shortcut: shortcut,
-                                 state: home.runStates[shortcut.id] ?? .idle,
-                                 isOn: home.toggleStates[shortcut.id]) {
-                            home.run(shortcut)
-                        }
-                        .contextMenu {
-                            Button("Edit in Shortcuts") { home.reveal(shortcut) }
+                    ForEach(row) { item in
+                        switch item {
+                        case .shortcut(let shortcut):
+                            HomeTile(shortcut: shortcut,
+                                     state: home.runStates[shortcut.id] ?? .idle,
+                                     isOn: home.toggleStates[shortcut.id]) {
+                                home.run(shortcut)
+                            }
+                            .contextMenu {
+                                if home.isPinned(shortcut) {
+                                    Button("Remove from Island") { home.togglePin(shortcut) }
+                                }
+                                Button("Edit in Shortcuts") { home.reveal(shortcut) }
+                            }
+                        case .add:
+                            AddTile { model.setChoosingShortcuts(true) }
                         }
                     }
                     ForEach(row.count..<columns, id: \.self) { _ in
@@ -51,35 +79,173 @@ struct HomeTab: View {
     }
 
     private var emptyState: some View {
-        let home = model.home
-        let folder = model.settings.homeFolderName
+        let hasShortcuts = !model.home.allShortcuts.isEmpty
         return HStack(spacing: 16) {
             Group {
-                if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Home") {
+                if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.shortcuts") {
                     Image(nsImage: NSWorkspace.shared.icon(forFile: url.path)).resizable()
                 } else {
-                    Image(systemName: "house.fill").font(.system(size: 26)).foregroundStyle(.orange)
+                    Image(systemName: "square.stack.3d.up.fill").font(.system(size: 26)).foregroundStyle(.pink)
                 }
             }
             .frame(width: 58, height: 58)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(home.folderExists ? "The “\(folder)” folder is empty" : "Control your home from here")
+                Text(hasShortcuts ? "Run shortcuts from here" : "No shortcuts yet")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.white)
-                Text("Create shortcuts with Control Home in Shortcuts and put them in a folder named “\(folder)”.")
+                Text(hasShortcuts
+                     ? "Pick the shortcuts you want as tiles – for example ones that set a Home scene."
+                     : "Create a shortcut in Shortcuts – for example one that controls your Home – and pick it here.")
                     .font(.system(size: 12))
                     .foregroundStyle(.white.opacity(0.55))
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 8) {
+                    if hasShortcuts {
+                        CapsuleButton(title: "Choose Shortcuts", isProminent: true) { model.setChoosingShortcuts(true) }
+                    }
                     CapsuleButton(title: "Open Shortcuts") { HomeService.openShortcutsApp() }
-                    CapsuleButton(title: "Open Home") { HomeService.openHomeApp() }
                 }
                 .padding(.top, 7)
             }
             Spacer(minLength: 0)
         }
         .padding(.top, 8)
+    }
+}
+
+/// Every shortcut in the Shortcuts app, with a checkmark for the ones that have a tile.
+private struct ShortcutPicker: View {
+    @Environment(IslandModel.self) private var model
+
+    var body: some View {
+        let home = model.home
+        let visibleRows = min(max(home.allShortcuts.count, 1), IslandLayout.maxVisibleDevices)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Choose Shortcuts")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.white)
+                Spacer()
+                CapsuleButton(title: "Done", isProminent: true) { model.setChoosingShortcuts(false) }
+            }
+            .frame(height: IslandLayout.sectionHeaderHeight)
+
+            Group {
+                if home.allShortcuts.count > IslandLayout.maxVisibleDevices {
+                    ScrollView(.vertical) { list }.scrollIndicators(.never)
+                } else {
+                    list
+                }
+            }
+            .frame(height: CGFloat(visibleRows) * IslandLayout.deviceRowHeight, alignment: .top)
+            .padding(.horizontal, -6)
+        }
+        .padding(.top, 4)
+    }
+
+    private var list: some View {
+        let home = model.home
+        return VStack(spacing: 0) {
+            if home.allShortcuts.isEmpty {
+                Text("No shortcuts found")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.white.opacity(0.5))
+                    .frame(maxWidth: .infinity, minHeight: IslandLayout.deviceRowHeight)
+            }
+            ForEach(home.allShortcuts) { shortcut in
+                ShortcutPickerRow(shortcut: shortcut, isPinned: home.isPinned(shortcut),
+                                  isInFolder: home.isInFolder(shortcut)) {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) { home.togglePin(shortcut) }
+                }
+            }
+        }
+    }
+}
+
+private struct ShortcutPickerRow: View {
+    let shortcut: HomeShortcut
+    let isPinned: Bool
+    let isInFolder: Bool
+    let action: () -> Void
+    @State private var isHovering = false
+
+    var body: some View {
+        let isSelected = isPinned || isInFolder
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Group {
+                    if let emoji = shortcut.emoji {
+                        Text(emoji).font(.system(size: 13))
+                    } else {
+                        Image(systemName: shortcut.symbol)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                }
+                .frame(width: 26, height: 26)
+                .background(Circle().fill(.white.opacity(0.14)))
+
+                Text(shortcut.title)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                if isInFolder {
+                    Text("In folder")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.white.opacity(0.4))
+                }
+                Spacer(minLength: 8)
+                Group {
+                    if isSelected {
+                        Image(systemName: "checkmark.circle.fill")
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, .blue)
+                    } else {
+                        Image(systemName: "circle")
+                            .foregroundStyle(.white.opacity(0.3))
+                    }
+                }
+                .font(.system(size: 17))
+                .contentTransition(.symbolEffect(.replace))
+            }
+            .padding(.horizontal, 6)
+            .frame(height: IslandLayout.deviceRowHeight)
+            .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(.white.opacity(isHovering ? 0.08 : 0)))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(isInFolder)
+        .onHover { isHovering = $0 }
+        .help(isInFolder ? "Shortcuts in the folder from Settings always get a tile" : shortcut.name)
+    }
+}
+
+/// The last tile: opens the shortcut picker.
+private struct AddTile: View {
+    let action: () -> Void
+    @State private var isHovering = false
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 5) {
+                Image(systemName: "plus")
+                    .font(.system(size: 16, weight: .semibold))
+                Text("Add")
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .foregroundStyle(.white.opacity(isHovering ? 0.9 : 0.55))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(.white.opacity(isHovering ? 0.35 : 0.18), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .buttonStyle(PressableTileStyle())
+        .onHover { isHovering = $0 }
+        .animation(.easeOut(duration: 0.15), value: isHovering)
+        .help("Choose shortcuts")
     }
 }
 
@@ -208,6 +374,8 @@ private struct Spinner: View {
 
 struct CapsuleButton: View {
     let title: String
+    /// White fill for the main action, like a default button.
+    var isProminent = false
     let action: () -> Void
     @State private var isHovering = false
 
@@ -215,10 +383,11 @@ struct CapsuleButton: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.white)
+                .foregroundStyle(isProminent ? Color.black : Color.white)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 5)
-                .background(Capsule().fill(.white.opacity(isHovering ? 0.22 : 0.14)))
+                .background(Capsule().fill(isProminent ? Color.white.opacity(isHovering ? 1 : 0.9)
+                                                       : Color.white.opacity(isHovering ? 0.22 : 0.14)))
                 .contentShape(Capsule())
         }
         .buttonStyle(PressableTileStyle())

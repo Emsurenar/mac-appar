@@ -28,6 +28,10 @@ final class ReminderSession: NSObject, ObservableObject {
 
     private var timer: Timer?
     private var startDate = Date()
+    /// While the pointer rests on the island the clock stands still, so there's time to read.
+    @Published private(set) var held = false
+    private var heldSince: Date?
+    private var heldFor = 0.0
     private var finishDate = Date()
     /// The move that was showing when the break finished, and for how long.
     private var finishedFrom: (move: Move, ranFor: Double)?
@@ -51,7 +55,7 @@ final class ReminderSession: NSObject, ObservableObject {
         return f.string(from: finishDate.addingTimeInterval(Double(nextMinutes) * 60))
     }
     /// When the current move began, so every exercise starts from rest.
-    var moveStart: Date { finished ? finishDate : startDate.addingTimeInterval(Double(index) * perExercise) }
+    var moveStart: Date { finished ? finishDate : startDate.addingTimeInterval(heldFor + Double(index) * perExercise) }
     var index: Int { min(Int(elapsed / perExercise), exercises.count - 1) }
     /// How far into the current move the buddy is, in seconds.
     var moveTime: Double { fixedTime ?? Date().timeIntervalSince(moveStart) }
@@ -77,8 +81,20 @@ final class ReminderSession: NSObject, ObservableObject {
         timer = t
     }
 
+    func hold(_ on: Bool) {
+        guard fixedTime == nil, !finished, on != held else { return }
+        held = on
+        if on {
+            heldSince = Date()
+        } else if let since = heldSince {
+            heldFor += Date().timeIntervalSince(since)
+            heldSince = nil
+        }
+    }
+
     @objc private func step() {
-        elapsed = Date().timeIntervalSince(startDate)
+        guard !held else { return }
+        elapsed = Date().timeIntervalSince(startDate) - heldFor
         if elapsed >= total { complete(); return }
         if index != announced {
             announced = index
@@ -165,6 +181,8 @@ struct ReminderView: View {
             Spacer(minLength: 0)
         }
         .frame(width: size.width, height: size.height)
+        .contentShape(Rectangle())
+        .onHover { s.hold($0) }
         .modifier(IslandReveal(progress: s.reveal, scale: 0.9))
         .environment(\.colorScheme, .dark)
         .animation(.spring(response: 0.4, dampingFraction: 0.82), value: s.index)
@@ -192,7 +210,13 @@ struct ReminderView: View {
                 .contentTransition(.opacity)
                 .animation(.easeInOut(duration: 0.25), value: label)
             Spacer(minLength: 8)
-            if !s.finished {
+            if s.held && !s.finished {
+                Image(systemName: "pause.fill")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(.white.opacity(0.8))
+                    .accessibilityLabel(L("Paused while the pointer is here"))
+                    .transition(.opacity)
+            } else if !s.finished {
                 Text(countdown)
                     .font(.system(size: 11, weight: .medium))
                     .monospacedDigit()

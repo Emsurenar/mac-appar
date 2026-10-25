@@ -99,7 +99,8 @@ small frog.
   <img src="docs/break.png" width="720" alt="A stretch break: a black island under the menu bar with Momo the mochi reaching up on a paper tile, the exercise, its progress and the In 5 min and Done buttons">
 </p>
 
-During a break, **Done** ends it early and counts it, and **In 5 min** postpones it. Breaks are timed around
+During a break, **Done** ends it early and counts it, **In 5 min** postpones it, and resting the pointer on
+the island holds the countdown while you read. Breaks are timed around
 what you're doing:
 
 | Situation | What Unknot does |

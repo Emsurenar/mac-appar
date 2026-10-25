@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.24.3 – 2026-10-25
+
+- **Rest the pointer on the island to hold the break.** The countdown and the progress stop, a small pause sign
+  takes the clock's place, and the break carries on when the pointer moves away, so there's time to read an
+  instruction properly.
+- **Pip stands on real chick feet:** short legs out of the down, three toes spread forwards and a little one
+  behind, instead of three orange sticks.
+
 ## 1.24.2 – 2026-10-25
 
 - **The menu bar notes match the island.** "Unknot lives up here" and the note after an update are dark, with

@@ -748,14 +748,17 @@ struct ChickArt: CrewArt {
                     rest: 25, inFront: true)
     }
 
+    /// Short legs out of the down, three toes spread forwards and a small one behind, like a real chick's.
     func feet(_ pen: Pen, _ f: CrewFrame) {
         for s: CGFloat in [-1, 1] {
-            let base = pt(100 + s * 15, 168)
+            let ankle = pt(100 + s * 14, 174)
+            var foot = line(pt(ankle.x, 163), ankle)
             for k: CGFloat in [-1, 0, 1] {
-                let toe = line(base, pt(base.x + k * 6, 175))
-                pen.tintLine(toe, width: 4, detailColor)
-                pen.stroke(toe, 2)
+                foot.move(to: ankle); foot.addLine(to: pt(ankle.x + k * 5.5 + s * 1.5, 178.5 - abs(k) * 0.6))
             }
+            foot.move(to: ankle); foot.addLine(to: pt(ankle.x - s * 3.2, 176))
+            pen.tintLine(foot, width: 4.2, detailColor)
+            pen.stroke(foot, 1.9)
         }
     }
 

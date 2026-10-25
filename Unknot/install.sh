@@ -67,5 +67,7 @@ for _ in 1 2 3; do
     sleep 1
     pgrep -xq Unknot && break
 done
-VERSION="$(defaults read "$APP/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null || true)"
+# Read the file itself: `defaults read` goes through the preferences cache, which can still hold the version
+# that was there before
+VERSION="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist" 2>/dev/null || true)"
 echo "Unknot ${VERSION} is installed. Look for the frog in your menu bar."

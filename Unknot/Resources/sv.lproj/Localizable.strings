@@ -1,0 +1,245 @@
+/* Svenska. Nyckeln är den engelska texten i koden. Kör scripts/check_translations.py efter ändringar. */
+
+/* Övningar */
+"Reach for the sky" = "Sträck mot taket";
+"Interlace your fingers and stretch your arms straight up." = "Fläta ihop fingrarna och sträck armarna rakt upp mot taket.";
+"Side bend" = "Sidböj";
+"One arm overhead, lean to the side. Switch halfway." = "Ena armen över huvudet, luta dig åt sidan. Byt sida halvvägs.";
+"Neck stretch" = "Nackstretch";
+"Slowly tilt your ear toward your shoulder. Right, then left." = "Luta sakta örat mot axeln. Först höger, sedan vänster.";
+"Shoulder rolls" = "Axelrullningar";
+"Roll your shoulders backwards in big, slow circles." = "Rulla axlarna bakåt i stora, lugna cirklar.";
+"Seated twist" = "Bålrotation";
+"Twist your upper body with one hand on the chair back. Switch sides." = "Vrid överkroppen åt sidan med handen på stolsryggen. Byt håll.";
+"Deep breaths" = "Djupandning";
+"Breathe in for four seconds and out for four. Drop your shoulders." = "Andas in i fyra sekunder och ut i fyra. Släpp axlarna.";
+"Rest your eyes" = "Vila ögonen";
+"Look at something at least 6 meters away and blink a few times." = "Titta på något minst sex meter bort och blinka några gånger.";
+"Open your chest" = "Öppna bröstet";
+"Bring your arms out and back and squeeze your shoulder blades." = "För armarna ut och bakåt och dra ihop skulderbladen.";
+"Calf raises" = "Tåhävningar";
+"Stand up, rise slowly onto your toes and back down again." = "Ställ dig upp, gå långsamt upp på tå och ner igen.";
+"Wrist circles" = "Handledscirklar";
+"Slowly roll your wrists in both directions." = "Rulla handlederna långsamt åt båda hållen.";
+"Shake it out" = "Skaka loss";
+"Shake out your arms and hands for a few seconds." = "Skaka loss armar och händer i några sekunder.";
+"Back hug" = "Ryggkram";
+"Give yourself a hug and breathe deeply into your back." = "Krama om dig själv och andas djupt in i ryggen.";
+
+/* The Stretch Crew */
+"Mochi" = "Mochi";
+"Cat" = "Katt";
+"Panda" = "Panda";
+"Bunny" = "Kanin";
+"Frog" = "Groda";
+"Semla" = "Semla";
+"Chick" = "Kyckling";
+"Crispbread" = "Knäckebröd";
+"Onigiri" = "Onigiri";
+"Momo the mochi" = "Mochin Momo";
+"Miso the cat" = "Katten Miso";
+"Bao the panda" = "Pandan Bao";
+"Juni the bunny" = "Kaninen Juni";
+"Otto the frog" = "Grodan Otto";
+"Selma the semla" = "Semlan Selma";
+"Pip the chick" = "Kycklingen Pip";
+"Finn the crispbread" = "Knäckebrödet Finn";
+"Nori the onigiri" = "Onigirin Nori";
+"of Nazareth" = "från Nasaret";
+"Jesus of Nazareth" = "Jesus från Nasaret";
+"TV tower" = "TV-torn";
+"Kaknäs Tower" = "Kaknästornet";
+"Stretch break with %@" = "Sträckpaus med %@";
+"Stretch Crew" = "Stretch Crew";
+"Choose who's on your Stretch Crew. With more than one, a random member leads each break." = "Välj vilka som är med i ditt Stretch Crew. Väljer du fler än en leder en slumpad medlem varje paus.";
+"Your crew needs at least one member." = "Ditt crew behöver minst en medlem.";
+
+/* Beröm efter en paus */
+"Knots undone" = "Knutarna lösta";
+"That's better" = "Så där, bättre";
+"Loose again" = "Mjuk igen";
+"Nicely stretched" = "Snyggt sträckt";
+"Lighter already" = "Redan lättare";
+
+/* Påminnelsen */
+"BREAK COMPLETE" = "STRÄCKPAUS KLAR";
+"Next break at %@." = "Nästa paus kl. %@.";
+"%ld seconds left" = "%ld sekunder kvar";
+"In %ld min" = "Om %ld min";
+"Snoozes the break" = "Skjuter upp pausen";
+"Done" = "Klar";
+
+/* Menyraden */
+"%ld min" = "%ld min";
+"Next break at %@, in %ld min" = "Nästa sträckpaus kl. %@, om %ld min";
+"Next break in less than a minute" = "Nästa sträckpaus om mindre än en minut";
+"Stretch break in progress" = "Sträckpaus pågår";
+"Paused until %@" = "Pausad till %@";
+"Outside working hours" = "Utanför arbetstid";
+"Outside working hours · back %@" = "Utanför arbetstid · tillbaka %@";
+"No stretch breaks yet today" = "Inga sträckpauser än idag";
+"1 stretch break today" = "1 sträckpaus idag";
+"%ld stretch breaks today" = "%ld sträckpauser idag";
+"Update available: %@…" = "Ny version finns: %@…";
+"Stretch now" = "Sträck på dig nu";
+"Resume reminders" = "Fortsätt påminna";
+"Pause" = "Pausa";
+"For 30 minutes" = "I 30 minuter";
+"For 1 hour" = "I en timme";
+"For 2 hours" = "I två timmar";
+"For the rest of the day" = "Resten av dagen";
+"Settings…" = "Inställningar…";
+"Quit Unknot" = "Avsluta Unknot";
+
+/* Appens meny */
+"About Unknot" = "Om Unknot";
+"Hide Unknot" = "Göm Unknot";
+"Edit" = "Redigera";
+"Undo" = "Ångra";
+"Redo" = "Gör om";
+"Cut" = "Klipp ut";
+"Copy" = "Kopiera";
+"Paste" = "Klistra in";
+"Select All" = "Markera alla";
+"Window" = "Fönster";
+"Close" = "Stäng";
+"Minimize" = "Minimera";
+
+/* Inställningar */
+"General" = "Allmänt";
+"Exercises" = "Övningar";
+"Schedule" = "Schema";
+"About" = "Om";
+"Breaks" = "Pauser";
+"Remind me every" = "Påminn mig var";
+"%ld minutes" = "%ld minuter";
+"Break length" = "Pausens längd";
+"%ld seconds" = "%ld sekunder";
+"Exercises per break" = "Övningar per paus";
+"Snooze for" = "Skjut upp i";
+"Try it out" = "Testa";
+"Show a break now" = "Visa en paus nu";
+"Appearance" = "Utseende";
+"Language" = "Språk";
+"System default" = "Systemets språk";
+"Position on screen" = "Placering på skärmen";
+"Top center" = "Uppe i mitten";
+"Drops out of the camera notch" = "Kommer ned ur kamerahacket";
+"Bottom right" = "Nere till höger";
+"Top right" = "Uppe till höger";
+"Bottom left" = "Nere till vänster";
+"Top left" = "Uppe till vänster";
+"Show time until the next break in the menu bar" = "Visa tid till nästa paus i menyraden";
+"Sound" = "Ljud";
+"Play a sound when a break starts" = "Spela ett ljud när en paus börjar";
+"System" = "System";
+"Open at login" = "Öppna vid inloggning";
+"Approve Unknot in System Settings to finish." = "Godkänn Unknot i Systeminställningar för att slutföra.";
+"Open System Settings" = "Öppna Systeminställningar";
+"Check for updates automatically" = "Sök efter uppdateringar automatiskt";
+"Choose which exercises Unknot can suggest. Hover over one to see the movement." = "Välj vilka övningar Unknot får föreslå. Håll muspekaren över en övning för att se rörelsen.";
+"%ld of %ld selected" = "%ld av %ld valda";
+"Select all" = "Välj alla";
+"At least one exercise has to stay on." = "Minst en övning måste vara på.";
+"Working hours" = "Arbetstid";
+"Only remind me during working hours" = "Påminn bara under arbetstid";
+"From" = "Från";
+"Until" = "Till";
+"Weekdays only" = "Bara vardagar";
+"Smart pauses" = "Smarta pauser";
+"Count time away from the computer as a break" = "Räkna tid borta från datorn som paus";
+"Away for at least" = "Borta i minst";
+"Wait while an app is in full screen" = "Vänta när en app visas i helskärm";
+"Wait until calls end" = "Vänta tills samtal är slut";
+"A call is when another app uses the microphone or camera. Unknot only checks whether they're on, never what they hear or see. Full screen usually means a presentation or a movie." = "Ett samtal är när en annan app använder mikrofonen eller kameran. Unknot kollar bara om de är på, aldrig vad de hör eller ser. Helskärm betyder oftast en presentation eller en film.";
+"Today" = "Idag";
+"All time" = "Totalt";
+
+/* Aktivitet */
+"Activity" = "Aktivitet";
+"This week" = "Den här veckan";
+"Streak" = "I rad";
+"1 day" = "1 dag";
+"%ld days" = "%ld dagar";
+"Last 7 days" = "Senaste 7 dagarna";
+"Day" = "Dag";
+"Your stretch breaks will show up here." = "Dina sträckpauser visas här.";
+"Statistics stay on this Mac." = "Statistiken stannar på den här datorn.";
+"Reset…" = "Nollställ…";
+"Reset your statistics?" = "Nollställa din statistik?";
+"Reset" = "Nollställ";
+"This removes your history and streak. It can't be undone." = "Historiken och dagarna i rad tas bort. Det går inte att ångra.";
+
+/* Om */
+"Version %@" = "Version %@";
+"Stretch breaks that drop out of the notch." = "Sträckpauser som kommer ned ur kamerahacket.";
+"Version %@ is available." = "Version %@ finns tillgänglig.";
+"Download" = "Ladda ned";
+"Check for updates" = "Sök efter uppdateringar";
+"You're up to date" = "Du har den senaste versionen";
+"Couldn't reach GitHub." = "Kunde inte nå GitHub.";
+"GitHub" = "GitHub";
+"Release notes" = "Versionsinformation";
+"Report a problem" = "Rapportera ett problem";
+"Free and open source under the MIT license." = "Gratis och öppen källkod under MIT-licensen.";
+
+/* Välkomstfönstret */
+"Welcome to Unknot" = "Välkommen till Unknot";
+"Welcome to Unknot" = "Välkommen till Unknot";
+"Every %ld minutes, a member of the Stretch Crew drops down from the top of your screen with a few quick stretches. Each break takes about %ld seconds." = "Var %ld:e minut kommer någon från Stretch Crew ned från toppen av skärmen och visar några snabba övningar. Varje paus tar ungefär %ld sekunder.";
+"Move to the Applications folder" = "Flytta till Program-mappen";
+"Recommended, so Unknot can open at login." = "Rekommenderas, så att Unknot kan öppnas vid inloggning.";
+"Move" = "Flytta";
+"Unknot lives in the menu bar, as a small frog. If you can't see it, open Unknot again to get to the settings." = "Unknot bor i menyraden, som en liten groda. Syns den inte kan du öppna Unknot igen för att komma till inställningarna.";
+"Show me a break" = "Visa en paus";
+"Get started" = "Kom igång";
+
+/* Waiting */
+"Break waiting until your call ends" = "Pausen väntar tills samtalet är slut";
+"Break waiting until your call in %@ ends" = "Pausen väntar tills samtalet i %@ är slut";
+"Break waiting until you leave full screen" = "Pausen väntar tills du lämnar helskärm";
+
+/* Menu bar hint after the welcome window */
+"Unknot lives up here" = "Här uppe bor Unknot";
+"%@. Click the frog to stretch now, pause reminders or change the settings." = "%@. Klicka på grodan för att sträcka på dig nu, pausa påminnelserna eller ändra inställningarna.";
+
+/* Updates */
+"Unknot %@ is available" = "Unknot %@ finns";
+"You have %@. The update is downloaded from GitHub and Unknot restarts. Your settings stay as they are." = "Du har %@. Uppdateringen hämtas från GitHub och Unknot startar om. Dina inställningar finns kvar.";
+"Install and Restart" = "Installera och starta om";
+"Release Notes" = "Versionsinformation";
+"Later" = "Senare";
+"Installing version %@…" = "Installerar version %@…";
+"Try Again" = "Försök igen";
+"The download was damaged. Please try again." = "Nedladdningen blev skadad. Försök igen.";
+"The download didn't contain the expected version of Unknot." = "Nedladdningen innehöll inte rätt version av Unknot.";
+"Couldn't unpack the update (%@)." = "Det gick inte att packa upp uppdateringen (%@).";
+
+/* Live cues during a move */
+"Breathe in · %ld" = "Andas in · %ld";
+"Breathe out · %ld" = "Andas ut · %ld";
+"Switch sides" = "Byt sida";
+"Shoulders up" = "Axlarna upp";
+"Hold" = "Håll";
+"And let go" = "Och släpp";
+
+/* Exercises added in 1.8.0 */
+"Shoulder shrugs" = "Axelryckningar";
+"Pull your shoulders up to your ears, hold for a moment, then let them drop." = "Dra upp axlarna mot öronen, håll en stund och släpp sedan ned dem.";
+"Shoulder stretch" = "Axelstretch";
+"Pull one arm across your chest with the other. Switch halfway." = "Dra ena armen över bröstet med den andra. Byt halvvägs.";
+
+/* Body areas, for grouping the exercises */
+"Neck and shoulders" = "Nacke och axlar";
+"Back and chest" = "Rygg och bröst";
+"Arms, hands and legs" = "Armar, händer och ben";
+"Eyes and breathing" = "Ögon och andning";
+
+/* Shrove Tuesday */
+"Happy Semla Day" = "Glad fettisdag";
+
+/* After an update */
+"Updated to Unknot %@" = "Uppdaterad till Unknot %@";
+"New crew members, new moves or fixes: the release notes have the details." = "Nya i crewet, nya rörelser eller rättningar: versionsinformationen berättar mer.";
+"What's new" = "Nyheter";
+"%ld days in a row" = "%ld dagar i rad";

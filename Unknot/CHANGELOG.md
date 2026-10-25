@@ -1,0 +1,343 @@
+# Changelog
+
+## 1.23.0 – 2026-10-25
+
+- **Unknot has moved to [mac-appar](https://github.com/Emsurenar/mac-appar)**, a small collection of native Mac
+  apps, alongside Dynamic Island and Posture. Its code, history, releases and issues are there now, in the
+  `Unknot` folder, and its releases are tagged `unknot-v…`.
+- Updates come from the new place. Copies that update from the menu bar keep updating as before; this version
+  is the one that knows where to look.
+- The install command is now
+  `curl -fsSL https://raw.githubusercontent.com/Emsurenar/mac-appar/main/Unknot/install.sh | bash`. The old one
+  still works and hands over to it.
+- The website is at [emsurenar.github.io/mac-appar/unknot](https://emsurenar.github.io/mac-appar/unknot/). Its
+  download button finds the newest Unknot by itself.
+- **Report a problem** in Settings opens a bug report in mac-appar with Unknot, its version and your Mac
+  already filled in.
+
+## 1.22.0 – 2026-10-21
+
+- **Breaks wait for a pause in your typing.** When a break falls due mid-sentence, it holds back until you've
+  stopped typing for two seconds, and never for more than a minute, so it doesn't drop in between two words.
+  Unknot only reads how long ago the last key was pressed, never which key, and needs no permission for it.
+- **Descartes's collar is one band of linen.** Its two halves overlapped by a hair too little, so their
+  outlines ran side by side down the middle and read as a black tie. They now meet with a faint seam.
+
+## 1.21.6 – 2026-10-21
+
+- **Bao looks more like a giant panda.** The black of the forelegs now runs up the sides into the arms, as on
+  a real panda, the eye patches are teardrops, narrow at the top and slanting out, and the nose is broad and
+  flat on top instead of a small dot.
+
+## 1.21.5 – 2026-10-21
+
+- **Stefan Löfven in his usual dark suit.** The jacket gets a second layer of colour, so it reads as the dark
+  charcoal of the photographs instead of mid grey, the red tie is one even colour all the way down, and his
+  hair is the ash brown, greying at the sides, that it is now rather than beige.
+
+## 1.21.4 – 2026-10-21
+
+- **Pip looks like a chick, not a lemon.** The outline is a row of small soft bumps, like down, the breast is
+  paler, the stubby wings are shaded where their little feathers overlap, and each eye has a speck of light.
+  The arcs on the breast that read as a second mouth are gone.
+
+## 1.21.3 – 2026-10-21
+
+- **Alexander Bard, closer to his photographs.** Heavy, pale strawberry-blond brows on a strong brow ridge,
+  drawn down into a frown with two creases between them, and a broad nose with a round, ruddy tip and full
+  wings instead of a single hooked line.
+- The strands in his beard are drawn as short straight segments, so he draws about 10 % faster with the same
+  look.
+
+## 1.21.2 – 2026-10-21
+
+- **Kaknästornet, closer to the real tower.** The platforms for the radio links sit on sloping undersides in
+  shade, like on the tower, with white drum antennas on their ends instead of round dishes on sticks. The
+  restaurant floors step back to the shaft on a deep soffit, a slab runs between the two bands of bronze glass,
+  and the glass is a warmer bronze.
+- The README and the website show the welcome window, and the website's link to the questions works again.
+- For contributors: `--only kaknas,semla` narrows `--portraits`, `--moves` and `--benchmark` to a few members
+  of the crew.
+
+## 1.21.1 – 2026-10-21
+
+- **René Descartes, closer to Frans Hals's portrait.** His hair is parted a little off centre with the middle
+  of the forehead bare and loose locks over the temples, instead of a straight fringe. The collar is a broad
+  falling band of plain linen lying flat over the shoulders, not a bow, and the cloak reads as black.
+
+## 1.21.0 – 2026-10-21
+
+- **Better mixes of exercises.** A break picks each exercise from a different part of the body when it can,
+  so it's no longer three neck stretches in a row, and the next break doesn't repeat any of them.
+- The menu shows your streak next to today's breaks: *4 stretch breaks today · 3 days in a row*.
+- Selma's cream is shaded with one hatch instead of eight, so she draws about 10 % faster.
+
+## 1.20.0 – 2026-10-21
+
+- **Selma leads every break on Shrove Tuesday**, fettisdagen, and the break ends with *Happy Semla Day*.
+- **A note after each update.** The first time a new version opens, the menu bar frog says which version it
+  is, with a link to what's new.
+- A break names its leader the way people know them: *Stretch break with Gandhi*, *with Löfven*, *with
+  Kaknäs Tower*, not with *Mahatma*.
+
+## 1.19.2 – 2026-10-21
+
+- **Alexander Bard's beard no longer looks cut off.** It had a straight edge across the face and a flat bottom;
+  now it runs up the cheeks to the sideburns and tapers into a long, rounded point, as in the photograph.
+
+## 1.19.1 – 2026-10-21
+
+- **Alexander Bard's eyes look like his own**: pale grey-blue with big irises, open wide under heavy lids,
+  the outer corners sloping down a little, with slightly puffy lower lids. They replace the round cartoon eyes.
+
+## 1.19.0 – 2026-10-21
+
+- **Fixed: clothes coloured over faces.** The colour of Stefan Löfven's jacket, Jesus's tunic and mantle,
+  Descartes's doublet and Bard's shirt was printed after their heads, so it ran over chins, beards and hair
+  lying on the shoulders. The people's clothes are now coloured before the head goes on. Stefan's flag pin
+  keeps its own colours too.
+- **Finn looks like a Finn Crisp**, from the photographs on the packet: a narrower, taller slab in a warm
+  reddish brown, with a surface packed with fine pores and only a few bigger holes.
+- **Alexander Bard's beard, redrawn**: it starts low on the cheeks, is widest along the jaw and hangs long
+  and broad, with a wiry edge, lighter strands and a big bushy moustache that hangs down over the mouth.
+
+## 1.18.0 – 2026-10-21
+
+- **Finn the crispbread takes Toby's place**: a thin slab of rye with a broken edge, a pale side where it's
+  thin, and a surface full of little craters of every size, each with a shadow inside, and a few white grains.
+- **Alexander Bard joins the Stretch Crew**, drawn from a photograph: a shaven, shiny head with freckles,
+  big round eyes, a huge wiry ginger beard with a moustache over the mouth, a brown shirt, a black tie with
+  orange polka dots and black braces with white ones.
+- The README no longer mentions the old name.
+
+## 1.17.0 – 2026-10-21
+
+- **Kaknästornet joins the Stretch Crew**, drawn from a photograph: the concrete shaft with its groove and
+  small windows, platforms on brackets carrying white dishes, the top floors with their bands of brown
+  windows, and the lattice mast. Its face is on the shaft, just under the top.
+- **Barack Obama has left the crew.**
+- Jesus, Gandhi and Descartes have their big round eyes back. Stefan Löfven keeps the almond-shaped ones.
+- **Stefan Löfven's hair, redrawn**: a side parting with short grey hair above the ear on that side, and a
+  soft wave combed across that lifts a little at the front and falls over the other temple.
+- Colour that never changes is worked out once instead of every frame, so the most detailed members of the
+  crew draw a quarter faster.
+
+## 1.16.0 – 2026-10-21
+
+- **Stefan Löfven and Barack Obama, redrawn again** from more photographs:
+  - Löfven's hair is right now: light brown going grey, parted on one side and combed smoothly across the
+    top, not swept back. His face is longer, with a broad jaw, narrow smiling blue eyes and laughter lines,
+    light brows that slope down at the ends and a thin smile pulled up at one corner.
+  - Obama has a long, slim face with high cheekbones and a rounded chin, a straight hairline with sharp
+    corners, ears that stand out only a little, straight dark brows and a wide closed smile; the big grin
+    is kept for cheering.
+- **New eyes for all the people in the crew.** The big round eyeballs with thick outlines looked like
+    glasses; now they're almond-shaped openings with an upper lid, a dark iris with a glint, a finer lower lid
+    and the fold above.
+- The shadow on the people's faces runs down one side only. Under the jaw it looked like stubble.
+
+## 1.15.0 – 2026-10-21
+
+- **The crew really does the exercises.** Every move is rechoreographed so it looks like the exercise itself:
+  - *Reach for the sky*: the arms go up round the head, the fingers lace above it, and up onto the toes.
+  - *Side bend*: the body bends at the waist, one arm sweeping over the top of the head.
+  - *Neck stretch*: the head leans on its own (for the people in the crew), and the hand on that side reaches
+    over the top of the head to the far ear.
+  - *Seated twist*: one hand goes across to the far hip, as if holding the chair, the other swings back.
+  - *Calf raises*: the heels rise and the feet stay on the ground, instead of the whole figure floating up.
+  - *Wrist circles*: the hands are in front of the chest, drawing circles.
+  - *Back hug*: the hands go round to the opposite shoulders.
+  - *Shoulder stretch*: one arm straight across the chest, the other hand pressing it in at the elbow.
+  - *Shoulder shrugs*: the people's heads sink down between their raised shoulders.
+  - *Open your chest* and *Shoulder rolls* lift the chin and look up as the chest opens.
+- **Motion lines**, the way comics draw them: round arrows above rolling shoulders, ticks above lifted
+  shoulders, circles round turning wrists and shake lines by shaking hands.
+- Hands that move from one place to another between exercises let go first, then reach, so nothing jumps.
+- `Unknot --moves` draws every exercise at its peak for ten members of the crew.
+
+## 1.14.0 – 2026-10-21
+
+- **The people in the crew look like themselves.** Stefan Löfven, Jesus, Gandhi, Obama and Descartes are
+  redrawn from photographs and portraits, with a more cartoonish face: big white eyes with small pupils,
+  heavy lids, noses drawn in one line.
+  - Stefan Löfven has his thin swept-back hair, pale bushy brows, narrowed smiling eyes, a broad nose,
+    a red tie and a Swedish flag pin.
+  - Jesus follows the icon of Christ Pantocrator at Sinai: dark hair parted in the middle, a forked beard,
+    a cruciform halo, a red tunic with a gold stripe and a blue mantle.
+  - Gandhi has a shaven head with grey stubble, big ears, round wire glasses, a bushy moustache and a thick
+    white shawl.
+  - Obama has close-cropped greying hair, ears that stand out, his broad smile with teeth showing, a navy
+    suit, a light blue shirt and a patterned tie.
+  - Descartes has the locks over his forehead, the raised brow, heavy lids, a long nose, a thin upturned
+    moustache and the tuft under his lip from Frans Hals's portrait.
+- `Unknot --portraits` draws the people large, for checking the likeness.
+
+## 1.13.0 – 2026-10-21
+
+- **Four new members of the Stretch Crew**, drawn in more detail than the rest:
+  - **Jesus of Nazareth**: long hair parted in the middle, a beard, a white tunic with a red mantle, sandals
+    and a fine gold halo.
+  - **Mahatma Gandhi**: round wire glasses, a white moustache, a khadi shawl with a woven border, a dhoti and
+    sandals.
+  - **Barack Obama**: close-cropped hair going grey at the temples, his wide smile, a charcoal suit, a blue
+    tie, a flag pin and a pocket square.
+  - **René Descartes**, as Frans Hals painted him: long dark hair, a thin moustache, a black doublet engraved
+    all over and a wide white collar.
+- The Stretch Crew settings and the README picture have room for all fourteen.
+
+## 1.12.0 – 2026-10-21
+
+- **Stefan Löfven joins the Stretch Crew** in place of Sol the cactus: a dark suit, a red tie, a shiny crown
+  with grey hair at the sides, and the same moves as everyone else.
+
+## 1.11.0 – 2026-10-21
+
+- **The crew have names**: Momo the mochi, Miso the cat, Bao the panda, Juni the bunny, Otto the frog, Selma
+  the semla, Pip the chick, Toby the toast, Nori the onigiri and Sol the cactus. A break says who's leading it
+  (*Stretch break with Otto*), the welcome window introduces whoever waves, and the Stretch Crew settings
+  show each name with what they are.
+- **Selma, redrawn.** The semla is now clearly a semla: a low, golden cardamom bun with a glazed shine, a
+  visible layer of almond paste, two rows of soft piped cream and the bun's top resting on it as a lid,
+  dusted with icing sugar where it's thickest on top.
+
+## 1.10.0 – 2026-10-21
+
+- **Says who's on the call.** When a break waits for a call, the menu names the app using the microphone:
+  *Break waiting until your call in zoom.us ends*.
+- In Low Power Mode the crew animates at 30 frames a second instead of the display's full rate.
+- Calmer Stretch Crew settings: the checkmark shows who's on, without a coloured frame around every card.
+- The Activity chart shows today in full colour and the days before a little quieter.
+- [SECURITY.md](SECURITY.md) explains what Unknot can see and how updates are checked, and security issues
+  can be reported privately on GitHub.
+- For contributors: the self-test and the README scene have their own files, and CI checks `install.sh`.
+
+## 1.9.1 – 2026-10-21
+
+- **No more jumps between exercises.** When a break moves on to the next exercise, the crew used to snap
+  back to standing from wherever it was, arms halfway up or a hand over its eyes. Now it blends into the
+  next move over half a second. The same goes for the cheer at the end.
+- Hovering over a crew member in the settings brings the still picture to life from where it is, instead
+  of jumping to another pose.
+- `Unknot --transitions` draws the frames around every change of exercise, for checking new moves.
+
+## 1.9.0 – 2026-10-21
+
+- **Pick a position by looking at it.** Settings → General shows five small screens with the panel where it
+  would appear, instead of a menu of long names.
+- **Exercises grouped by where they help**: neck and shoulders, back and chest, arms, hands and legs, eyes
+  and breathing. In the settings and in the README.
+- During a break the menu offers **Done** and **In 5 min**, handy when the panel is on another display.
+- **Report a problem** in Settings → About opens a bug report with your Unknot and macOS versions already
+  filled in. Nothing is sent until you submit it.
+- Clearer issue forms on GitHub.
+
+## 1.8.1 – 2026-10-21
+
+- **Smoother animations.** The crew now moves at the display's own refresh rate, up to 120 frames a second,
+  instead of 30. A frame takes well under a millisecond to draw.
+- **Fixed:** on macOS 26, switching to a taller settings tab (from Stretch Crew to Exercises, say) could leave a
+  white band over the first rows. The window now gets its new size before the tab is shown.
+- The README animation runs at 20 frames a second.
+
+## 1.8.0 – 2026-10-21
+
+- **Live cues.** The label at the top of a break keeps time with the move: *Breathe in · 3* during deep
+  breaths, *Switch sides* halfway through a side bend, a neck stretch or a twist.
+- **Two new exercises:** shoulder shrugs and a shoulder stretch with one arm across your chest.
+- **Unknot's own sound**: two soft wooden notes instead of a macOS alert. The other sounds are still there.
+- The menu shows the time of the next break, not just how far away it is.
+- In dark mode the paper behind the crew is printed a little dimmer, so it doesn't glare.
+- `install.sh` checks the macOS version, says which version it installed, and can uninstall everything with
+  `--uninstall`.
+- A small website at [emsurenar.github.io/unknot](https://emsurenar.github.io/unknot/).
+
+## 1.7.0 – 2026-10-21
+
+- **Out of the notch.** A break now starts as a drop of black inside the camera notch, falls out of it and
+  opens into the glass panel, then shrinks back into the notch when it's done. On screens without a notch it
+  unfolds from under the menu bar.
+- **Waits for your calls.** A break that's due holds off while another app uses the microphone or camera,
+  and sitting still through a call no longer counts as time away. Unknot only checks whether they're on.
+  Turn it off under Settings → Schedule.
+- **One-click updates.** When a new version is out, choose it in the menu and Unknot downloads it from
+  GitHub, checks its SHA-256 checksum, replaces itself and restarts.
+- **A frog in the menu bar** instead of a generic symbol. It closes its eyes while reminders are paused and
+  smiles during a break.
+- A clearer first launch: the welcome window explains what happens, and afterwards a small note points at
+  the menu bar icon.
+- When a break is done it shows the time of the next one, with new lines to finish on.
+- Drawing the crew is cheaper: shapes that never change are no longer rebuilt for every frame.
+- A rewritten README with a FAQ, and a CONTRIBUTING guide with the code map and the command-line helpers.
+
+## 1.6.0 – 2026-10-21
+
+- **Breaks drop down from the camera.** The panel now slides out from under the menu bar at the top center of
+  the screen, where the camera sits, and goes back the same way. This is the new default; the corners are still
+  there under Settings → General → Position on screen.
+- **A semla joins the crew** in place of the penguin: a cardamom bun with almond paste, a cloud of whipped
+  cream and a sugared lid that wobbles as it moves.
+
+## 1.5.0 – 2026-10-21
+
+- **The Stretch Crew, redrawn.** Every member is now an engraved line drawing: one ink line, finer lines for
+  detail, hatching for shadow and a soft tint of colour printed on top. Each has its own details, from the
+  frog's golden eyes and webbed toes to the cat's tabby stripes and the cactus's patterned pot.
+- **New animations for every exercise.** Moves have a beginning, a hold and an end, with smooth easing,
+  a quiet breath at rest, a soft landing after jumps, tails and ears that follow a beat behind, and a real
+  hand over the brow when resting your eyes. Every exercise starts from rest.
+- The crew always stands on paper, so the drawings read just as well in dark mode.
+- A new app icon: the frog, reaching up.
+- Unknot now needs macOS 14 Sonoma or later.
+
+## 1.4.0 – 2026-10-21
+
+- **A new look for the crew**: a flat, calmer illustration style with no outlines, small features, soft shading
+  and a muted palette. The app icon follows.
+- "Buddies" is now the **Stretch Crew**.
+- **Choose the app's language** in Settings → General: follow the system, English or Svenska. It switches
+  right away.
+- Hover over the menu bar icon to see when the next break is.
+
+## 1.3.1 – 2026-10-21
+
+- Updating could leave Unknot closed: the new copy saw the old one, which was still quitting, and stepped aside.
+  It now ignores a copy that's on its way out, and the installer retries opening the app.
+
+## 1.3.0 – 2026-10-21
+
+- **Nine new buddies**: a cat, a panda, a bunny, a frog, a penguin, a chick, a slice of toast, an onigiri and
+  a cactus join Mochi. Every break brings a random one, never the same twice in a row.
+- New **Buddies** tab: pick who can visit you. Hover over a buddy to see it wave.
+- The welcome window and the exercise list show off the whole cast.
+
+## 1.2.0 – 2026-10-21
+
+- **Sträckis is now called Unknot.** A name that works in every language and says what the app is for.
+  Your settings and statistics come along, and the old Sträckis app is quit and moved to the Trash.
+- The installer waits for the running app to quit before opening the new version, so updating no longer
+  fails with error -600.
+
+## 1.1.0 – 2026-10-21
+
+- New **Activity** tab: today, this week, days in a row and all time, plus a chart of the last seven days.
+- Choose how long the snooze button postpones a break: 5, 10 or 15 minutes.
+- The settings window resizes to fit each tab.
+- Waiting for full-screen apps now works on Macs with a camera notch, without mistaking a zoomed window for full screen.
+- Opening a second copy of Sträckis shows the settings of the one that's already running instead of doing nothing.
+- Moving to Applications no longer replaces a newer version that's already installed.
+- No breaks while the display is asleep.
+- The buddy animates at 30 frames per second, which saves battery.
+- Every build gets its own build number.
+
+## 1.0.0 – 2026-10-20
+
+First public release.
+
+- Stretch breaks in a floating glass panel that never steals focus, with an animated buddy that shows each exercise.
+- 12 exercises; every break picks a few at random from the ones you have turned on.
+- Settings window: interval, break length, exercises per break, position, sound, open at login, update checks.
+- Smart pauses: time away from the computer counts as a break, sleep and a locked screen restart the countdown, optional working hours and waiting while an app is in full screen.
+- Menu bar menu with countdown, "Stretch now", pause for 30 min / 1 h / 2 h / the rest of the day, and today's break count.
+- Welcome window on first launch, with an offer to move the app to the Applications folder.
+- English and Swedish.
+- Universal app for Apple silicon and Intel, macOS 13 or later.

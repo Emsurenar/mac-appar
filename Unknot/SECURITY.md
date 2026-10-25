@@ -14,10 +14,10 @@ Settings and statistics are stored in `UserDefaults` on your Mac and never leave
 
 ## How updates are checked
 
-The only network requests go to GitHub, for this repository's releases:
+The only network requests go to GitHub, for Unknot's releases in the mac-appar repository:
 
 1. At most once a day, if **Check for updates automatically** is on, Unknot asks GitHub's releases API for the
-   latest version number.
+   latest version number. Its releases are the ones tagged `unknot-v…`.
 2. Only when you click **Install and Restart** does it download `Unknot.zip`, over HTTPS.
 3. Before using the download it checks the SHA-256 checksum GitHub publishes for the file, that the app inside
    has Unknot's bundle identifier and the version it expected, and that its code signature is intact.
@@ -30,5 +30,5 @@ Actions.
 ## Reporting a problem
 
 If you find a security issue, please report it privately with
-[Report a vulnerability](https://github.com/Emsurenar/unknot/security/advisories/new) instead of opening a
+[Report a vulnerability](https://github.com/Emsurenar/mac-appar/security/advisories/new) instead of opening a
 public issue.

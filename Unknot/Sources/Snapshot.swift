@@ -361,20 +361,13 @@ enum Snapshot {
         var done = false
         Task {
             do {
-                let api = URL(string: "https://api.github.com/repos/\(Updater.repository)/releases/latest")!
-                let (data, _) = try await URLSession.shared.data(from: api)
-                struct Asset: Decodable { let name: String; let browser_download_url: URL; let digest: String? }
-                struct Release: Decodable { let tag_name: String; let assets: [Asset] }
-                let release = try JSONDecoder().decode(Release.self, from: data)
-                guard let zip = release.assets.first(where: { $0.name == "Unknot.zip" }) else { print("✗ no Unknot.zip"); exit(1) }
-                let version = String(release.tag_name.dropFirst())
-                let sha = zip.digest.map { String($0.dropFirst(7)) }
-                print("→ \(release.tag_name), sha256 \(sha ?? "none")")
-                let app = try await Updater.fetch(zip.browser_download_url, sha256: sha, expecting: version)
+                let release = try await Updater.latestRelease()
+                print("→ Unknot \(release.version), sha256 \(release.sha256 ?? "none")")
+                let app = try await Updater.fetch(release.zip, sha256: release.sha256, expecting: release.version)
                 print("✓ verified \(app.path)")
                 try? FileManager.default.removeItem(at: app.deletingLastPathComponent())
                 do {
-                    _ = try await Updater.fetch(zip.browser_download_url, sha256: String(repeating: "0", count: 64), expecting: version)
+                    _ = try await Updater.fetch(release.zip, sha256: String(repeating: "0", count: 64), expecting: release.version)
                     print("✗ a wrong checksum was accepted")
                 } catch {
                     print("✓ a wrong checksum is refused: \(error.localizedDescription)")

@@ -1,11 +1,14 @@
 #!/bin/bash
 # Installs the latest Unknot release into /Applications and opens it:
-#   curl -fsSL https://raw.githubusercontent.com/Emsurenar/unknot/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Emsurenar/mac-appar/main/Unknot/install.sh | bash
 # Removes Unknot, its login item and its settings again:
-#   curl -fsSL https://raw.githubusercontent.com/Emsurenar/unknot/main/install.sh | bash -s -- --uninstall
+#   curl -fsSL https://raw.githubusercontent.com/Emsurenar/mac-appar/main/Unknot/install.sh | bash -s -- --uninstall
 set -euo pipefail
 
-URL="https://github.com/Emsurenar/unknot/releases/latest/download/Unknot.zip"
+SCRIPT="https://raw.githubusercontent.com/Emsurenar/mac-appar/main/Unknot/install.sh"
+# Unknot shares its repository with other apps, so the newest release isn't necessarily Unknot's: look for the
+# newest one tagged unknot-v… instead. GitHub lists releases newest first.
+RELEASES="https://api.github.com/repos/Emsurenar/mac-appar/releases?per_page=50"
 APP="/Applications/Unknot.app"
 
 quit_running_copies() {
@@ -38,6 +41,12 @@ fi
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
+URL="$(curl -fsSL "$RELEASES" | grep -o 'https://github.com/Emsurenar/mac-appar/releases/download/unknot-v[^"]*/Unknot.zip' | head -1 || true)"
+if [[ -z "$URL" ]]; then
+    echo "Couldn't find an Unknot release. Download it from https://github.com/Emsurenar/mac-appar/releases?q=unknot-v instead."
+    exit 1
+fi
+
 echo "Downloading Unknot…"
 curl -fsSL "$URL" -o "$TMP/Unknot.zip"
 ditto -x -k "$TMP/Unknot.zip" "$TMP"
@@ -46,7 +55,7 @@ quit_running_copies
 rm -rf "/Applications/Sträckis.app" 2>/dev/null || true
 
 if ! { rm -rf "$APP" && ditto "$TMP/Unknot.app" "$APP"; } 2>/dev/null; then
-    echo "Couldn't write to /Applications. Try again with: sudo bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Emsurenar/unknot/main/install.sh)\""
+    echo "Couldn't write to /Applications. Try again with: sudo bash -c \"\$(curl -fsSL $SCRIPT)\""
     exit 1
 fi
 # Downloads made with curl aren't quarantined, but clear the flag in case the zip was.

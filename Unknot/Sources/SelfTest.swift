@@ -13,6 +13,9 @@ extension Snapshot {
         check(Activity.shouldWaitForTyping(secondsSinceKeyPress: 0.4, waitedFor: 5), "A break waits while you're typing")
         check(!Activity.shouldWaitForTyping(secondsSinceKeyPress: 3, waitedFor: 5), "A break comes in a pause in the typing")
         check(!Activity.shouldWaitForTyping(secondsSinceKeyPress: 0.4, waitedFor: 61), "A break waits for typing a minute at most")
+        check(Updater.version(fromTag: "unknot-v1.23.0") == "1.23.0", "Unknot's release tags give its version")
+        check(Updater.version(fromTag: "dynamicisland-v2.0.0") == nil && Updater.version(fromTag: "v1.22.0") == nil,
+              "Other apps' release tags are ignored")
         check(Updater.isVersion("1.0.1", newerThan: "1.0.0"), "1.0.1 is newer than 1.0.0")
         check(!Updater.isVersion("1.0.0", newerThan: "1.0.0"), "1.0.0 is not newer than itself")
         check(Updater.isVersion("1.10", newerThan: "1.9.9"), "1.10 is newer than 1.9.9")

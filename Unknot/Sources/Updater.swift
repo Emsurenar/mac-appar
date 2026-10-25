@@ -7,9 +7,11 @@ import CryptoKit
 final class Updater: ObservableObject {
     static let shared = Updater()
 
-    static let repository = "Emsurenar/unknot"
-    static let repositoryURL = URL(string: "https://github.com/\(repository)")!
-    static let releasesURL = URL(string: "https://github.com/\(repository)/releases/latest")!
+    /// Unknot lives in mac-appar, beside the other apps, and its releases are tagged unknot-v1.2.3.
+    nonisolated static let repository = "Emsurenar/mac-appar"
+    nonisolated static let tagPrefix = "unknot-v"
+    static let repositoryURL = URL(string: "https://github.com/\(repository)/tree/main/Unknot")!
+    static let releasesURL = URL(string: "https://github.com/\(repository)/releases?q=\(tagPrefix)&expanded=true")!
     static let issuesURL = URL(string: "https://github.com/\(repository)/issues")!
 
     /// A new bug report with the app and macOS versions already filled in. Nothing is sent until you submit it.
@@ -21,6 +23,7 @@ final class Updater: ObservableObject {
         var components = URLComponents(string: "https://github.com/\(repository)/issues/new")!
         components.queryItems = [
             URLQueryItem(name: "template", value: "bug_report.yml"),
+            URLQueryItem(name: "app", value: "Unknot"),
             URLQueryItem(name: "version", value: currentVersion),
             URLQueryItem(name: "macos", value: "macOS \(os.majorVersion).\(os.minorVersion).\(os.patchVersion), \(String(cString: model))"),
         ]
@@ -63,26 +66,46 @@ final class Updater: ObservableObject {
         status = .checking
         Task {
             do {
-                var request = URLRequest(url: URL(string: "https://api.github.com/repos/\(Self.repository)/releases/latest")!)
-                request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-                request.timeoutInterval = 15
-                let (data, response) = try await URLSession.shared.data(for: request)
-                guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw URLError(.badServerResponse) }
-                struct Asset: Decodable { let name: String; let browser_download_url: URL; let digest: String? }
-                struct Release: Decodable { let tag_name: String; let assets: [Asset] }
-                let release = try JSONDecoder().decode(Release.self, from: data)
-                let latest = release.tag_name.trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
-                if let zip = release.assets.first(where: { $0.name == "Unknot.zip" }) {
-                    // GitHub publishes a SHA-256 for each asset, written "sha256:<hex>"
-                    download = (zip.browser_download_url, zip.digest.flatMap { $0.hasPrefix("sha256:") ? String($0.dropFirst(7)) : nil })
-                }
-                latestVersion = latest
-                status = Self.isVersion(latest, newerThan: Self.currentVersion) ? .available(latest) : .upToDate
+                let release = try await Self.latestRelease()
+                download = (release.zip, release.sha256)
+                latestVersion = release.version
+                status = Self.isVersion(release.version, newerThan: Self.currentVersion) ? .available(release.version) : .upToDate
                 UserDefaults.standard.set(Date(), forKey: lastCheckKey)
             } catch {
                 status = .failed
             }
         }
+    }
+
+    /// The newest Unknot release among those of all the apps in the repository, with its download and the
+    /// SHA-256 that GitHub publishes for it.
+    nonisolated static func latestRelease() async throws -> (version: String, zip: URL, sha256: String?) {
+        var request = URLRequest(url: URL(string: "https://api.github.com/repos/\(repository)/releases?per_page=50")!)
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        request.timeoutInterval = 15
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw URLError(.badServerResponse) }
+        struct Asset: Decodable { let name: String; let browser_download_url: URL; let digest: String? }
+        struct Release: Decodable { let tag_name: String; let draft: Bool; let prerelease: Bool; let assets: [Asset] }
+        let found = try JSONDecoder().decode([Release].self, from: data)
+            .filter { !$0.draft && !$0.prerelease }
+            .compactMap { release -> (String, Asset)? in
+                guard let version = version(fromTag: release.tag_name),
+                      let zip = release.assets.first(where: { $0.name == "Unknot.zip" }) else { return nil }
+                return (version, zip)
+            }
+            .max { isVersion($1.0, newerThan: $0.0) }
+        guard let (version, zip) = found else { throw URLError(.fileDoesNotExist) }
+        // GitHub writes the checksum as "sha256:<hex>"
+        let sha256 = zip.digest.flatMap { $0.hasPrefix("sha256:") ? String($0.dropFirst(7)) : nil }
+        return (version, zip.browser_download_url, sha256)
+    }
+
+    /// "unknot-v1.23.0" → "1.23.0". Tags of the other apps in the repository give nil.
+    nonisolated static func version(fromTag tag: String) -> String? {
+        guard tag.hasPrefix(tagPrefix) else { return nil }
+        let version = String(tag.dropFirst(tagPrefix.count))
+        return version.isEmpty ? nil : version
     }
 
     func openReleasePage() {

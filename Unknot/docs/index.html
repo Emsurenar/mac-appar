@@ -7,7 +7,7 @@
   <meta name="description" content="Stretch breaks for your Mac that drop out of the camera notch. Free and open source for macOS 14 and later.">
   <meta property="og:title" content="Unknot – stretch breaks for your Mac">
   <meta property="og:description" content="Every 20 minutes a member of the Stretch Crew drops out of the notch with three quick stretches.">
-  <meta property="og:image" content="https://emsurenar.github.io/unknot/break-light.png">
+  <meta property="og:image" content="https://emsurenar.github.io/mac-appar/unknot/break-light.png">
   <link rel="icon" href="icon.png">
   <style>
     :root {
@@ -101,7 +101,7 @@
       <nav>
         <a href="#how">How it works</a>
         <a href="#first-launch">First launch</a>
-        <a href="https://github.com/Emsurenar/unknot">GitHub</a>
+        <a href="https://github.com/Emsurenar/mac-appar/tree/main/Unknot">GitHub</a>
       </nav>
     </header>
 
@@ -110,15 +110,15 @@
       <p class="lede">Every 20 minutes a member of the Stretch Crew drops down from your Mac's camera notch with
         three quick stretches. Thirty seconds later it goes back. It waits for a pause in your typing and never takes focus.</p>
       <div class="actions">
-        <a class="button primary" href="https://github.com/Emsurenar/unknot/releases/latest/download/Unknot.zip">Download for macOS</a>
-        <a class="button" href="https://github.com/Emsurenar/unknot">Source on GitHub</a>
+        <a class="button primary" id="download" href="https://github.com/Emsurenar/mac-appar/releases?q=unknot-v&amp;expanded=true">Download for macOS</a>
+        <a class="button" href="https://github.com/Emsurenar/mac-appar/tree/main/Unknot">Source on GitHub</a>
       </div>
       <p class="fine">Free and open source · macOS 14 or later · Apple silicon and Intel · About 2 MB</p>
 
       <div class="terminal">
         <p>Or install it from Terminal, which skips the security prompt below:</p>
         <div class="command">
-          <code id="cmd">curl -fsSL https://raw.githubusercontent.com/Emsurenar/unknot/main/install.sh | bash</code>
+          <code id="cmd">curl -fsSL https://raw.githubusercontent.com/Emsurenar/mac-appar/main/Unknot/install.sh | bash</code>
           <button type="button" id="copy">Copy</button>
         </div>
       </div>
@@ -180,13 +180,25 @@
 
     <footer>
       <span>MIT license · © 2026 Emre Sunar</span>
-      <a href="https://github.com/Emsurenar/unknot#faq">Questions</a>
-      <a href="https://github.com/Emsurenar/unknot/blob/main/CHANGELOG.md">What's new</a>
-      <a href="https://github.com/Emsurenar/unknot/issues">Report a problem</a>
+      <a href="https://github.com/Emsurenar/mac-appar/blob/main/Unknot/README.md#faq">Questions</a>
+      <a href="https://github.com/Emsurenar/mac-appar/blob/main/Unknot/CHANGELOG.md">What's new</a>
+      <a href="https://github.com/Emsurenar/mac-appar/issues/new/choose">Report a problem</a>
+      <a href="https://github.com/Emsurenar/mac-appar">More Mac apps</a>
     </footer>
   </div>
 
   <script>
+    // Unknot shares its repository with other apps, so "the latest release" may be someone else's. Point the
+    // button straight at the newest Unknot.zip; without JavaScript or GitHub it opens Unknot's releases instead.
+    fetch("https://api.github.com/repos/Emsurenar/mac-appar/releases?per_page=50")
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (releases) {
+        var release = releases.find(function (r) { return !r.draft && !r.prerelease && r.tag_name.indexOf("unknot-v") === 0; });
+        var zip = release && release.assets.find(function (a) { return a.name === "Unknot.zip"; });
+        if (zip) document.getElementById("download").href = zip.browser_download_url;
+      })
+      .catch(function () {});
+
     document.getElementById("copy").addEventListener("click", function () {
       var button = this;
       navigator.clipboard.writeText(document.getElementById("cmd").textContent).then(function () {

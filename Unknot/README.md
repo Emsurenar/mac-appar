@@ -9,20 +9,20 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Emsurenar/unknot/releases/latest"><img src="https://img.shields.io/github/v/release/Emsurenar/unknot?label=release&color=de6447" alt="Latest release"></a>
-  <a href="https://github.com/Emsurenar/unknot/actions/workflows/build.yml"><img src="https://github.com/Emsurenar/unknot/actions/workflows/build.yml/badge.svg" alt="Build status"></a>
+  <a href="https://github.com/Emsurenar/mac-appar/releases?q=unknot-v&amp;expanded=true"><img src="https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fraw.githubusercontent.com%2FEmsurenar%2Fmac-appar%2Fmain%2FUnknot%2FInfo.plist&amp;query=%2F%2Fkey%5B.%3D%27CFBundleShortVersionString%27%5D%2Ffollowing-sibling%3A%3Astring%5B1%5D&amp;label=version&amp;color=de6447" alt="Latest version"></a>
+  <a href="https://github.com/Emsurenar/mac-appar/actions/workflows/unknot.yml"><img src="https://github.com/Emsurenar/mac-appar/actions/workflows/unknot.yml/badge.svg" alt="Build status"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-555" alt="macOS 14 or later">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/Emsurenar/unknot?color=555" alt="MIT license"></a>
+  <a href="../LICENSE"><img src="https://img.shields.io/badge/license-MIT-555" alt="MIT license"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Emsurenar/unknot/releases/latest"><strong>Download</strong></a>
+  <a href="https://github.com/Emsurenar/mac-appar/releases?q=unknot-v&amp;expanded=true"><strong>Download</strong></a>
   &nbsp;·&nbsp;
-  <a href="https://emsurenar.github.io/unknot/">Website</a>
+  <a href="https://emsurenar.github.io/mac-appar/unknot/">Website</a>
   &nbsp;·&nbsp;
   <a href="CHANGELOG.md">Changelog</a>
   &nbsp;·&nbsp;
-  <a href="https://github.com/Emsurenar/unknot/issues">Report an issue</a>
+  <a href="https://github.com/Emsurenar/mac-appar/issues/new/choose">Report an issue</a>
 </p>
 
 <p align="center">
@@ -33,6 +33,9 @@ Unknot is a small menu bar app that reminds you to move. Every 20 minutes a pane
 top of your screen, a member of the Stretch Crew demonstrates three short exercises, and after 30 seconds the
 panel slides back. It waits for a pause in your typing and never takes focus, so it doesn't break your train
 of thought.
+
+Unknot is one of the [mac-appar](../README.md), a small collection of native Mac apps, alongside Dynamic Island
+and Posture. Each app stands on its own.
 
 ## Highlights
 
@@ -71,10 +74,10 @@ of thought.
 **Terminal (recommended).** Downloads the latest release into `/Applications` and opens it:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Emsurenar/unknot/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Emsurenar/mac-appar/main/Unknot/install.sh | bash
 ```
 
-**Manual.** Download `Unknot.zip` from the [latest release](https://github.com/Emsurenar/unknot/releases/latest),
+**Manual.** Download `Unknot.zip` from the [latest release](https://github.com/Emsurenar/mac-appar/releases?q=unknot-v&expanded=true),
 unzip it and move **Unknot** to **Applications**.
 
 > [!NOTE]
@@ -208,7 +211,7 @@ works as well.
 This removes the app, its login item, settings and statistics:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Emsurenar/unknot/main/install.sh | bash -s -- --uninstall
+curl -fsSL https://raw.githubusercontent.com/Emsurenar/mac-appar/main/Unknot/install.sh | bash -s -- --uninstall
 ```
 
 To do it by hand, turn off **Open at login**, quit Unknot, move it to the Trash and run
@@ -221,8 +224,8 @@ The only requirement is the Xcode Command Line Tools (`xcode-select --install`).
 no Xcode project.
 
 ```bash
-git clone https://github.com/Emsurenar/unknot.git
-cd unknot
+git clone https://github.com/Emsurenar/mac-appar.git
+cd mac-appar/Unknot
 ./build.sh && open build/Unknot.app
 ```
 
@@ -237,4 +240,4 @@ release process.
 
 ## License
 
-Released under the [MIT License](LICENSE). © 2026 Emre Sunar.
+Released under the [MIT License](../LICENSE), like the rest of mac-appar. © 2026 Emre Sunar.

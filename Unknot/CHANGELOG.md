@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.23.0 – 2026-10-25
+
+- **Unknot has moved to [mac-appar](https://github.com/Emsurenar/mac-appar)**, a small collection of native Mac
+  apps, alongside Dynamic Island and Posture. Its code, history, releases and issues are there now, in the
+  `Unknot` folder, and its releases are tagged `unknot-v…`.
+- Updates come from the new place. Copies that update from the menu bar keep updating as before; this version
+  is the one that knows where to look.
+- The install command is now
+  `curl -fsSL https://raw.githubusercontent.com/Emsurenar/mac-appar/main/Unknot/install.sh | bash`. The old one
+  still works and hands over to it.
+- The website is at [emsurenar.github.io/mac-appar/unknot](https://emsurenar.github.io/mac-appar/unknot/). Its
+  download button finds the newest Unknot by itself.
+- **Report a problem** in Settings opens a bug report in mac-appar with Unknot, its version and your Mac
+  already filled in.
+
 ## 1.22.0 – 2026-10-21
 
 - **Breaks wait for a pause in your typing.** When a break falls due mid-sentence, it holds back until you've

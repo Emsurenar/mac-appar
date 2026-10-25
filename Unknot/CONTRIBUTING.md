@@ -1,11 +1,13 @@
 # Contributing to Unknot
 
 Unknot is small on purpose: one Swift target, no dependencies, no Xcode project. You need the Command Line
-Tools (`xcode-select --install`) and nothing else.
+Tools (`xcode-select --install`) and nothing else. It lives in the `Unknot/` folder of
+[mac-appar](../README.md); the commands below run from there.
 
 ## Build and run
 
 ```bash
+cd Unknot
 ./build.sh                  # build/Unknot.app for your Mac
 ./build.sh --release        # a universal app and dist/Unknot.zip
 open build/Unknot.app
@@ -60,7 +62,7 @@ Power Mode every figure takes about 70 % longer, which is why the app draws at 3
 | `Sources/Snapshot.swift`, `DropScene.swift` | The command-line helpers above, and the drawn screen in the README animation |
 | `Sources/SelfTest.swift` | `--selftest`, run by every build |
 | `Resources/*.lproj`, `Resources/Unknot.wav` | Translations, and the break sound (made by `scripts/make_sound.py`) |
-| `docs/` | The website at emsurenar.github.io/unknot (`index.html`) and the README images |
+| `docs/` | The website at emsurenar.github.io/mac-appar/unknot (`index.html`) and the README images |
 
 ## Adding a crew member
 
@@ -86,14 +88,16 @@ to `CFBundleLocalizations` in `Info.plist` and to `AppLanguage` in `Sources/Loca
 
 1. Bump `CFBundleShortVersionString` in `Info.plist` and add an entry to `CHANGELOG.md`.
 2. Regenerate the README images if anything visible changed (see the helpers above).
-3. Commit, then tag and push:
+3. Commit, then tag and push. Unknot's tags start with `unknot-v`, so they never mix with the other apps':
 
    ```bash
-   git tag v1.7.0 && git push origin main v1.7.0
+   git tag unknot-v1.23.0 && git push origin main unknot-v1.23.0
    ```
 
-GitHub Actions builds the universal app and attaches `Unknot.zip` to the release. Running copies offer the
-update from their menu, and `install.sh` always fetches the latest release.
+The `Unknot` workflow (`.github/workflows/unknot.yml` at the root of the repository) builds the universal app
+and attaches `Unknot.zip` to the release. Running copies offer the update from their menu, and `install.sh`
+always fetches the newest Unknot release. Changes to `docs/` are published to the website by the `Website`
+workflow.
 
 ## Style
 

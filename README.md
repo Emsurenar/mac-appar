@@ -1,8 +1,8 @@
 <h1 align="center">mac-appar</h1>
 
 <p align="center">
-  Two native macOS apps written in Swift and SwiftUI.<br>
-  No Xcode project: each app is a Swift package with a one-line build script.
+  Three native macOS apps written in Swift and SwiftUI.<br>
+  No Xcode project: each app builds with a one-line script.
 </p>
 
 <p align="center">
@@ -34,13 +34,31 @@ A menu bar app that keeps an eye on how you sit. Every 10 seconds it reads your 
   <img src="DynamicIsland/Screenshots/posture.png" width="640" alt="Posture shown in the Dynamic Island">
 </p>
 
+### [Unknot](Unknot)
+
+Stretch breaks that drop out of the camera notch. Every 20 minutes a member of the Stretch Crew, fifteen
+characters drawn like small engravings, shows three short exercises in a glass panel and goes back into the
+notch. Breaks wait for a pause in your typing, for calls and for full-screen apps, and time away counts as a
+break. It's the one app here with ready-made releases: install it with one line and it updates itself from the
+menu bar.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Emsurenar/mac-appar/main/Unknot/install.sh | bash
+```
+
+→ [Read more](Unknot/README.md) · [Website](https://emsurenar.github.io/mac-appar/unknot/) · [Releases](https://github.com/Emsurenar/mac-appar/releases?q=unknot-v&expanded=true)
+
+<p align="center">
+  <img src="Unknot/docs/demo.gif" width="640" alt="An Unknot break drops out of the notch, shows three stretches and goes back">
+</p>
+
 ## Requirements
 
-| | Dynamic Island | Posture |
-|---|---|---|
-| macOS | 14 Sonoma or later | 26 Tahoe or later |
-| Mac | Apple silicon. Designed for MacBooks with a notch | Apple silicon with a camera |
-| Tools | Xcode 16+ or the Command Line Tools | Xcode 26+ or the Command Line Tools |
+| | Dynamic Island | Posture | Unknot |
+|---|---|---|---|
+| macOS | 14 Sonoma or later | 26 Tahoe or later | 14 Sonoma or later |
+| Mac | Apple silicon. Designed for MacBooks with a notch | Apple silicon with a camera | Apple silicon or Intel, notch optional |
+| Tools | Xcode 16+ or the Command Line Tools | Xcode 26+ or the Command Line Tools | The Command Line Tools |
 
 ## Build and run
 
@@ -53,11 +71,14 @@ DynamicIsland/build.sh --run
 
 # Posture
 Hallning/build.sh --run
+
+# Unknot
+Unknot/build.sh && open Unknot/build/Unknot.app
 ```
 
-Each script builds a release binary with Swift Package Manager, wraps it in an `.app` bundle in the app's `build/` folder, signs it and, with `--run`, launches it. Both apps live in the menu bar area and have no Dock icon.
+Dynamic Island and Posture are Swift packages: their scripts build a release binary with Swift Package Manager, wrap it in an `.app` bundle in the app's `build/` folder, sign it and, with `--run`, launch it. Unknot's script compiles its sources with `swiftc`, draws its icon and runs its self-test; `--release` makes a universal app and `dist/Unknot.zip`. All three live in the menu bar and have no Dock icon.
 
-## How the two apps work together
+## How Dynamic Island and Posture work together
 
 The apps are independent, and each one works on its own. When both run, they talk over `DistributedNotificationCenter`:
 
@@ -70,16 +91,19 @@ The apps are independent, and each one works on its own. When both run, they tal
 mac-appar/
 ├── DynamicIsland/   # The notch app (Swift package, build script, screenshots)
 ├── Hallning/        # The Posture app (Swift package, build script)
-└── .github/         # CI: builds both apps on macOS 26
+├── Unknot/          # Stretch breaks (build script, install script, website in docs/)
+└── .github/         # CI for each app, Unknot's releases and website, issue forms
 ```
 
 ## Contributing
 
-Issues and pull requests are welcome. Please keep changes in the style of the surrounding code and make sure both apps still build:
+Issues and pull requests are welcome. Please keep changes in the style of the surrounding code and make sure the apps still build:
 
 ```bash
-(cd DynamicIsland && swift build) && (cd Hallning && swift build)
+(cd DynamicIsland && swift build) && (cd Hallning && swift build) && Unknot/build.sh
 ```
+
+Unknot has its own [contributing guide](Unknot/CONTRIBUTING.md), with tools for checking its drawings and animations and its release steps.
 
 ## License
 

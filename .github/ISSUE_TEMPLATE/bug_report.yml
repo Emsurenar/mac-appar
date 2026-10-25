@@ -2,6 +2,16 @@ name: Bug report
 description: Something doesn't work the way it should
 labels: [bug]
 body:
+  - type: dropdown
+    id: app
+    attributes:
+      label: Which app?
+      options:
+        - Unknot
+        - Dynamic Island
+        - Posture
+    validations:
+      required: true
   - type: textarea
     id: what
     attributes:
@@ -14,14 +24,14 @@ body:
     attributes:
       label: How can we make it happen again?
       placeholder: |
-        1. Open Settings → Schedule
-        2. Turn on working hours
+        1. Open Settings
+        2. Turn on …
         3. …
   - type: input
     id: version
     attributes:
-      label: Unknot version
-      description: Settings → About. "Report a problem" there fills this in for you.
+      label: App version
+      description: In Unknot, Settings → About. "Report a problem" there fills this in for you.
       placeholder: "1.9.0"
     validations:
       required: true

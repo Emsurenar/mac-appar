@@ -1,0 +1,45 @@
+name: Website
+
+# Publishes Unknot's website from Unknot/docs to emsurenar.github.io/mac-appar/unknot/
+on:
+  push:
+    branches: [main]
+    paths: ["Unknot/docs/**", ".github/workflows/website.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}unknot/
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble the site
+        run: |
+          mkdir -p _site/unknot
+          cp -R Unknot/docs/. _site/unknot/
+          # The root of the site has nothing of its own yet: send visitors to the repository
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <meta charset="utf-8">
+          <title>mac-appar</title>
+          <meta http-equiv="refresh" content="0; url=https://github.com/Emsurenar/mac-appar">
+          <link rel="canonical" href="https://github.com/Emsurenar/mac-appar">
+          <p><a href="https://github.com/Emsurenar/mac-appar">mac-appar on GitHub</a> · <a href="unknot/">Unknot</a></p>
+          HTML
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

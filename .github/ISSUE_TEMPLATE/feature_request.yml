@@ -1,0 +1,25 @@
+name: Idea
+description: Suggest an improvement, or for Unknot a new exercise or a new member of the Stretch Crew
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: app
+    attributes:
+      label: Which app?
+      options:
+        - Unknot
+        - Dynamic Island
+        - Posture
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What would you like the app to do? For Unknot, who should join the Stretch Crew next?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would it help?

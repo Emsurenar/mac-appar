@@ -3,7 +3,10 @@ name: Build
 on:
   push:
     branches: [main]
+    # Unknot has its own workflow
+    paths-ignore: ["Unknot/**", ".github/workflows/unknot.yml", ".github/workflows/website.yml"]
   pull_request:
+    paths-ignore: ["Unknot/**", ".github/workflows/unknot.yml", ".github/workflows/website.yml"]
   workflow_dispatch:
 
 jobs:

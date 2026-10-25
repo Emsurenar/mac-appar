@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.23.1 – 2026-10-25
+
+- **Breaks are read out with VoiceOver.** The break panel never takes focus, so VoiceOver didn't notice it.
+  Now it reads out who's leading the break and the first exercise, each new exercise as it starts, and the
+  cheer and the time of the next break at the end.
+- **Selma's lid wears its icing sugar.** Like a bakery semla, the top of the lid is under a thick white coat
+  with a dusty edge, and only the golden rim of the crust shows below it.
+
 ## 1.23.0 – 2026-10-25
 
 - **Unknot has moved to [mac-appar](https://github.com/Emsurenar/mac-appar)**, a small collection of native Mac

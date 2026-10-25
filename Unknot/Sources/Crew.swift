@@ -641,7 +641,17 @@ struct SemlaArt: CrewArt {
             }
         }
         sugar = dots
-        powder = oval(100, 66, 46, 13).intersection(top)
+        // A thick coat of icing sugar over the top of the lid, as on a bakery semla, with an uneven, dusty
+        // lower edge where the golden crust shows through
+        // (Each patch is cut to the lid on its own: cutting the union of them returned the whole lid.)
+        var patches = [oval(101, 66, 74, 18)]
+        var e = SeededRandom(state: 23)
+        for k in 0..<10 {
+            let x = 68 + CGFloat(k) * 7.4 + (e.next() - 0.5) * 3
+            let y = 74 + (1 - pow((x - 101) / 36, 2)) * 2.5 + (e.next() - 0.5) * 1.6
+            patches.append(oval(x, y, 8 + e.next() * 3, 4.5 + e.next() * 2))
+        }
+        powder = makePath { p in for patch in patches { p.addPath(patch.intersection(top)) } }
     }
 
     func feet(_ pen: Pen, _ f: CrewFrame) { ovalFeet(pen, [83, 117]) }
@@ -676,8 +686,10 @@ struct SemlaArt: CrewArt {
         p.hatch(lidHatch)
         p.tint(lid, Color(hex: 0xD9984F).opacity(0.85))
         p.tint(lidCut, Color(hex: 0xF0D9B0))
-        p.c.fill(powder, with: .color(Pen.paper.opacity(0.45)))
+        // The sugar lies over the shading, so the hatching only shows faintly through it
+        p.c.fill(powder, with: .color(Pen.paper.opacity(0.82)))
         p.solid(sugar, color: Pen.paper)
+        p.stroke(lid, 1.8)
     }
 
     func detail(_ f: CrewFrame) -> Path { paste }

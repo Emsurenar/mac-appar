@@ -28,6 +28,8 @@ final class ReminderSession: NSObject, ObservableObject {
     private var finishDate = Date()
     /// The move that was showing when the break finished, and for how long.
     private var finishedFrom: (move: Move, ranFor: Double)?
+    /// The exercise VoiceOver last read out.
+    private var announced = -1
 
     init(exercises: [Exercise], buddy: Buddy = .mochi, nextMinutes: Int, snoozeMinutes: Int = 5, total: Double) {
         self.exercises = exercises.isEmpty ? [allExercises[0]] : exercises
@@ -65,6 +67,8 @@ final class ReminderSession: NSObject, ObservableObject {
 
     func start() {
         startDate = Date()
+        announced = 0
+        announce(L("Stretch break with %@", buddy.callName) + ". " + exercises[0].title + ". " + exercises[0].text)
         let t = Timer(timeInterval: 0.05, target: self, selector: #selector(step), userInfo: nil, repeats: true)
         RunLoop.main.add(t, forMode: .common)
         timer = t
@@ -72,7 +76,19 @@ final class ReminderSession: NSObject, ObservableObject {
 
     @objc private func step() {
         elapsed = Date().timeIntervalSince(startDate)
-        if elapsed >= total { complete() }
+        if elapsed >= total { complete(); return }
+        if index != announced {
+            announced = index
+            announce(current.title + ". " + current.text)
+        }
+    }
+
+    /// The panel never takes focus, so VoiceOver wouldn't notice it: read out the start, each new exercise and
+    /// the end instead.
+    private func announce(_ text: String) {
+        guard fixedTime == nil, NSWorkspace.shared.isVoiceOverEnabled else { return }
+        NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested,
+                             userInfo: [.announcement: text, .priority: NSAccessibilityPriorityLevel.high.rawValue])
     }
 
     func complete() {
@@ -81,6 +97,7 @@ final class ReminderSession: NSObject, ObservableObject {
         finishedFrom = (current.move, elapsed - Double(index) * perExercise)
         finished = true
         finishDate = Date()
+        announce(cheer + ". " + L("Next break at %@.", nextBreakTime))
         perform(#selector(closeAfterCheer), with: nil, afterDelay: 2.4)
     }
 

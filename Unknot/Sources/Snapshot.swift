@@ -340,10 +340,7 @@ enum Snapshot {
             window.orderOut(nil)
         }
 
-        let welcome = NSWindow(contentViewController: NSHostingController(rootView: WelcomeView(onTryBreak: {}, onDone: {})))
-        welcome.styleMask = [.titled, .closable, .fullSizeContentView]
-        welcome.titlebarAppearsTransparent = true
-        welcome.titleVisibility = .hidden
+        let welcome = WindowManager.makeWelcomeWindow(onTryBreak: {}, onDone: {})
         welcome.appearance = NSAppearance(named: .aqua)
         welcome.setFrameOrigin(NSPoint(x: -10_000, y: -10_000))
         welcome.orderFrontRegardless()

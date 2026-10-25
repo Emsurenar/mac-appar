@@ -28,22 +28,33 @@ final class WindowManager: NSObject, NSWindowDelegate {
 
     func showWelcome() {
         if welcomeWindow == nil {
-            let view = WelcomeView(onTryBreak: { [weak self] in self?.onTestBreak?() },
-                                   onDone: { [weak self] in self?.welcomeWindow?.close() })
-            let host = NSHostingController(rootView: view.environment(\.locale, Localizer.locale))
-            let window = NSWindow(contentViewController: host)
-            window.styleMask = [.titled, .closable, .fullSizeContentView]
-            window.titlebarAppearsTransparent = true
-            window.titleVisibility = .hidden
-            window.isMovableByWindowBackground = true
-            window.isReleasedWhenClosed = false
-            window.title = L("Welcome to Unknot")
+            let window = Self.makeWelcomeWindow(onTryBreak: { [weak self] in self?.onTestBreak?() },
+                                                onDone: { [weak self] in self?.welcomeWindow?.close() })
             window.delegate = self
-            window.setContentSize(host.view.fittingSize)
             window.center()
             welcomeWindow = window
         }
         present(welcomeWindow!)
+    }
+
+    /// The first-launch window, also photographed for the README.
+    static func makeWelcomeWindow(onTryBreak: @escaping () -> Void, onDone: @escaping () -> Void) -> NSWindow {
+        let host = NSHostingController(rootView: WelcomeView(onTryBreak: onTryBreak, onDone: onDone)
+            .environment(\.locale, Localizer.locale))
+        // The island at the top hangs from the window's very edge, under the transparent title bar
+        host.safeAreaRegions = []
+        let window = NSWindow(contentViewController: host)
+        window.styleMask = [.titled, .closable, .fullSizeContentView]
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.isMovableByWindowBackground = true
+        window.isReleasedWhenClosed = false
+        window.title = L("Welcome to Unknot")
+        // Only the close button: the others can't be used here, and the island needs the room
+        window.standardWindowButton(.miniaturizeButton)?.isHidden = true
+        window.standardWindowButton(.zoomButton)?.isHidden = true
+        window.setContentSize(host.view.fittingSize)
+        return window
     }
 
     func makeSettingsWindow(animatesResize: Bool = true) -> (NSWindow, SettingsTabViewController) {

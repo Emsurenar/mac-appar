@@ -14,21 +14,12 @@ struct WelcomeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            BuddyView(move: .wave, buddy: buddy, epoch: Date())
-                .frame(width: 150, height: 150)
-                .background(Circle().fill(Pen.paper).frame(width: 168, height: 168))
-                .paperTone(scheme)
-                .padding(.top, 34)
-
-            Text(buddy.introduction)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .padding(.top, 14)
+            island
 
             Text(L("Welcome to Unknot"))
                 .font(.system(size: 26, weight: .bold))
                 .tracking(-0.4)
-                .padding(.top, 6)
+                .padding(.top, 22)
 
             Text(L("Every %ld minutes, a member of the Stretch Crew drops down from the top of your screen with a few quick stretches. Each break takes about %ld seconds.", prefs.intervalMinutes, prefs.breakSeconds))
                 .font(.system(size: 13.5))
@@ -101,7 +92,6 @@ struct WelcomeView: View {
                 .padding(.top, 16)
 
             HStack {
-                Button(L("Show me a break"), action: onTryBreak)
                 Spacer()
                 Button(L("Get started"), action: onDone)
                     .keyboardShortcut(.defaultAction)
@@ -117,6 +107,41 @@ struct WelcomeView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             login.refresh()
         }
+    }
+
+    /// A break in miniature, hanging from the top of the window the way the real one hangs from the notch: a
+    /// member of the crew waving on its paper tile, and a button that shows a real break.
+    private var island: some View {
+        HStack(alignment: .top, spacing: 14) {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Pen.paper)
+                .overlay(BuddyView(move: .wave, buddy: buddy, epoch: Date()).padding(3))
+                .colorMultiply(Color(hex: 0xF1ECE3))
+                .frame(width: 78, height: 78)
+                .shadow(color: .black.opacity(0.4), radius: 6, y: 3)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(L("Stretch Crew").uppercased(with: Localizer.locale))
+                    .font(.system(size: 10.5, weight: .semibold))
+                    .tracking(0.8)
+                    .foregroundStyle(Island.accent)
+                Text(buddy.introduction)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Spacer(minLength: 0)
+                Button(L("Show me a break"), action: onTryBreak)
+                    .buttonStyle(IslandCapsuleStyle(prominent: true))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: 78)
+        }
+        .padding(.horizontal, 12 + 16)
+        .padding(.top, 34)
+        .padding(.bottom, 18)
+        .frame(width: 356)
+        .background(IslandShape(ear: 12, bottom: 28).fill(Color.black))
+        .environment(\.colorScheme, .dark)
     }
 
     private func row<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {

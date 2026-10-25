@@ -92,7 +92,7 @@ break** plays one straight away so you know what to expect. From then on the app
 small frog.
 
 <p align="center">
-  <img src="docs/welcome.png" width="360" alt="The welcome window: an introduction from a member of the Stretch Crew, the break interval, open at login and a button to try a break">
+  <img src="docs/welcome.png" width="360" alt="The welcome window: a small black island at the top with a member of the Stretch Crew and a button to try a break, then the break interval and open at login">
 </p>
 
 <p align="center">

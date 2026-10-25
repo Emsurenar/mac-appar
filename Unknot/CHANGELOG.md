@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.24.1 – 2026-10-25
+
+- **The welcome window shows a break in miniature.** A small black island hangs from the top of the window,
+  the way a real break hangs from the notch, with a member of the crew waving on its tile and the **Show me a
+  break** button that plays a real one. Only the close button is left in the corner.
+- **Kaknästornet** gets the white aluminium panel the real tower has on its shaft, pressed into diamonds. It sits
+  off the middle, so under the face it doesn't read as a second mouth.
+- The install script reported the version that was there before when it replaced Unknot; it now reads the new
+  one from the app itself.
+
 ## 1.24.0 – 2026-10-25
 
 - **Unknot now looks like Dynamic Island**, its neighbour in mac-appar. A break grows out of the notch as a

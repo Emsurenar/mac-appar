@@ -1072,10 +1072,8 @@ struct KaknasArt: CrewArt {
             }
             for (y, w) in [(44.0, 7.0), (38.0, 5.5)] { p.move(to: pt(100 - w, y)); p.addLine(to: pt(100 + w, y)) }
         }
-        // The shuttering marks in the concrete: a groove, a column of small windows and the white panel
+        // Two small windows under the face
         marks = makePath { p in
-            p.move(to: pt(100, 152)); p.addLine(to: pt(100, 162))
-            for y in stride(from: 155.0, through: 162.0, by: 7.0) { p.addRect(CGRect(x: 103, y: y - 1.5, width: 2.6, height: 3)) }
             p.addRect(CGRect(x: 94.5, y: 113.5, width: 3, height: 3)); p.addRect(CGRect(x: 102.5, y: 113.5, width: 3, height: 3))
         }
         wash = shaft
@@ -1115,7 +1113,28 @@ struct KaknasArt: CrewArt {
         pen.mouth(pt(100 + f.fx * 0.6, 107), f, width: 3.8, depth: 2.6)
     }
 
+    /// The white aluminium panel on the shaft below the platforms, pressed into diamonds, as on the
+    /// photographs. It sits off the middle, so under the face it never reads as a second mouth.
+    private static let panel = CGRect(x: 102, y: 151, width: 10, height: 8)
+    /// Each diamond in two halves, the left one catching the light, the right one in shade.
+    private static let diamonds: [(lit: Path, shade: Path)] = (0..<2).map { k in
+        let w = panel.width / 2, cx = panel.minX + w / 2 + CGFloat(k) * w, cy = panel.midY, hy = panel.height / 2 - 0.4
+        func half(_ side: CGFloat) -> Path {
+            makePath { p in
+                p.move(to: pt(cx, cy - hy)); p.addLine(to: pt(cx + side * (w / 2 - 0.4), cy)); p.addLine(to: pt(cx, cy + hy)); p.closeSubpath()
+            }
+        }
+        return (half(-1), half(1))
+    }
+
     func overlay(_ pen: Pen, _ f: CrewFrame) {
+        // Drawn after the concrete's colour, so the panel stays white
+        pen.paper(Path(Self.panel))
+        for diamond in Self.diamonds {
+            pen.solid(diamond.shade, color: Color(hex: 0xDEDBD5))
+            pen.c.stroke(diamond.lit.union(diamond.shade), with: .color(Pen.ink.opacity(0.45)), lineWidth: 0.55)
+        }
+        pen.c.stroke(Path(Self.panel), with: .color(Pen.ink), lineWidth: 1)
         // White drum antennas on the platforms, turned out to the sides: a short cylinder with a round face
         for (c, side) in drums {
             let back = c.x - side * 2.4, face = c.x + side * 2.4

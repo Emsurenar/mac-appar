@@ -37,8 +37,8 @@ A menu bar app that keeps an eye on how you sit. Every 10 seconds it reads your 
 ### [Unknot](Unknot)
 
 Stretch breaks that drop out of the camera notch. Every 20 minutes a member of the Stretch Crew, fifteen
-characters drawn like small engravings, shows three short exercises in a glass panel and goes back into the
-notch. Breaks wait for a pause in your typing, for calls and for full-screen apps, and time away counts as a
+characters drawn like small engravings, shows three short exercises in a black island, with Dynamic Island's
+look and springs, and goes back into the notch. Breaks wait for a pause in your typing, for calls and for full-screen apps, and time away counts as a
 break. It's the one app here with ready-made releases: install it with one line and it updates itself from the
 menu bar.
 

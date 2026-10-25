@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.24.0 – 2026-10-25
+
+- **Unknot now looks like Dynamic Island**, its neighbour in mac-appar. A break grows out of the notch as a
+  black island with concave ears where it meets the top of the screen, on the same springs, and the
+  exercise arrives through a soft blur. White type, an orange accent and Dynamic Island's capsule buttons:
+  white for **Done**, a soft plate for **In 5 min**. The crew member stands on a paper tile, like an album
+  cover. In a corner of the screen the break is a black rounded panel.
+- On a screen without a notch the island grows from the top edge, where a notch would be.
+- **A new app icon** in the same family as Dynamic Island's: the gradient squircle with a black island hanging
+  from its top, holding the frog on its tile.
+- Settings, the welcome window and the website use the same orange, and the position picker shows the island.
+- VoiceOver read the start of a break twice; now it's once.
+
 ## 1.23.1 – 2026-10-25
 
 - **Breaks are read out with VoiceOver.** The break panel never takes focus, so VoiceOver didn't notice it.

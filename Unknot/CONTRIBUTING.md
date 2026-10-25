@@ -28,7 +28,8 @@ $U --filmstrip film.png                 # ten frames across one cycle of a dozen
 $U --transitions changes.png            # the frames around a change of exercise, which should never jump
 $U --portraits people.png               # the people in the crew, large, for checking the likeness
 $U --moves moves.png                    # every exercise at its peak, done by ten of the crew
-$U --previews previews                  # the break panel for every exercise, light and dark
+$U --previews previews                  # the break on screen for every exercise, and the end of a break
+$U --drop-frames drop.png               # frames of the island growing out of the notch and going back
 $U --gif demo.gif                       # the README animation: a break dropping out of the notch
 $U --settings-screenshots shots         # every settings tab, light and dark, and the welcome window
 $U --buddies-image crew.png             # the crew image in the README

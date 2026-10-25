@@ -1,7 +1,8 @@
 import SwiftUI
 
 enum Brand {
-    static func accent(_ dark: Bool) -> Color { dark ? Color(hex: 0xF28466) : Color(hex: 0xDE6447) }
+    /// Dynamic Island's orange, a shade deeper on light backgrounds so it stays legible there.
+    static func accent(_ dark: Bool) -> Color { dark ? Island.accent : Color(hex: 0xF08A00) }
 }
 
 enum BreakOutcome { case completed, snoozed }
@@ -16,6 +17,8 @@ final class ReminderSession: NSObject, ObservableObject {
     let snoozeMinutes: Int
     let total: Double
     @Published var elapsed = 0.0
+    /// How far the contents have come into view while the island grows out of the notch, from 0 to 1.
+    @Published var reveal: CGFloat = 1
     @Published private(set) var finished = false
     /// Freezes the buddy animation at a given time (used for screenshots).
     var fixedTime: Double?
@@ -117,36 +120,22 @@ final class ReminderSession: NSObject, ObservableObject {
     @objc private func closeAfterCheer() { onClose?(.completed) }
 }
 
-struct ActionButtonStyle: ButtonStyle {
-    var prominent: Bool
-    var accent: Color
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 12, weight: prominent ? .semibold : .medium))
-            .lineLimit(1)
-            .fixedSize()
-            .foregroundStyle(prominent ? AnyShapeStyle(Color.white) : AnyShapeStyle(.primary))
-            .padding(.horizontal, 12)
-            .frame(height: 24)
-            .background(Capsule().fill(prominent ? AnyShapeStyle(accent) : AnyShapeStyle(Color.primary.opacity(0.08))))
-            .overlay(Capsule().fill(Color.black.opacity(configuration.isPressed ? 0.12 : 0)))
-            .contentShape(Capsule())
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
-
-/// The content of the reminder. The glass background and shadow come from the window.
+/// The contents of a break: the crew member on a paper tile, like the artwork in Dynamic Island, the exercise
+/// with its live cues, the progress and the buttons. The black island around it comes from the window.
 struct ReminderView: View {
     @ObservedObject var s: ReminderSession
-    @Environment(\.colorScheme) private var scheme
+    /// Room at the top for the notch or the menu bar, and at the sides for the island's ears.
+    var topInset: CGFloat = 0
+    var sideInset: CGFloat = 0
 
-    static let size = CGSize(width: 404, height: 144)
-    static let cornerRadius: CGFloat = 22
+    static let content = CGSize(width: 420, height: 104)
+    static let padding: CGFloat = 16
 
-    private var dark: Bool { scheme == .dark }
-    private var accent: Color { Brand.accent(dark) }
+    /// The whole island or panel around the contents.
+    static func size(topInset: CGFloat, sideInset: CGFloat) -> CGSize {
+        CGSize(width: content.width + padding * 2 + sideInset * 2,
+               height: (topInset > 0 ? topInset + 6 : padding) + content.height + padding + 2)
+    }
 
     /// The small label at the top: a live cue while one fits the move, otherwise what this is.
     private var label: String {
@@ -159,105 +148,121 @@ struct ReminderView: View {
     }
 
     var body: some View {
-        HStack(spacing: 14) {
-            // The crew is drawn in ink, so it always stands on paper, also in dark mode
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Pen.paper)
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.black.opacity(dark ? 0 : 0.05)))
-                .overlay(BuddyView(move: s.finished ? .celebrate : s.current.move, buddy: s.buddy,
-                                   fixedTime: s.fixedTime, epoch: s.moveStart, previous: s.previousMove).padding(4))
-                .frame(width: 116, height: 116)
-                .paperTone(scheme)
-
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(label)
-                        .font(.system(size: 10.5, weight: .semibold))
-                        .tracking(0.8)
-                        .foregroundStyle(accent)
-                        .contentTransition(.opacity)
-                        .animation(.easeInOut(duration: 0.25), value: label)
-                    Spacer()
-                    if !s.finished {
-                        Text(countdown)
-                            .font(.system(size: 11, weight: .medium))
-                            .monospacedDigit()
-                            .foregroundStyle(.tertiary)
-                            .accessibilityLabel(L("%ld seconds left", s.remaining))
-                    }
+        let size = Self.size(topInset: topInset, sideInset: sideInset)
+        VStack(spacing: 0) {
+            Color.clear.frame(height: topInset > 0 ? topInset + 6 : Self.padding)
+            HStack(alignment: .top, spacing: 14) {
+                tile
+                VStack(alignment: .leading, spacing: 0) {
+                    header
+                    words.padding(.top, 4)
+                    Spacer(minLength: 6)
+                    controls
                 }
+                .padding(.top, 1)
+            }
+            .frame(width: Self.content.width, height: Self.content.height)
+            Spacer(minLength: 0)
+        }
+        .frame(width: size.width, height: size.height)
+        .modifier(IslandReveal(progress: s.reveal, scale: 0.9))
+        .environment(\.colorScheme, .dark)
+        .animation(.spring(response: 0.4, dampingFraction: 0.82), value: s.index)
+        .animation(.spring(response: 0.4, dampingFraction: 0.82), value: s.finished)
+    }
 
-                Group {
-                    if s.finished {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(s.cheer)
-                                .font(.system(size: 17, weight: .semibold))
-                                .tracking(-0.2)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
-                            Text(L("Next break at %@.", s.nextBreakTime))
-                                .font(.system(size: 12.5))
-                                .foregroundStyle(.secondary)
-                        }
-                        .transition(.opacity)
-                    } else {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(s.current.title)
-                                .font(.system(size: 17, weight: .semibold))
-                                .tracking(-0.2)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
-                            Text(s.current.text)
-                                .font(.system(size: 12.5))
-                                .foregroundStyle(.secondary)
-                                .lineSpacing(1.5)
-                                .lineLimit(2)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .id(s.index)
-                        .transition(.opacity.combined(with: .offset(y: 4)))
-                    }
-                }
-                .padding(.top, 5)
+    /// The crew is drawn in ink, so it stands on paper, a little toned down beside the black.
+    private var tile: some View {
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .fill(Pen.paper)
+            .overlay(BuddyView(move: s.finished ? .celebrate : s.current.move, buddy: s.buddy,
+                               fixedTime: s.fixedTime, epoch: s.moveStart, previous: s.previousMove).padding(4))
+            .colorMultiply(Color(hex: 0xF1ECE3))
+            .frame(width: Self.content.height, height: Self.content.height)
+            .shadow(color: .black.opacity(0.4), radius: 8, y: 4)
+    }
 
-                Spacer(minLength: 8)
-
-                HStack(spacing: 12) {
-                    HStack(spacing: 4) {
-                        ForEach(0..<s.exercises.count, id: \.self) { i in
-                            GeometryReader { g in
-                                ZStack(alignment: .leading) {
-                                    Capsule().fill(Color.primary.opacity(0.1))
-                                    Capsule().fill(accent).frame(width: g.size.width * s.progress(i))
-                                }
-                            }
-                            .frame(height: 4)
-                        }
-                    }
-                    .accessibilityHidden(true)
-
-                    if !s.finished {
-                        HStack(spacing: 6) {
-                            Button(L("In %ld min", s.snoozeMinutes)) { s.snooze() }
-                                .buttonStyle(ActionButtonStyle(prominent: false, accent: accent))
-                                .accessibilityHint(L("Snoozes the break"))
-                            Button(L("Done")) { s.complete() }
-                                .buttonStyle(ActionButtonStyle(prominent: true, accent: accent))
-                        }
-                        .transition(.opacity)
-                    }
-                }
-                .frame(height: 24)
+    private var header: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(label)
+                .font(.system(size: 10.5, weight: .semibold))
+                .tracking(0.8)
+                .foregroundStyle(Island.accent)
+                .lineLimit(1)
+                .contentTransition(.opacity)
+                .animation(.easeInOut(duration: 0.25), value: label)
+            Spacer(minLength: 8)
+            if !s.finished {
+                Text(countdown)
+                    .font(.system(size: 11, weight: .medium))
+                    .monospacedDigit()
+                    .foregroundStyle(Island.tertiary)
+                    .accessibilityLabel(L("%ld seconds left", s.remaining))
             }
         }
-        .padding(14)
-        .frame(width: Self.size.width, height: Self.size.height)
-        .overlay(
-            // Circular corners, to match the window's own mask
-            RoundedRectangle(cornerRadius: Self.cornerRadius, style: .circular)
-                .strokeBorder(dark ? Color.white.opacity(0.12) : Color.black.opacity(0.07), lineWidth: 0.5)
-        )
-        .animation(.easeInOut(duration: 0.3), value: s.index)
-        .animation(.easeInOut(duration: 0.3), value: s.finished)
+    }
+
+    private var words: some View {
+        Group {
+            if s.finished {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(s.cheer)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    Text(L("Next break at %@.", s.nextBreakTime))
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(Island.secondary)
+                }
+                .transition(.islandContent(scale: 0.96))
+            } else {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(s.current.title)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    Text(s.current.text)
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(Island.secondary)
+                        .lineSpacing(1.5)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .id(s.index)
+                .transition(.islandContent(scale: 0.96))
+            }
+        }
+    }
+
+    private var controls: some View {
+        HStack(spacing: 12) {
+            // One thin track per exercise, filled in white like the sliders in Dynamic Island
+            HStack(spacing: 4) {
+                ForEach(0..<s.exercises.count, id: \.self) { i in
+                    GeometryReader { g in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Color.white.opacity(0.18))
+                            Capsule().fill(Color.white.opacity(0.85)).frame(width: g.size.width * s.progress(i))
+                        }
+                    }
+                    .frame(height: 5)
+                }
+            }
+            .accessibilityHidden(true)
+
+            if !s.finished {
+                HStack(spacing: 6) {
+                    Button(L("In %ld min", s.snoozeMinutes)) { s.snooze() }
+                        .buttonStyle(IslandCapsuleStyle())
+                        .accessibilityHint(L("Snoozes the break"))
+                    Button(L("Done")) { s.complete() }
+                        .buttonStyle(IslandCapsuleStyle(prominent: true))
+                }
+                .transition(.opacity)
+            }
+        }
+        .frame(height: 26)
     }
 }

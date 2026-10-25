@@ -40,7 +40,8 @@ enum SettingsTab: Int, CaseIterable {
 
     @MainActor
     func makeView(onTestBreak: @escaping () -> Void) -> AnyView {
-        AnyView(content(onTestBreak: onTestBreak).environment(\.locale, Localizer.locale))
+        // Dynamic Island's orange for switches, selections and charts
+        AnyView(content(onTestBreak: onTestBreak).environment(\.locale, Localizer.locale).tint(.orange))
     }
 
     @MainActor
@@ -148,7 +149,8 @@ struct PositionPicker: View {
     }
 }
 
-/// A tiny Mac screen with the menu bar, the notch and the break panel where it would appear.
+/// A tiny Mac screen with the menu bar, the notch and the break where it would appear: the island growing out
+/// of the notch at the top, a black panel in a corner.
 private struct ScreenThumbnail: View {
     let position: ReminderPosition
     let selected: Bool
@@ -164,18 +166,22 @@ private struct ScreenThumbnail: View {
             let x: CGFloat = position == .topCenter ? (w - panel.width) / 2 : (position.isLeft ? inset : w - panel.width - inset)
             let y: CGFloat = position.isTop ? bar + (position == .topCenter ? h * 0.05 : inset) : h - panel.height - inset
             ZStack(alignment: .topLeading) {
-                LinearGradient(colors: dark ? [Color(hex: 0x3A4250), Color(hex: 0x262A31)] : [Color(hex: 0xDCE3EA), Color(hex: 0xC4CFDA)],
-                               startPoint: .top, endPoint: .bottom)
-                Rectangle().fill(Color.white.opacity(dark ? 0.12 : 0.55)).frame(height: bar)
+                Island.wallpaper.opacity(selected ? 1 : 0.75)
                 UnevenRoundedRectangle(bottomLeadingRadius: 2, bottomTrailingRadius: 2)
                     .fill(Color.black)
                     .frame(width: w * 0.18, height: bar)
                     .offset(x: w * 0.41)
-                RoundedRectangle(cornerRadius: 2.5, style: .continuous)
-                    .fill(selected ? accent : Color.white.opacity(dark ? 0.75 : 0.95))
-                    .shadow(color: .black.opacity(0.18), radius: 1.5, y: 0.5)
-                    .frame(width: panel.width, height: panel.height)
-                    .offset(x: x, y: y)
+                if position == .topCenter {
+                    IslandShape(ear: 2, bottom: 5)
+                        .fill(Color.black)
+                        .frame(width: panel.width + 4, height: bar + panel.height)
+                        .offset(x: (w - panel.width - 4) / 2)
+                } else {
+                    RoundedRectangle(cornerRadius: 3.5, style: .continuous)
+                        .fill(Color.black)
+                        .frame(width: panel.width, height: panel.height)
+                        .offset(x: x, y: y)
+                }
             }
             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous)

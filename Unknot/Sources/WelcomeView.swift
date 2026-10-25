@@ -113,6 +113,7 @@ struct WelcomeView: View {
         }
         .frame(width: 470)
         .fixedSize(horizontal: false, vertical: true)
+        .tint(.orange)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             login.refresh()
         }

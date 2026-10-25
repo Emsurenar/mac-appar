@@ -29,18 +29,18 @@
   <img src="docs/demo.gif" width="720" alt="A break drops out of the camera notch, shows three stretches, cheers and goes back into the notch">
 </p>
 
-Unknot is a small menu bar app that reminds you to move. Every 20 minutes a panel drops out of the notch at the
-top of your screen, a member of the Stretch Crew demonstrates three short exercises, and after 30 seconds the
-panel slides back. It waits for a pause in your typing and never takes focus, so it doesn't break your train
+Unknot is a small menu bar app that reminds you to move. Every 20 minutes a black island grows out of the notch
+at the top of your screen, a member of the Stretch Crew demonstrates three short exercises, and after 30 seconds
+the island goes back in. It waits for a pause in your typing and never takes focus, so it doesn't break your train
 of thought.
 
 Unknot is one of the [mac-appar](../README.md), a small collection of native Mac apps, alongside Dynamic Island
-and Posture. Each app stands on its own.
+and Posture, and it shares their look. Each app stands on its own.
 
 ## Highlights
 
-- **Designed for the notch.** Breaks emerge from the camera housing and return to it. On displays without a
-  notch they unfold from beneath the menu bar.
+- **Designed for the notch.** Like Dynamic Island, each break grows out of the camera housing as a black island,
+  with the same springs, and goes back into it. On displays without a notch it grows from the top edge.
 - **Fourteen animated exercises** for the neck, shoulders, back, wrists, legs and eyes, each choreographed to
   match the real movement, with live cues such as *Breathe in · 3* and *Switch sides*.
 - **Context-aware timing.** Time away counts as a break, sleep resets the countdown, and breaks wait while
@@ -96,8 +96,7 @@ small frog.
 </p>
 
 <p align="center">
-  <img src="docs/break-light.png" width="420" alt="A stretch break in light mode">
-  <img src="docs/break-dark.png" width="420" alt="The same break in dark mode">
+  <img src="docs/break.png" width="720" alt="A stretch break: a black island under the menu bar with Momo the mochi reaching up on a paper tile, the exercise, its progress and the In 5 min and Done buttons">
 </p>
 
 During a break, **Done** ends it early and counts it, and **In 5 min** postpones it. Breaks are timed around
@@ -169,7 +168,7 @@ Open Settings from the menu bar, or by opening Unknot again from Finder or Spotl
 
 | Tab | Options |
 | --- | --- |
-| General | Interval, break length, exercises per break, snooze length, language (English or Swedish), panel position, sound, open at login, automatic updates |
+| General | Interval, break length, exercises per break, snooze length, language (English or Swedish), where the break appears, sound, open at login, automatic updates |
 | Stretch Crew | Which characters can lead a break |
 | Exercises | Which exercises can come up, grouped by body area |
 | Schedule | Working hours, time away, waiting for calls and full screen |
@@ -194,8 +193,8 @@ Spotlight to reach Settings, or remove a few other menu bar items.
 <details>
 <summary><strong>My Mac has no notch</strong></summary>
 
-The panel unfolds from beneath the menu bar instead. The same applies to external displays. You can also move
-it to a corner in **Settings → General → Position on screen**.
+The island grows from the top edge of the screen instead, where a notch would be. The same applies to external
+displays. You can also move it to a corner, as a black panel, in **Settings → General → Position on screen**.
 </details>
 
 <details>

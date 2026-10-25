@@ -66,19 +66,21 @@ extension Snapshot {
         check(NSSound(named: "Unknot") != nil, "The app's own sound is bundled")
 
         let notch = CGRect(x: 270, y: 0, width: 185, height: 32)
-        let card = CGRect(x: 36, y: 42, width: 404, height: 144)
-        let drop = NotchDrop(start: notch, panel: card, fromNotch: true)
+        let island = CGRect(x: 123, y: 0, width: 480, height: 160)
+        let drop = NotchDrop(start: notch, island: island)
         func near(_ a: CGRect, _ b: CGRect) -> Bool {
             abs(a.minX - b.minX) < 0.5 && abs(a.minY - b.minY) < 0.5 && abs(a.width - b.width) < 0.5 && abs(a.height - b.height) < 0.5
         }
         check(near(drop.frame(at: 0).outline.boundingBoxOfPath, notch), "A break starts inside the notch")
-        check(near(drop.frame(at: 1).outline.boundingBoxOfPath, card), "A break ends as the panel")
-        check(drop.frame(at: 0).ink == 1 && drop.frame(at: 1).ink == 0, "The drop starts black and ends as glass")
-        check(drop.frame(at: 0.3).content == 0 && drop.frame(at: 1).content == 1, "The contents appear once it has opened")
-        check(stride(from: 0.0, through: 1.0, by: 0.05).allSatisfy { k in
-            let stops = NotchDrop.inkStops(CGFloat(k))
-            return stops.solid <= stops.clear
-        }, "The black drains in order")
+        check(near(drop.frame(at: NotchDrop.openDuration).outline.boundingBoxOfPath, island), "A break opens into the island")
+        check(near(drop.frame(at: NotchDrop.closeDuration, closing: true).outline.boundingBoxOfPath, notch), "A break closes back into the notch")
+        check(stride(from: 0.0, through: NotchDrop.openDuration, by: 0.02).allSatisfy { t in
+            drop.frame(at: t).outline.boundingBoxOfPath.minY == 0
+        }, "The island hangs from the top of the screen all the way")
+        check(drop.frame(at: 0.05).reveal == 0 && drop.frame(at: NotchDrop.openDuration).reveal == 1,
+              "The contents arrive once the island has started to open")
+        check(abs(Island.spring(3, response: 0.42, damping: 0.74) - 1) < 0.001 && Island.spring(0, response: 0.42, damping: 0.74) == 0,
+              "The spring starts at 0 and settles at 1")
 
         Localizer.apply(.swedish)
         check(L("Stretch now") == "Sträck på dig nu", "Swedish can be chosen in the app")

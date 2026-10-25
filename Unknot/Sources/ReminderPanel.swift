@@ -6,21 +6,6 @@ final class FirstMouseHostingView<Content: View>: NSHostingView<Content> {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }
 
-extension NSImage {
-    /// A rounded-corner mask for NSVisualEffectView; the window shadow follows its shape.
-    static func roundedMask(radius r: CGFloat) -> NSImage {
-        let edge = r * 2 + 1
-        let image = NSImage(size: NSSize(width: edge, height: edge), flipped: false) { rect in
-            NSColor.black.setFill()
-            NSBezierPath(roundedRect: rect, xRadius: r, yRadius: r).fill()
-            return true
-        }
-        image.capInsets = NSEdgeInsets(top: r, left: r, bottom: r, right: r)
-        image.resizingMode = .stretch
-        return image
-    }
-}
-
 /// A view backed by a layer we configure ourselves: a shape, or a shadow.
 private final class LayerView<L: CALayer>: NSView {
     let shape = L()
@@ -34,7 +19,7 @@ private final class LayerView<L: CALayer>: NSView {
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
 
-/// A floating, non-activating glass panel. It never steals focus.
+/// A floating, non-activating island. It never steals focus.
 @MainActor
 final class ReminderPanel: NSObject {
     private var panel: NSPanel?
@@ -43,19 +28,14 @@ final class ReminderPanel: NSObject {
 
     func show(_ session: ReminderSession, at position: ReminderPosition) {
         close()
-        let content = ReminderView(s: session).environment(\.locale, Localizer.locale)
         // Use the screen the pointer is on
         let mouse = NSEvent.mouseLocation
         let screen = NSScreen.screens.first { NSMouseInRect(mouse, $0.frame, false) } ?? NSScreen.main ?? NSScreen.screens[0]
         if position == .topCenter {
-            drop = DropAnimation(content: content, on: screen)
+            drop = DropAnimation(session: session, on: screen)
         } else {
-            showInCorner(content, position: position, on: screen)
+            showInCorner(session, position: position, on: screen)
         }
-        NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested, userInfo: [
-            .announcement: "\(L("Stretch break with %@", session.buddy.callName)): \(session.current.title). \(session.current.text)",
-            .priority: NSAccessibilityPriorityLevel.high.rawValue,
-        ])
     }
 
     func close() {
@@ -73,23 +53,27 @@ final class ReminderPanel: NSObject {
         p.perform(#selector(NSWindow.orderOut(_:)), with: nil, afterDelay: 0.35)
     }
 
-    /// In a corner the panel is an ordinary window with a glass background, sliding in from the nearest edge.
-    private func showInCorner<V: View>(_ content: V, position: ReminderPosition, on screen: NSScreen) {
-        let size = NSSize(width: ReminderView.size.width, height: ReminderView.size.height)
+    /// In a corner there's no notch to grow from: the island is a black rounded panel that slides in from the
+    /// nearest edge.
+    private func showInCorner(_ session: ReminderSession, position: ReminderPosition, on screen: NSScreen) {
+        let content = ReminderView(s: session).environment(\.locale, Localizer.locale)
+        let size = NSSize(width: ReminderView.size(topInset: 0, sideInset: 0).width,
+                          height: ReminderView.size(topInset: 0, sideInset: 0).height)
         let p = makePanel(size: size)
         p.hasShadow = true
         p.isMovableByWindowBackground = true
 
-        let glass = NSVisualEffectView(frame: NSRect(origin: .zero, size: size))
-        glass.material = .popover
-        glass.blendingMode = .behindWindow
-        glass.state = .active
-        glass.maskImage = .roundedMask(radius: ReminderView.cornerRadius)
+        let black = NSView(frame: NSRect(origin: .zero, size: size))
+        black.wantsLayer = true
+        black.layer?.backgroundColor = NSColor.black.cgColor
+        black.layer?.cornerRadius = Island.panelRadius
+        black.layer?.cornerCurve = .continuous
+        black.layer?.masksToBounds = true
         let host = FirstMouseHostingView(rootView: content)
-        host.frame = glass.bounds
+        host.frame = black.bounds
         host.autoresizingMask = [.width, .height]
-        glass.addSubview(host)
-        p.contentView = glass
+        black.addSubview(host)
+        p.contentView = black
 
         let vf = screen.visibleFrame
         let inset: CGFloat = 16
@@ -128,29 +112,31 @@ private func makePanel(size: NSSize) -> NSPanel {
     return p
 }
 
-/// The panel at the top center: it comes out of the camera notch and goes back into it.
-/// The window reaches up over the menu bar so the drop can start inside the notch; it only takes clicks
-/// over the panel itself, so the menu bar keeps working around it.
+/// The island at the top center: it grows out of the camera notch and goes back into it, like Dynamic Island.
+/// The window covers the top of the screen around the notch; it only takes clicks over the island itself, so
+/// the menu bar keeps working around it.
 @MainActor
 private final class DropAnimation: NSObject {
+    private let session: ReminderSession
     private let window: NSPanel
     private let geometry: DropGeometry
-    private let glass = NSView()
-    private let glassMask = CAShapeLayer()
-    private let ink = LayerView<CAGradientLayer>()
-    private let inkMask = CAShapeLayer()
+    private let island = LayerView<CAShapeLayer>()
     private let shadow = LayerView<CALayer>()
     private let shadowMask = CAShapeLayer()
+    private let contentMask = CAShapeLayer()
     private let host: NSView
     private var timer: Timer?
     private var started = Date()
     private var closing = false
+    private var settled = false
     private let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
 
-    init<V: View>(content: V, on screen: NSScreen) {
+    init(session: ReminderSession, on screen: NSScreen) {
+        self.session = session
         geometry = DropGeometry(screen: screen)
         window = makePanel(size: geometry.windowFrame.size)
-        host = FirstMouseHostingView(rootView: content)
+        host = FirstMouseHostingView(rootView: ReminderView(s: session, topInset: geometry.topInset, sideInset: Island.earRadius)
+            .environment(\.locale, Localizer.locale))
         super.init()
 
         window.hasShadow = false
@@ -158,40 +144,29 @@ private final class DropAnimation: NSObject {
         let root = NSView(frame: NSRect(origin: .zero, size: geometry.windowFrame.size))
         root.wantsLayer = true
 
-        // A soft shadow under the panel, kept outside it so it doesn't darken the glass
+        // A soft shadow under the island, kept outside it
         shadow.frame = root.bounds
         shadow.shape.shadowColor = NSColor.black.cgColor
-        shadow.shape.shadowRadius = 16
-        shadow.shape.shadowOffset = CGSize(width: 0, height: -6)
+        shadow.shape.shadowRadius = 18
+        shadow.shape.shadowOffset = CGSize(width: 0, height: -8)
         shadowMask.fillRule = .evenOdd
         shadowMask.frame = root.bounds
         shadow.shape.mask = shadowMask
         root.addSubview(shadow)
 
-        glass.frame = root.bounds
-        glass.wantsLayer = true
-        let material = NSVisualEffectView(frame: root.bounds)
-        material.material = .popover
-        material.blendingMode = .behindWindow
-        material.state = .active
-        material.autoresizingMask = [.width, .height]
-        glass.addSubview(material)
-        glassMask.frame = root.bounds
-        glass.layer?.mask = glassMask
-        root.addSubview(glass)
+        island.frame = root.bounds
+        island.shape.fillColor = NSColor.black.cgColor
+        root.addSubview(island)
 
-        ink.frame = root.bounds
-        ink.shape.colors = [NSColor.black.cgColor, NSColor.black.cgColor, NSColor.black.withAlphaComponent(0).cgColor]
-        ink.shape.startPoint = CGPoint(x: 0.5, y: 1)   // the top, in a layer's y-up space
-        ink.shape.endPoint = CGPoint(x: 0.5, y: 0)
-        ink.shape.mask = inkMask
-        root.addSubview(ink)
-
-        host.frame = geometry.flip(geometry.drop.panel)
+        // The contents are clipped to the island while it grows, so nothing shows outside the black
+        host.frame = geometry.flip(geometry.drop.island)
+        host.wantsLayer = true
+        contentMask.frame = CGRect(origin: .zero, size: host.frame.size)
+        host.layer?.mask = contentMask
         root.addSubview(host)
         window.contentView = root
 
-        render(at: reduceMotion ? 1 : 0)
+        render(geometry.drop.frame(at: reduceMotion ? NotchDrop.openDuration : 0))
         if reduceMotion { window.alphaValue = 0 }
         window.ignoresMouseEvents = true
         window.orderFrontRegardless()
@@ -203,6 +178,7 @@ private final class DropAnimation: NSObject {
 
     func close() {
         closing = true
+        settled = false
         window.ignoresMouseEvents = true
         if reduceMotion {
             NSAnimationContext.runAnimationGroup { $0.duration = 0.25; window.animator().alphaValue = 0 }
@@ -224,49 +200,41 @@ private final class DropAnimation: NSObject {
         let elapsed = Date().timeIntervalSince(started)
         if closing {
             guard !reduceMotion else { return }
-            let k = min(elapsed / NotchDrop.closeDuration, 1)
-            render(at: 1 - CGFloat(k * k * (3 - 2 * k)))
-            if k >= 1 { finish(after: 0) }
-        } else {
-            let k = reduceMotion ? 1 : min(elapsed / NotchDrop.openDuration, 1)
-            if k < 1 { render(at: CGFloat(k)) } else if timer?.timeInterval != 1.0 / 30 {
-                render(at: 1)
-                // Open: keep checking whether the pointer is over the panel, so clicks around it go through
+            render(geometry.drop.frame(at: elapsed, closing: true))
+            if elapsed >= NotchDrop.closeDuration { finish(after: 0) }
+            return
+        }
+        if reduceMotion || elapsed >= NotchDrop.openDuration {
+            if !settled {
+                settled = true
+                render(geometry.drop.frame(at: NotchDrop.openDuration))
+                // Open: keep checking whether the pointer is over the island, so clicks around it go through
                 timer?.invalidate()
                 let t = Timer(timeInterval: 1.0 / 30, target: self, selector: #selector(step), userInfo: nil, repeats: true)
                 RunLoop.main.add(t, forMode: .common)
                 timer = t
             }
-            if k >= 1 {
-                window.ignoresMouseEvents = !geometry.panelOnScreen.contains(NSEvent.mouseLocation)
-            }
+            window.ignoresMouseEvents = !geometry.islandOnScreen.contains(NSEvent.mouseLocation)
+        } else {
+            render(geometry.drop.frame(at: elapsed))
         }
     }
 
-    private func render(at t: CGFloat) {
-        let f = geometry.drop.frame(at: t)
+    private func render(_ f: NotchDrop.Frame) {
         let outline = geometry.flip(f.outline)
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        glassMask.path = outline
-        // The black is a gradient over the drop's own height, so it can drain upwards
-        let box = outline.boundingBoxOfPath
-        ink.frame = box
-        var toLocal = CGAffineTransform(translationX: -box.minX, y: -box.minY)
-        inkMask.frame = CGRect(origin: .zero, size: box.size)
-        inkMask.path = outline.copy(using: &toLocal)
-        let stops = NotchDrop.inkStops(f.ink)
-        ink.shape.locations = [0, NSNumber(value: Double(stops.solid)), NSNumber(value: Double(stops.clear))]
-        ink.isHidden = f.ink <= 0
+        island.shape.path = outline
         shadow.shape.shadowPath = outline
-        shadow.shape.shadowOpacity = Float(0.28 * f.shadow)
+        shadow.shape.shadowOpacity = Float(0.5 * f.shadow)
         let surround = CGMutablePath()
         surround.addRect(shadow.bounds)
         surround.addPath(outline)
         shadowMask.path = surround
+        var toHost = CGAffineTransform(translationX: -host.frame.minX, y: -host.frame.minY)
+        contentMask.path = outline.copy(using: &toHost)
         CATransaction.commit()
-        host.alphaValue = f.content
-        host.setFrameOrigin(geometry.flip(geometry.drop.panel.offsetBy(dx: 0, dy: f.contentOffset)).origin)
+        if session.reveal != f.reveal { session.reveal = f.reveal }
     }
 
     private func finish(after delay: TimeInterval) {
@@ -276,34 +244,37 @@ private final class DropAnimation: NSObject {
     }
 }
 
-/// Where the notch, the panel and the window are on a screen.
+/// Where the notch, the island and the window are on a screen.
 private struct DropGeometry {
     let windowFrame: NSRect
     let drop: NotchDrop
-    let panelOnScreen: NSRect
+    let islandOnScreen: NSRect
+    /// The height of the notch, or of the menu bar on a screen without one: the contents start below it.
+    let topInset: CGFloat
 
     init(screen: NSScreen) {
         let frame = screen.frame
-        let size = ReminderView.size
-        // The menu bar, or the notch's height when the menu bar is hidden in full screen
-        let menuBar = max(frame.maxY - screen.visibleFrame.maxY, screen.safeAreaInsets.top)
-        let margin: CGFloat = 36
-        let gap: CGFloat = 10
-        let panelX = (frame.midX - size.width / 2).rounded()
-        windowFrame = NSRect(x: panelX - margin, y: frame.maxY - menuBar - gap - size.height - margin,
-                             width: size.width + margin * 2, height: menuBar + gap + size.height + margin)
-        panelOnScreen = NSRect(x: panelX, y: windowFrame.minY + margin, width: size.width, height: size.height)
-
-        // Window coordinates with y pointing down, so the top of the screen is 0
-        let panel = CGRect(x: margin, y: menuBar + gap, width: size.width, height: size.height)
         let left = screen.auxiliaryTopLeftArea ?? .zero
         let right = screen.auxiliaryTopRightArea ?? .zero
-        if screen.safeAreaInsets.top > 0 && left.width > 0 && right.width > 0 {
+        let hasNotch = screen.safeAreaInsets.top > 0 && left.width > 0 && right.width > 0
+        // The menu bar, or the notch's height when the menu bar is hidden in full screen
+        let menuBar = max(frame.maxY - screen.visibleFrame.maxY, screen.safeAreaInsets.top)
+        topInset = hasNotch ? screen.safeAreaInsets.top : menuBar
+        let size = ReminderView.size(topInset: topInset, sideInset: Island.earRadius)
+        let margin: CGFloat = 40
+        let islandX = (frame.midX - size.width / 2).rounded()
+        windowFrame = NSRect(x: islandX - margin, y: frame.maxY - size.height - margin,
+                             width: size.width + margin * 2, height: size.height + margin)
+        islandOnScreen = NSRect(x: islandX, y: frame.maxY - size.height, width: size.width, height: size.height)
+
+        // Window coordinates with y pointing down, so the top of the screen is 0
+        let island = CGRect(x: margin, y: 0, width: size.width, height: size.height)
+        if hasNotch {
             let notch = CGRect(x: left.maxX - windowFrame.minX, y: 0, width: right.minX - left.maxX, height: screen.safeAreaInsets.top)
-            drop = NotchDrop(start: notch, panel: panel, fromNotch: true, cornerRadius: ReminderView.cornerRadius)
+            drop = NotchDrop(start: notch, island: island)
         } else {
-            let sliver = CGRect(x: panel.midX - 70, y: menuBar, width: 140, height: 2)
-            drop = NotchDrop(start: sliver, panel: panel, fromNotch: false, cornerRadius: ReminderView.cornerRadius)
+            // No notch: it grows out of the top edge, from where one would be
+            drop = NotchDrop(start: CGRect(x: island.midX - 90, y: 0, width: 180, height: 0), island: island)
         }
     }
 

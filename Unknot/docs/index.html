@@ -7,29 +7,32 @@
   <meta name="description" content="Stretch breaks for your Mac that drop out of the camera notch. Free and open source for macOS 14 and later.">
   <meta property="og:title" content="Unknot – stretch breaks for your Mac">
   <meta property="og:description" content="Every 20 minutes a member of the Stretch Crew drops out of the notch with three quick stretches.">
-  <meta property="og:image" content="https://emsurenar.github.io/mac-appar/unknot/break-light.png">
+  <meta property="og:image" content="https://emsurenar.github.io/mac-appar/unknot/break.png">
   <link rel="icon" href="icon.png">
   <style>
+    /* The same profile as Dynamic Island: Apple's neutral greys, black islands and an orange accent */
     :root {
-      --paper: #f7f5f0;
+      --paper: #f5f5f7;
       --surface: #ffffff;
-      --ink: #262626;
-      --muted: #6b6560;
-      --line: rgba(38, 38, 38, 0.1);
-      --accent: #de6447;
-      --accent-ink: #ffffff;
-      --code: #efebe4;
+      --ink: #1d1d1f;
+      --muted: #6e6e73;
+      --line: rgba(0, 0, 0, 0.08);
+      --accent: #f08a00;
+      --island: #000000;
+      --island-ink: #ffffff;
+      --code: #ebebef;
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --paper: #18191b;
-        --surface: #222326;
-        --ink: #ece9e4;
-        --muted: #a39d96;
+        --paper: #000000;
+        --surface: #1c1c1e;
+        --ink: #f5f5f7;
+        --muted: #a1a1a6;
         --line: rgba(255, 255, 255, 0.1);
-        --accent: #f28466;
-        --accent-ink: #1b1b1b;
-        --code: #2a2b2f;
+        --accent: #ff9f0a;
+        --island: #ffffff;
+        --island-ink: #000000;
+        --code: #1c1c1e;
       }
     }
     * { box-sizing: border-box; }
@@ -46,7 +49,7 @@
     .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; font-size: 18px; text-decoration: none; }
     .brand img { width: 32px; height: 32px; }
     nav a { color: var(--muted); text-decoration: none; font-size: 15px; margin-left: 20px; }
-    nav a:hover { color: var(--ink); }
+    nav a:hover { color: var(--accent); }
 
     .hero { text-align: center; padding: 48px 0 28px; }
     h1 { font-size: clamp(34px, 6vw, 54px); line-height: 1.08; letter-spacing: -0.025em; margin: 0 auto 18px; max-width: 14em; }
@@ -57,7 +60,7 @@
       padding: 12px 22px; border-radius: 999px; font-weight: 600; font-size: 16px; text-decoration: none;
       border: 1px solid var(--line); background: var(--surface);
     }
-    .button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+    .button.primary { background: var(--island); color: var(--island-ink); border-color: transparent; }
     .button:hover { filter: brightness(1.04); }
     .fine { color: var(--muted); font-size: 14px; margin-top: 14px; }
 
@@ -125,7 +128,7 @@
     </div>
 
     <div class="demo">
-      <img src="demo.gif" width="1080" height="354" alt="A break drops out of the camera notch, shows three stretches and goes back">
+      <img src="demo.gif" width="1320" height="348" alt="A break drops out of the camera notch, shows three stretches and goes back">
     </div>
 
     <section id="how">
@@ -135,8 +138,8 @@
       <div class="features">
         <div class="feature">
           <h3>Out of the notch</h3>
-          <p>A break starts as a drop of black inside the notch and opens into a glass panel. Without a notch it
-            unfolds from under the menu bar.</p>
+          <p>A break grows out of the notch as a black island, with the same springs as Dynamic Island, and goes
+            back in when it's done. Without a notch it grows from the top edge of the screen.</p>
         </div>
         <div class="feature">
           <h3>At the right moment</h3>

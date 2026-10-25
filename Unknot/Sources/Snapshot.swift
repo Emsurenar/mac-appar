@@ -26,6 +26,7 @@ enum Snapshot {
         let only = value("--only").map { $0.split(separator: ",").compactMap { Buddy(rawValue: String($0)) } }
         if args.contains("--benchmark") { benchmark(only ?? Buddy.allCases); return true }
         if let path = value("--transitions") { transitions(to: path); return true }
+        if let path = value("--drop-frames") { dropFrames(to: path); return true }
         if let path = value("--portraits") { portraits(to: path, people: only); return true }
         if let path = value("--moves") { moves(to: path, cast: only); return true }
         if args.contains("--selftest") { exit(selfTest() ? 0 : 1) }
@@ -46,34 +47,65 @@ enum Snapshot {
         try? png.write(to: URL(fileURLWithPath: path))
     }
 
-    /// Roughly how the reminder looks on screen: the glass is replaced by a flat surface.
-    static func framed<V: View>(_ view: V, dark: Bool) -> some View {
-        view
-            .background(RoundedRectangle(cornerRadius: ReminderView.cornerRadius)
-                .fill(dark ? Color(hex: 0x2C2B2B) : Color(hex: 0xF6F5F3)))
-            .compositingGroup()
-            .shadow(color: .black.opacity(dark ? 0.5 : 0.16), radius: 14, y: 5)
-            .padding(28)
-            .background(LinearGradient(colors: dark ? [Color(hex: 0x1D1E22), Color(hex: 0x131416)]
-                                                    : [Color(hex: 0xEAE6E1), Color(hex: 0xDAD5CF)],
-                                       startPoint: .topLeading, endPoint: .bottomTrailing))
-            .environment(\.colorScheme, dark ? .dark : .light)
+    /// How a break looks on screen: the island open under the menu bar, on Dynamic Island's wallpaper.
+    static func onScreen(_ session: ReminderSession) -> some View {
+        DropScene(session: session, frame: DropScene.drop.frame(at: NotchDrop.openDuration), mood: .happy)
     }
 
+    /// The app icon, built like Dynamic Island's: the same gradient squircle and the black island hanging from its
+    /// top edge, here with the frog on its paper tile, the lines of an exercise and the progress of a break.
     static func icon(to path: String) {
-        // The frog reaching up, engraved on paper, with a soft green field behind it
-        let view = ZStack {
-            RoundedRectangle(cornerRadius: 186, style: .continuous)
-                .fill(LinearGradient(colors: [Color(hex: 0xFBF9F4), Color(hex: 0xEEEAE1)], startPoint: .top, endPoint: .bottom))
+        let orange = LinearGradient(colors: [Color(red: 1, green: 0.62, blue: 0.3), Color(red: 0.98, green: 0.28, blue: 0.45)],
+                                    startPoint: .topLeading, endPoint: .bottomTrailing)
+        let squircle = RoundedRectangle(cornerRadius: 185, style: .circular)
+        let view = ZStack(alignment: .topLeading) {
+            squircle.fill(Color.black)
                 .frame(width: 824, height: 824)
-                .shadow(color: .black.opacity(0.22), radius: 18, y: 10)
-            Circle().fill(Color(hex: 0xCFE0C3)).frame(width: 520, height: 520).offset(x: 40, y: -10)
-            BuddyView(move: .armsUp, buddy: .frog, fixedTime: 2.3).frame(width: 760, height: 760).offset(y: 10)
-                .blendMode(.multiply)
+                .shadow(color: .black.opacity(0.35), radius: 24, y: 10)
+                .offset(x: 100, y: 100)
+            ZStack(alignment: .topLeading) {
+                LinearGradient(colors: [Color(red: 0.36, green: 0.55, blue: 1), Color(red: 0.55, green: 0.33, blue: 0.95),
+                                        Color(red: 0.95, green: 0.45, blue: 0.62)],
+                               startPoint: UnitPoint(x: 0.25, y: 0.067), endPoint: UnitPoint(x: 0.75, y: 0.933))
+                // The soft highlight of a Tahoe wallpaper
+                Ellipse().fill(RadialGradient(colors: [.white.opacity(0.35), .white.opacity(0)], center: .center,
+                                              startRadius: 0, endRadius: 380))
+                    .frame(width: 760, height: 560).offset(x: 80, y: 244)
+                // The island, hanging from the top edge
+                IslandIcon(orange: orange).offset(x: 132, y: 0)
+            }
+            .frame(width: 824, height: 824)
+            .clipShape(squircle)
+            .offset(x: 100, y: 100)
         }
-        .compositingGroup()
-        .frame(width: 1024, height: 1024)
+        .frame(width: 1024, height: 1024, alignment: .topLeading)
         save(view, to: path, scale: 1)
+    }
+
+    private struct IslandIcon: View {
+        let orange: LinearGradient
+        var body: some View {
+            ZStack(alignment: .topLeading) {
+                UnevenRoundedRectangle(bottomLeadingRadius: 100, bottomTrailingRadius: 100, style: .circular)
+                    .fill(Color.black)
+                    .frame(width: 560, height: 284)
+                RoundedRectangle(cornerRadius: 34, style: .continuous)
+                    .fill(Pen.paper)
+                    .overlay(BuddyView(move: .armsUp, buddy: .frog, fixedTime: 2.3).padding(6))
+                    .colorMultiply(Color(hex: 0xF1ECE3))
+                    .frame(width: 150, height: 150)
+                    .offset(x: 52, y: 112)
+                Capsule().fill(Color.white.opacity(0.92)).frame(width: 214, height: 26).offset(x: 236, y: 128)
+                Capsule().fill(Color.white.opacity(0.45)).frame(width: 154, height: 18).offset(x: 236, y: 170)
+                HStack(spacing: 12) {
+                    Capsule().fill(orange)
+                    Capsule().fill(Color.white.opacity(0.22))
+                    Capsule().fill(Color.white.opacity(0.22))
+                }
+                .frame(width: 270, height: 16)
+                .offset(x: 236, y: 230)
+            }
+        }
     }
 
     static func previews(in dir: String) {
@@ -85,13 +117,12 @@ enum Snapshot {
                                     nextMinutes: 20, total: 30)
             s.elapsed = 3.4
             s.fixedTime = 1.1 + Double(i) * 0.37
-            save(framed(ReminderView(s: s), dark: false), to: "\(dir)/card-\(exercise.id).png")
-            save(framed(ReminderView(s: s), dark: true), to: "\(dir)/card-\(exercise.id)-dark.png")
+            save(onScreen(s), to: "\(dir)/card-\(exercise.id).png")
         }
-        let done = ReminderSession(exercises: Array(allExercises.prefix(3)), nextMinutes: 20, total: 30)
+        let done = ReminderSession(exercises: Array(allExercises.prefix(3)), buddy: .frog, nextMinutes: 20, total: 30)
         done.markFinishedForPreview()
         done.fixedTime = 0.3
-        save(framed(ReminderView(s: done), dark: false), to: "\(dir)/card-done.png")
+        save(onScreen(done), to: "\(dir)/card-done.png")
     }
 
     /// Every buddy in a dozen poses: a contact sheet for checking the drawings.
@@ -250,45 +281,46 @@ enum Snapshot {
         let picks = [Move.armsUp, .sideBend, .breathe].compactMap { m in allExercises.first { $0.move == m } }
         let s = ReminderSession(exercises: picks, buddy: .frog, nextMinutes: 20, total: 30)
         s.fixedTime = 0
-        var frames: [(t: CGFloat, mood: MenuBarIcon.Mood, delay: Double)] = []
-        frames.append((0, .awake, 0.9))                                    // the desktop, before
+        let drop = DropScene.drop
         let morphFPS = 30.0
-        for i in 0...Int(NotchDrop.openDuration * morphFPS) {             // out of the notch
-            frames.append((CGFloat(Double(i) / (NotchDrop.openDuration * morphFPS)), .happy, 1 / morphFPS))
-        }
         let fps = 20.0
         let secondsPerMove = 2.6
         s.moveDurationOverride = secondsPerMove
+        let openFrames = Int(NotchDrop.openDuration * morphFPS)
+        let closeFrames = Int(NotchDrop.closeDuration * morphFPS)
         let activeFrames = Int(secondsPerMove * fps) * picks.count
         let doneFrames = Int(2.0 * fps)
-        let closeFrames = Int(NotchDrop.closeDuration * morphFPS)
         guard let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: path) as CFURL, UTType.gif.identifier as CFString,
-                                                         frames.count + activeFrames + doneFrames + closeFrames + 2, nil) else { return }
+                                                         openFrames + activeFrames + doneFrames + closeFrames + 4, nil) else { return }
         CGImageDestinationSetProperties(dest, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
-        func add(_ t: CGFloat, _ mood: MenuBarIcon.Mood, _ delay: Double) {
-            let renderer = ImageRenderer(content: DropScene(session: s, t: t, mood: mood))
+        func add(_ frame: NotchDrop.Frame?, _ mood: MenuBarIcon.Mood, _ delay: Double) {
+            s.reveal = frame?.reveal ?? 0
+            let renderer = ImageRenderer(content: DropScene(session: s, frame: frame, mood: mood))
             renderer.scale = 1.5
             guard let cg = renderer.cgImage else { return }
             CGImageDestinationAddImage(dest, cg, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: delay]] as CFDictionary)
         }
-        for f in frames { add(f.t, f.mood, f.delay) }
+        add(nil, .awake, 0.9)                                                // the desktop, before
+        for i in 0...openFrames {                                           // out of the notch
+            add(drop.frame(at: Double(i) / morphFPS), .happy, 1 / morphFPS)
+        }
+        let open = drop.frame(at: NotchDrop.openDuration)
         let framesPerMove = Int(secondsPerMove * fps)
         for frame in 0..<activeFrames {
             // Each move plays in real time from its start; the progress bar runs faster than the clock
             s.elapsed = Double(frame) / Double(activeFrames) * s.total
             s.fixedTime = Double(frame % framesPerMove) / fps
-            add(1, .happy, 1 / fps)
+            add(open, .happy, 1 / fps)
         }
         s.markFinishedForPreview()
         for frame in 0..<doneFrames {
             s.fixedTime = Double(frame) / fps
-            add(1, .happy, 1 / fps)
+            add(open, .happy, 1 / fps)
         }
         for i in 0...closeFrames {                                          // and back in
-            let k = Double(i) / Double(closeFrames)
-            add(CGFloat(1 - k * k * (3 - 2 * k)), .happy, 1 / morphFPS)
+            add(drop.frame(at: Double(i) / morphFPS, closing: true), .happy, 1 / morphFPS)
         }
-        add(0, .awake, 1.2)
+        add(nil, .awake, 1.2)
         CGImageDestinationFinalize(dest)
     }
 
@@ -396,5 +428,27 @@ enum Snapshot {
             let ms = Date().timeIntervalSince(start) / Double(frames) * 1000
             print(String(format: "%-8@ %.2f ms per frame", buddy.rawValue as NSString, ms))
         }
+    }
+}
+
+extension Snapshot {
+    /// Frames of the island opening and closing, side by side, for checking the motion.
+    static func dropFrames(to path: String) {
+        let drop = DropScene.drop
+        let times: [(Double, Bool)] = [(0.04, false), (0.1, false), (0.16, false), (0.24, false), (0.34, false), (0.5, false),
+                                       (0.05, true), (0.12, true), (0.2, true), (0.3, true)]
+        let scenes = times.map { t, closing -> (ReminderSession, NotchDrop.Frame) in
+            let s = ReminderSession(exercises: Array(allExercises.prefix(3)), buddy: .frog, nextMinutes: 20, total: 30)
+            s.fixedTime = 0.5
+            let f = drop.frame(at: t, closing: closing)
+            s.reveal = f.reveal
+            return (s, f)
+        }
+        let sheet = VStack(spacing: 4) {
+            ForEach(scenes.indices, id: \.self) { i in
+                DropScene(session: scenes[i].0, frame: scenes[i].1, mood: .happy)
+            }
+        }
+        save(sheet, to: path, scale: 1)
     }
 }

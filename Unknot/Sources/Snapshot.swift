@@ -27,6 +27,7 @@ enum Snapshot {
         if args.contains("--benchmark") { benchmark(only ?? Buddy.allCases); return true }
         if let path = value("--transitions") { transitions(to: path); return true }
         if let path = value("--drop-frames") { dropFrames(to: path); return true }
+        if let path = value("--menubar-notes") { menuBarNotes(to: path); return true }
         if let path = value("--portraits") { portraits(to: path, people: only); return true }
         if let path = value("--moves") { moves(to: path, cast: only); return true }
         if args.contains("--selftest") { exit(selfTest() ? 0 : 1) }
@@ -447,5 +448,24 @@ extension Snapshot {
             }
         }
         save(sheet, to: path, scale: 1)
+    }
+}
+
+extension Snapshot {
+    /// The notes the menu bar icon shows after the welcome window and after an update, on a dark popover.
+    static func menuBarNotes(to path: String) {
+        let notes = [MenuBarHint(title: L("Unknot lives up here"),
+                                 text: L("%@. Click the frog to stretch now, pause reminders or change the settings.", L("Next break at %@, in %ld min", "14:20", 20))),
+                     MenuBarHint(title: L("Updated to Unknot %@", Updater.currentVersion),
+                                 text: L("New crew members, new moves or fixes: the release notes have the details."),
+                                 link: (L("What's new"), Updater.releasesURL))]
+        let sheet = HStack(alignment: .top, spacing: 20) {
+            ForEach(notes.indices, id: \.self) { i in
+                notes[i].background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color(white: 0.16)))
+            }
+        }
+        .padding(20)
+        .background(Island.wallpaper)
+        save(sheet, to: path)
     }
 }

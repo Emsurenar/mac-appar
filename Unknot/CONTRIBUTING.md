@@ -34,6 +34,7 @@ $U --gif demo.gif                       # the README animation: a break dropping
 $U --settings-screenshots shots         # every settings tab, light and dark, and the welcome window
 $U --buddies-image crew.png             # the crew image in the README
 $U --menubar-icons icons.png            # the menu bar frog in each mood
+$U --menubar-notes notes.png            # the notes the frog shows after the welcome window and after an update
 $U --capture-drop frames                # photographs a real break window while it opens and closes
 $U --verify-latest-release              # downloads and checks the latest release like the updater does
 $U --benchmark                          # how long one frame of each crew member takes to draw

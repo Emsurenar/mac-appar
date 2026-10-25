@@ -153,6 +153,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let popover = NSPopover()
         popover.behavior = .transient
         popover.animates = true
+        // Dark, like the island a break comes in
+        popover.appearance = NSAppearance(named: .darkAqua)
         popover.contentViewController = NSHostingController(rootView: note.environment(\.locale, Localizer.locale))
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { [weak popover] in popover?.performClose(nil) }
@@ -268,27 +270,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func quit() { NSApp.terminate(nil) }
 }
 
-/// A short note from the menu bar icon: where the app lives, or that it was updated.
-private struct MenuBarHint: View {
+/// A short note from the menu bar icon: where the app lives, or that it was updated. In the island's
+/// language: white type on dark, the frog in orange, a capsule button for the link.
+struct MenuBarHint: View {
     let title: String
     let text: String
     var link: (String, URL)? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.system(size: 13, weight: .semibold))
-            Text(text)
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            if let link {
-                Link(link.0, destination: link.1)
-                    .font(.system(size: 12, weight: .medium))
-                    .padding(.top, 4)
+        HStack(alignment: .top, spacing: 10) {
+            Image(nsImage: MenuBarIcon.image(.happy))
+                .renderingMode(.template)
+                .foregroundStyle(Island.accent)
+                .padding(.top, 1)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.white)
+                Text(text)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Island.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let link {
+                    Button(link.0) { NSWorkspace.shared.open(link.1) }
+                        .buttonStyle(IslandCapsuleStyle(prominent: true))
+                        .padding(.top, 6)
+                }
             }
         }
-        .frame(width: 250, alignment: .leading)
+        .frame(width: 260, alignment: .leading)
         .padding(14)
+        .environment(\.colorScheme, .dark)
     }
 }

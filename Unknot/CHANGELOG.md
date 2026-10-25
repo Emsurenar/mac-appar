@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.24.2 – 2026-10-25
+
+- **The menu bar notes match the island.** "Unknot lives up here" and the note after an update are dark, with
+  white type, the frog in orange and a capsule button for the release notes.
+- **Stefan Löfven laughs with his teeth showing.** In the moves where the crew opens their mouths, his is a
+  broad smile with the upper teeth, as in the photographs, instead of a black crescent.
+
 ## 1.24.1 – 2026-10-25
 
 - **The welcome window shows a break in miniature.** A small black island hangs from the top of the window,

@@ -392,10 +392,18 @@ struct StefanArt: CrewArt {
             pen.fine(bend(pt(108.5 + x, 112.5), pt(110 + x, 112.3), pt(110.6 + x, 111)))
             pen.fine(bend(pt(96 + x, 118.5), pt(100 + x, 119.3), pt(104 + x, 118.3)))
         case .open:
-            pen.solid(makePath { p in
+            // A broad, open smile showing the upper teeth, as in the photographs where he laughs
+            let mouth = makePath { p in
                 p.move(to: pt(92 + x, 113.5)); p.addQuadCurve(to: pt(108 + x, 113), control: pt(100 + x, 115))
                 p.addQuadCurve(to: pt(92 + x, 113.5), control: pt(100 + x, 122))
-            })
+            }
+            pen.solid(mouth)
+            let teeth = mouth.intersection(Path(CGRect(x: 90 + x, y: 112, width: 20, height: 3.6)))
+            pen.paper(teeth)
+            pen.c.stroke(makePath { p in
+                for tx in [96.0, 100.0, 104.0] { p.move(to: pt(tx + x, 113.9)); p.addLine(to: pt(tx + x, 115.5)) }
+            }, with: .color(Pen.ink.opacity(0.35)), lineWidth: 0.6)
+            pen.stroke(mouth, 1.4)
         case .o:
             pen.stroke(oval(100 + x, 116, 5, 5.5), 1.6)
         }

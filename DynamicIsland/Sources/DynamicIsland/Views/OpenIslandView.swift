@@ -64,7 +64,9 @@ struct OpenIslandView: View {
             if model.showsClipboardTab {
                 tabButton(.clipboard, symbol: "doc.on.clipboard", help: "Clipboard")
             }
-            tabButton(.system, symbol: "gauge.with.dots.needle.67percent", help: "System")
+            if model.showsSystemTab {
+                tabButton(.system, symbol: "gauge.with.dots.needle.67percent", help: "System")
+            }
             Button { model.onOpenSettings?() } label: {
                 Image(systemName: "gearshape.fill").font(.system(size: 12, weight: .semibold))
             }

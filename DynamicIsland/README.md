@@ -6,7 +6,7 @@
 
 <p align="center">
   A native Dynamic Island that grows out of your MacBook's notch.<br>
-  Now Playing from any app, sound, brightness and Apple Home, animated with real SwiftUI springs.
+  Now Playing, sound, Apple Home, calendar, clipboard, a file shelf and more, animated with real SwiftUI springs.
 </p>
 
 <p align="center">
@@ -32,6 +32,7 @@
 - **Clipboard history.** The last 20 things you copied, text and images. Click one to paste it again.
 - **Screenshot shelf.** A new screenshot pops out of the notch. Drag it straight into Mail, Slack or a folder, or copy, reveal or trash it from there. The first time, macOS may ask to let the app read the folder your screenshots go to.
 - **File shelf.** Drag files onto the notch to park them in the island. They stay there, even after a restart, until you drag them out to wherever they're going.
+- **System at a glance.** Memory, CPU, heat, battery, charger and uptime, with the apps using the most.
 - **Posture companion.** With the [Posture](../Hallning) app running, the island shows your posture and nudges you when you slouch.
 - **Feels like a Mac.** Spring animations, blur-and-scale transitions, rubber-band sliders, SF Symbols and trackpad haptics. It never steals focus from the app you're using.
 
@@ -93,7 +94,7 @@ Click **Show me the island** and it opens once, so you see where it lives. You c
 ## Using it
 
 - **Hover** over the notch to open the island. Move the pointer away to close it. If you prefer clicking, turn off hover in settings.
-- **Tabs** in the top-left corner switch between Now Playing, Home, Sound and display, and Posture.
+- **Tabs** switch between Now Playing, Home, Sound and display and Posture on the left of the notch, and Shelf, Calendar, Clipboard and System on the right. Every tab except Now Playing and Sound and display can be hidden in settings.
 - **Click the artwork** to bring the playing app to the front. Click the output icon to jump to the output picker.
 - **Right-click** the island, or use the gear, for **Settings** and **Quit**. The app has no Dock icon.
 
@@ -124,6 +125,18 @@ Turn on **Replace the system volume and brightness HUD** in settings and grant *
 
 Drag files from Finder, or any app, onto the notch. The island opens on the shelf, and the files you drop stay there until you drag them out again, to another folder, a mail or a chat. The shelf only keeps references, so the files never move. Double-click a file to open it, or right-click it to show it in Finder or remove it.
 
+### Screenshots
+
+Take a screenshot and it pops out of the notch for a few seconds. Drag it straight into Mail, Slack or a folder, click it to open it, or copy, reveal or trash it from there. The island finds new screenshots wherever macOS saves them, so the first time macOS may ask to let the app read that folder. Turn it off under **Screenshots** in settings.
+
+### Water
+
+Every 45 minutes at the Mac, a glass of water drops out of the notch. Click **Done** to count it, or **Later** to be asked again in 10 minutes. Only active time counts: the timer pauses after 5 minutes without input and while the Mac sleeps. Pick the interval and a daily goal under **Water** in settings.
+
+### System
+
+The System tab shows memory and CPU use with the apps using the most, the Mac's heat, the battery and charger, and the uptime. A reading turns orange or red when it's worth doing something about, like quitting a hungry app or restarting after weeks. It only measures while the tab is open.
+
 ### Calendar
 
 The island reads events from the macOS **Calendar** app, so any account added there works, including Google. To add Google, open **System Settings › Internet Accounts**, add your Google account and turn on **Calendars**. Then open the calendar tab in the island and click **Allow Access**.
@@ -136,12 +149,17 @@ The clipboard tab keeps the last 20 things you copied, newest first, with the ap
 
 The history lives in memory only and is gone when the app quits. Passwords copied from password managers that mark them as concealed, like 1Password, are never kept.
 
+## Settings
+
+Right-click the island, or click the gear, and choose **Settings**. It has one section per feature, in the same order as the island: General, Now Playing, Volume and Brightness, Home, Calendar, Shelf, Clipboard, System and Posture, then the pop-ups for Screenshots and Water. Each tab and each pop-up has its own switch.
+
 ## Permissions and privacy
 
 | Permission | Used for | Required |
 |---|---|:---:|
 | Accessibility | Replacing the system volume and brightness HUD, pasting from the clipboard history | Optional |
 | Calendars | The Calendar tab and event reminders | Optional |
+| Files and folders | Showing new screenshots from the folder macOS saves them to | Optional |
 
 Everything else, like Now Playing, volume, outputs and brightness, works without any prompts. Shortcuts may ask for access to Home the first time a Home shortcut runs.
 
@@ -162,7 +180,7 @@ The panel is much larger than the island, so it lets clicks through (`ignoresMou
 
 `NotchShape` is an animatable SwiftUI `Shape` with concave "ears" where it meets the top of the screen and rounded bottom corners. Both radii animate together with the size, so the outline morphs between states instead of cross-fading. Every state has its own spring: a slight bounce when opening and a calm, critically damped close. Content enters with a blur and scale from the notch, and the artwork moves between states with `matchedGeometryEffect`.
 
-`IslandPresentation(_:)` decides what the island shows by picking the most important state: open, HUD, calendar reminder, posture reminder, track peek, music live activity, posture live activity, and finally closed. `IslandGeometry` turns that into a size, corner radii and the hover zone. Both are plain values, so the tests cover them without any windows or services.
+`IslandPresentation(_:)` decides what the island shows by picking the most important state: open, HUD, new screenshot, calendar reminder, water reminder, posture reminder, track peek, music live activity, posture live activity, and finally closed. `IslandGeometry` turns that into a size, corner radii and the hover zone. Both are plain values, so the tests cover them without any windows or services.
 </details>
 
 <details>
@@ -202,12 +220,14 @@ DynamicIsland/
 └── Sources/DynamicIsland/
     ├── App/                    # Entry point and app delegate
     ├── Island/                 # Window, presentation and geometry, state model
-    ├── Services/               # Now Playing, audio, brightness, keys, Home, Posture
+    ├── Services/               # Now Playing, audio, brightness, keys, Home, Posture, calendar,
+    │                           # clipboard, shelf, screenshots, water, system
     ├── Settings/               # Preferences and settings window
     ├── Welcome/                # First-launch window, moving to Applications, login item
     ├── Views/                  # Island shape, live activities, tabs, components
     └── Debug/                  # Snapshot renderer (debug builds only)
-Tests/DynamicIslandTests/       # Unit tests: presentation, geometry, Home, settings
+Tests/DynamicIslandTests/       # Unit tests: presentation, geometry, Home, settings, shelf,
+                                # clipboard, screenshots, water
 ```
 
 ## Development

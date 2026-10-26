@@ -167,6 +167,7 @@ final class IslandModel {
     var showsCalendarTab: Bool { settings.showCalendarTab }
     var showsShelfTab: Bool { settings.showShelfTab }
     var showsClipboardTab: Bool { settings.showClipboardTab }
+    var showsSystemTab: Bool { settings.showSystemTab }
 
     var animation: Animation {
         switch presentation {
@@ -190,7 +191,7 @@ final class IslandModel {
     var size: CGSize { geometry.size }
     var hoverZone: CGRect { geometry.hoverZone }
 
-    /// The selected tab, falling back to media when the Home or posture tab is hidden.
+    /// The selected tab, falling back to media when that tab is hidden.
     var currentTab: IslandTab {
         switch tab {
         case .home where !settings.showHomeTab: .media
@@ -198,6 +199,7 @@ final class IslandModel {
         case .calendar where !showsCalendarTab: .media
         case .shelf where !showsShelfTab: .media
         case .clipboard where !showsClipboardTab: .media
+        case .system where !showsSystemTab: .media
         default: tab
         }
     }

@@ -24,6 +24,8 @@ final class AppSettingsTests: XCTestCase {
             XCTAssertTrue(settings.showClipboardTab)
             XCTAssertTrue(settings.pasteFromClipboardHistory)
             XCTAssertTrue(settings.showScreenshots)
+            XCTAssertTrue(settings.showSystemTab)
+            XCTAssertTrue(settings.showShelfTab)
         }
     }
 

@@ -125,6 +125,20 @@ struct SettingsView: View {
                     }
                 }
 
+                SettingsSection("Clipboard", footer: "The last 20 things you copied, newest first. They stay in memory only, and passwords from password managers are skipped. Pasting needs Accessibility access; without it, an item is just copied.") {
+                    SettingsToggle("Show Clipboard tab", isOn: $settings.showClipboardTab)
+                    SettingsToggle("Paste the item you pick", isOn: $settings.pasteFromClipboardHistory)
+                    if settings.pasteFromClipboardHistory && !hasAccessibility {
+                        SettingsRow(action: openAccessibilitySettings) {
+                            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                            Text("Pasting requires Accessibility permission")
+                            Spacer()
+                            Text("Open Settings").foregroundStyle(.secondary)
+                            Chevron()
+                        }
+                    }
+                }
+
                 SettingsSection("Volume and Brightness", footer: "The volume and brightness keys then show only in the island. Hold ⌥⇧ for finer steps.") {
                     SettingsToggle("Show volume changes in the island", isOn: $settings.showVolumeHUD)
                     SettingsToggle("Replace the system volume and brightness HUD", isOn: $settings.replaceSystemHUD)

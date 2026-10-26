@@ -28,6 +28,7 @@
 - **HUDs in the notch.** Volume, brightness and output changes appear in the island. It can also replace the system's volume and brightness overlay.
 - **Apple Home and Shortcuts.** Pick any shortcut, like a Home scene, and run it with one click from a tile.
 - **Calendar.** Your next events, Google Calendar included, with a reminder in the notch 15 minutes before each one and a Join button for Meet, Zoom and Teams links.
+- **File shelf.** Drag files onto the notch to park them in the island. They stay there, even after a restart, until you drag them out to wherever they're going.
 - **Posture companion.** With the [Posture](../Hallning) app running, the island shows your posture and nudges you when you slouch.
 - **Feels like a Mac.** Spring animations, blur-and-scale transitions, rubber-band sliders, SF Symbols and trackpad haptics. It never steals focus from the app you're using.
 
@@ -115,6 +116,10 @@ Turn on **Replace the system volume and brightness HUD** in settings and grant *
 ### Posture
 
 [Posture](../Hallning) is a companion menu bar app in this repository. While it runs, the island gets a Posture tab with today's score, the neck angle from AirPods, and buttons to pause or check now. When you've slouched for a while, a reminder appears in the notch instead of as a notification.
+
+### Shelf
+
+Drag files from Finder, or any app, onto the notch. The island opens on the shelf, and the files you drop stay there until you drag them out again, to another folder, a mail or a chat. The shelf only keeps references, so the files never move. Double-click a file to open it, or right-click it to show it in Finder or remove it.
 
 ### Calendar
 

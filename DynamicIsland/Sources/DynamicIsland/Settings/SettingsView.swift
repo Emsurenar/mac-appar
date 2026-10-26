@@ -125,6 +125,10 @@ struct SettingsView: View {
                     }
                 }
 
+                SettingsSection("Shelf", footer: "Drag files onto the notch to keep them on the shelf. They stay there until you drag them out, and the files themselves never move.") {
+                    SettingsToggle("Show Shelf tab", isOn: $settings.showShelfTab)
+                }
+
                 SettingsSection("Volume and Brightness", footer: "The volume and brightness keys then show only in the island. Hold ⌥⇧ for finer steps.") {
                     SettingsToggle("Show volume changes in the island", isOn: $settings.showVolumeHUD)
                     SettingsToggle("Replace the system volume and brightness HUD", isOn: $settings.replaceSystemHUD)

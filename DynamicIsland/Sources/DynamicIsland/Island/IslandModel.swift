@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 enum IslandTab: Hashable {
-    case media, home, controls, posture, calendar, system
+    case media, home, controls, posture, shelf, calendar, system
 }
 
 enum HUDKind: Equatable {
@@ -43,6 +43,9 @@ enum IslandLayout {
     static let calendarRowHeight: CGFloat = 40
     static let maxCalendarRows = 4
     static let calendarEmptyHeight: CGFloat = 112
+    static let shelfTileWidth: CGFloat = 76
+    static let shelfTileHeight: CGFloat = 78
+    static let shelfContentHeight: CGFloat = 4 + sectionHeaderHeight + shelfTileHeight + 8 + 16
 }
 
 @MainActor @Observable
@@ -54,6 +57,7 @@ final class IslandModel {
     let posture: PostureService
     let system: SystemService
     let calendar: CalendarService
+    let shelf: FileShelf
     let settings: AppSettings
 
     var metrics = NotchMetrics.fallback
@@ -65,6 +69,8 @@ final class IslandModel {
     private(set) var isChoosingShortcuts = false
     private(set) var isShowingPostureAlert = false
     private(set) var isShowingCalendarReminder = false
+    /// Files are being dragged over the island.
+    private(set) var isDropTargeted = false
     var tab: IslandTab = .media
 
     @ObservationIgnored var onOpenSettings: (() -> Void)?
@@ -79,7 +85,8 @@ final class IslandModel {
     @ObservationIgnored private var permissionPoll: Timer?
 
     init(media: NowPlayingService, audio: AudioService, brightness: BrightnessService, home: HomeService,
-         posture: PostureService, system: SystemService, calendar: CalendarService, settings: AppSettings) {
+         posture: PostureService, system: SystemService, calendar: CalendarService, shelf: FileShelf = FileShelf(),
+         settings: AppSettings) {
         self.media = media
         self.audio = audio
         self.brightness = brightness
@@ -87,6 +94,7 @@ final class IslandModel {
         self.posture = posture
         self.system = system
         self.calendar = calendar
+        self.shelf = shelf
         self.settings = settings
 
         media.onTrackChange = { [weak self] in self?.showTrackPeek() }
@@ -131,6 +139,7 @@ final class IslandModel {
 
     var showsPostureTab: Bool { settings.showPostureTab && posture.isConnected }
     var showsCalendarTab: Bool { settings.showCalendarTab }
+    var showsShelfTab: Bool { settings.showShelfTab }
 
     var animation: Animation {
         switch presentation {
@@ -160,6 +169,7 @@ final class IslandModel {
         case .home where !settings.showHomeTab: .media
         case .posture where !showsPostureTab: .media
         case .calendar where !showsCalendarTab: .media
+        case .shelf where !showsShelfTab: .media
         default: tab
         }
     }
@@ -185,6 +195,8 @@ final class IslandModel {
             guard calendar.access == .granted, !calendar.events.isEmpty else { return IslandLayout.calendarEmptyHeight }
             let rows = CGFloat(min(calendar.events.count, IslandLayout.maxCalendarRows))
             return 4 + IslandLayout.sectionHeaderHeight + rows * IslandLayout.calendarRowHeight + 16
+        case .shelf:
+            return IslandLayout.shelfContentHeight
         case .system:
             return 4 + CGFloat(system.rowCount) * IslandLayout.systemRowHeight + 16
         case .controls:
@@ -231,7 +243,37 @@ final class IslandModel {
         isShowingCalendarReminder = false
         if currentTab == .home { home.refresh() }
         if currentTab == .calendar { calendar.reload() }
+        if currentTab == .shelf { shelf.prune() }
         isOpen = true
+    }
+
+    // MARK: Shelf
+
+    /// Files dragged onto the island open it on the shelf, ready for the drop.
+    func setDropTargeted(_ targeted: Bool) {
+        guard targeted != isDropTargeted else { return }
+        isDropTargeted = targeted
+        if targeted { showShelfForDrop() }
+    }
+
+    func showShelfForDrop() {
+        guard showsShelfTab, !ShelfDragSource.isDragging else { return }
+        closeTask?.cancel()
+        if isOpen {
+            select(.shelf)
+        } else {
+            tab = .shelf
+            open()
+        }
+    }
+
+    /// Keeps the dropped files. Returns false for drags that started on the shelf itself.
+    func dropFiles(_ providers: [NSItemProvider]) -> Bool {
+        isDropTargeted = false
+        guard showsShelfTab, !ShelfDragSource.isDragging else { return false }
+        shelf.add(from: providers)
+        if !isOpen { showShelfForDrop() }
+        return true
     }
 
     func performHaptic(_ pattern: NSHapticFeedbackManager.FeedbackPattern) {
@@ -255,6 +297,7 @@ final class IslandModel {
     func select(_ tab: IslandTab) {
         if tab == .home { home.refresh() }
         if tab == .calendar { calendar.reload() }
+        if tab == .shelf { shelf.prune() }
         isChoosingShortcuts = false
         guard tab != self.tab else { return }
         withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { self.tab = tab }

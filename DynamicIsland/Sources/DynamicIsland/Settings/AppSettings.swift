@@ -14,6 +14,7 @@ final class AppSettings {
     var showPostureLiveActivity: Bool { didSet { store(showPostureLiveActivity, Key.showPostureLiveActivity) } }
     var showCalendarTab: Bool { didSet { store(showCalendarTab, Key.showCalendarTab) } }
     var showCalendarReminders: Bool { didSet { store(showCalendarReminders, Key.showCalendarReminders) } }
+    var showShelfTab: Bool { didSet { store(showShelfTab, Key.showShelfTab) } }
     /// Minutes before an event that its reminder appears.
     var calendarLeadMinutes: Int { didSet { defaults.set(calendarLeadMinutes, forKey: Key.calendarLeadMinutes) } }
     /// Identifiers of the calendars the island leaves out.
@@ -50,6 +51,7 @@ final class AppSettings {
         static let showCalendarReminders = "showCalendarReminders"
         static let calendarLeadMinutes = "calendarLeadMinutes"
         static let hiddenCalendarIDs = "hiddenCalendarIDs"
+        static let showShelfTab = "showShelfTab"
     }
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -74,6 +76,7 @@ final class AppSettings {
             Key.showCalendarTab: true,
             Key.showCalendarReminders: true,
             Key.calendarLeadMinutes: 15,
+            Key.showShelfTab: true,
         ])
         hoverToOpen = defaults.bool(forKey: Key.hoverToOpen)
         hasSeenWelcome = defaults.bool(forKey: Key.hasSeenWelcome)
@@ -89,6 +92,7 @@ final class AppSettings {
         showPostureLiveActivity = defaults.bool(forKey: Key.showPostureLiveActivity)
         showCalendarTab = defaults.bool(forKey: Key.showCalendarTab)
         showCalendarReminders = defaults.bool(forKey: Key.showCalendarReminders)
+        showShelfTab = defaults.bool(forKey: Key.showShelfTab)
         calendarLeadMinutes = defaults.integer(forKey: Key.calendarLeadMinutes)
         hiddenCalendarIDs = Set(defaults.stringArray(forKey: Key.hiddenCalendarIDs) ?? [])
         homeFolderName = defaults.string(forKey: Key.homeFolderName) ?? "Home"

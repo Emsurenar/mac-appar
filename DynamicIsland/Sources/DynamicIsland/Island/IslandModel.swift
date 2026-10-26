@@ -92,6 +92,7 @@ final class IslandModel {
         posture.onAlert = { [weak self] _ in self?.showPostureAlert() }
         calendar.onReminder = { [weak self] _ in self?.showCalendarReminder() }
         calendar.leadMinutes = { [weak settings] in settings?.calendarLeadMinutes ?? 15 }
+        calendar.hiddenCalendars = { [weak settings] in settings?.hiddenCalendarIDs ?? [] }
         audio.onExternalVolumeChange = { [weak self] in
             guard let self, self.settings.showVolumeHUD || self.isReplacingSystemHUD else { return }
             self.showHUD(.volume)

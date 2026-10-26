@@ -20,7 +20,7 @@
 
 ### [Dynamic Island](DynamicIsland)
 
-A Dynamic Island that grows out of your MacBook's notch. It shows Now Playing from any app with artwork and controls, and lets you set volume, brightness and audio output, including AirPods and AirPlay. It shows volume and output changes as HUDs in the notch, and runs your Apple Home scenes through Shortcuts. The animations use the same springs as the iPhone.
+A Dynamic Island that grows out of your MacBook's notch. It shows Now Playing from any app with artwork and controls, and lets you set volume, brightness and audio output, including AirPods and AirPlay. It shows volume and output changes as HUDs in the notch and runs your Apple Home scenes through Shortcuts. It also has a calendar with reminders, clipboard history, a file shelf, a screenshot shelf, water reminders and a System tab. The animations use the same springs as the iPhone.
 
 → [Read more](DynamicIsland/README.md)
 

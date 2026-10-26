@@ -16,6 +16,7 @@ final class AppSettings {
     var showCalendarReminders: Bool { didSet { store(showCalendarReminders, Key.showCalendarReminders) } }
     var showShelfTab: Bool { didSet { store(showShelfTab, Key.showShelfTab) } }
     var showClipboardTab: Bool { didSet { store(showClipboardTab, Key.showClipboardTab) } }
+    var showSystemTab: Bool { didSet { store(showSystemTab, Key.showSystemTab) } }
     /// Picking an item from the clipboard history also pastes it, not just copies it.
     var pasteFromClipboardHistory: Bool { didSet { store(pasteFromClipboardHistory, Key.pasteFromClipboardHistory) } }
     var showScreenshots: Bool { didSet { store(showScreenshots, Key.showScreenshots) } }
@@ -65,6 +66,7 @@ final class AppSettings {
         static let waterIntervalMinutes = "waterIntervalMinutes"
         static let waterDailyGoal = "waterDailyGoal"
         static let showClipboardTab = "showClipboardTab"
+        static let showSystemTab = "showSystemTab"
         static let pasteFromClipboardHistory = "pasteFromClipboardHistory"
     }
 
@@ -96,6 +98,7 @@ final class AppSettings {
             Key.waterIntervalMinutes: 45,
             Key.waterDailyGoal: 8,
             Key.showClipboardTab: true,
+            Key.showSystemTab: true,
             Key.pasteFromClipboardHistory: true,
         ])
         hoverToOpen = defaults.bool(forKey: Key.hoverToOpen)
@@ -116,6 +119,7 @@ final class AppSettings {
         showScreenshots = defaults.bool(forKey: Key.showScreenshots)
         calendarLeadMinutes = defaults.integer(forKey: Key.calendarLeadMinutes)
         showClipboardTab = defaults.bool(forKey: Key.showClipboardTab)
+        showSystemTab = defaults.bool(forKey: Key.showSystemTab)
         pasteFromClipboardHistory = defaults.bool(forKey: Key.pasteFromClipboardHistory)
         hiddenCalendarIDs = Set(defaults.stringArray(forKey: Key.hiddenCalendarIDs) ?? [])
         showWaterReminders = defaults.bool(forKey: Key.showWaterReminders)

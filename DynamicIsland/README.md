@@ -31,6 +31,7 @@
 - **Water reminders.** A nudge from the notch every 45 minutes at the Mac (you pick the interval), with a daily glass count. Time away and sleep don't count.
 - **Clipboard history.** The last 20 things you copied, text and images. Click one to paste it again.
 - **Screenshot shelf.** A new screenshot pops out of the notch. Drag it straight into Mail, Slack or a folder, or copy, reveal or trash it from there. The first time, macOS may ask to let the app read the folder your screenshots go to.
+- **File shelf.** Drag files onto the notch to park them in the island. They stay there, even after a restart, until you drag them out to wherever they're going.
 - **Posture companion.** With the [Posture](../Hallning) app running, the island shows your posture and nudges you when you slouch.
 - **Feels like a Mac.** Spring animations, blur-and-scale transitions, rubber-band sliders, SF Symbols and trackpad haptics. It never steals focus from the app you're using.
 
@@ -118,6 +119,10 @@ Turn on **Replace the system volume and brightness HUD** in settings and grant *
 ### Posture
 
 [Posture](../Hallning) is a companion menu bar app in this repository. While it runs, the island gets a Posture tab with today's score, the neck angle from AirPods, and buttons to pause or check now. When you've slouched for a while, a reminder appears in the notch instead of as a notification.
+
+### Shelf
+
+Drag files from Finder, or any app, onto the notch. The island opens on the shelf, and the files you drop stay there until you drag them out again, to another folder, a mail or a chat. The shelf only keeps references, so the files never move. Double-click a file to open it, or right-click it to show it in Finder or remove it.
 
 ### Calendar
 

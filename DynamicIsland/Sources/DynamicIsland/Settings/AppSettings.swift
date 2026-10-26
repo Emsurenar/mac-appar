@@ -14,6 +14,7 @@ final class AppSettings {
     var showPostureLiveActivity: Bool { didSet { store(showPostureLiveActivity, Key.showPostureLiveActivity) } }
     var showCalendarTab: Bool { didSet { store(showCalendarTab, Key.showCalendarTab) } }
     var showCalendarReminders: Bool { didSet { store(showCalendarReminders, Key.showCalendarReminders) } }
+    var showShelfTab: Bool { didSet { store(showShelfTab, Key.showShelfTab) } }
     var showClipboardTab: Bool { didSet { store(showClipboardTab, Key.showClipboardTab) } }
     /// Picking an item from the clipboard history also pastes it, not just copies it.
     var pasteFromClipboardHistory: Bool { didSet { store(pasteFromClipboardHistory, Key.pasteFromClipboardHistory) } }
@@ -59,6 +60,7 @@ final class AppSettings {
         static let showScreenshots = "showScreenshots"
         static let calendarLeadMinutes = "calendarLeadMinutes"
         static let hiddenCalendarIDs = "hiddenCalendarIDs"
+        static let showShelfTab = "showShelfTab"
         static let showWaterReminders = "showWaterReminders"
         static let waterIntervalMinutes = "waterIntervalMinutes"
         static let waterDailyGoal = "waterDailyGoal"
@@ -89,6 +91,7 @@ final class AppSettings {
             Key.showCalendarReminders: true,
             Key.showScreenshots: true,
             Key.calendarLeadMinutes: 15,
+            Key.showShelfTab: true,
             Key.showWaterReminders: true,
             Key.waterIntervalMinutes: 45,
             Key.waterDailyGoal: 8,
@@ -109,6 +112,7 @@ final class AppSettings {
         showPostureLiveActivity = defaults.bool(forKey: Key.showPostureLiveActivity)
         showCalendarTab = defaults.bool(forKey: Key.showCalendarTab)
         showCalendarReminders = defaults.bool(forKey: Key.showCalendarReminders)
+        showShelfTab = defaults.bool(forKey: Key.showShelfTab)
         showScreenshots = defaults.bool(forKey: Key.showScreenshots)
         calendarLeadMinutes = defaults.integer(forKey: Key.calendarLeadMinutes)
         showClipboardTab = defaults.bool(forKey: Key.showClipboardTab)

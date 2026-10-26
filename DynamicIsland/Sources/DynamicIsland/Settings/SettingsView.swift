@@ -129,6 +129,10 @@ struct SettingsView: View {
                     }
                 }
 
+                SettingsSection("Shelf", footer: "Drag files onto the notch to keep them on the shelf. They stay there until you drag them out, and the files themselves never move.") {
+                    SettingsToggle("Show Shelf tab", isOn: $settings.showShelfTab)
+                }
+
                 SettingsSection("Water", footer: "Only time at the Mac counts: the timer pauses while you're away and while the Mac sleeps. Later asks again in 10 minutes.") {
                     SettingsToggle("Remind me to drink water", isOn: $settings.showWaterReminders)
                     SettingsRow {

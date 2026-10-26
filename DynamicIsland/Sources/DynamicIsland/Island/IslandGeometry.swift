@@ -64,7 +64,7 @@ struct IslandGeometry: Equatable {
         }
     }
 
-    var openWidth: CGFloat { max(notch.width + 340, 500) }
+    var openWidth: CGFloat { max(notch.width + 360, 520) }
 
     var size: CGSize {
         let ears = earRadius * 2

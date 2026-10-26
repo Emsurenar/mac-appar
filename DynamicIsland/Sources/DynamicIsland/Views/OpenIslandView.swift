@@ -19,6 +19,9 @@ struct OpenIslandView: View {
                 case .posture:
                     PostureTab()
                         .transition(.islandContent(scale: 0.97))
+                case .shelf:
+                    ShelfTab()
+                        .transition(.islandContent(scale: 0.97))
                 case .calendar:
                     CalendarTab()
                         .transition(.islandContent(scale: 0.97))
@@ -52,6 +55,9 @@ struct OpenIslandView: View {
                 }
             }
             Spacer(minLength: model.notch.width + 12)
+            if model.showsShelfTab {
+                tabButton(.shelf, symbol: "tray.full.fill", help: "Shelf")
+            }
             if model.showsCalendarTab {
                 tabButton(.calendar, symbol: "calendar", help: "Calendar")
             }

@@ -40,6 +40,9 @@ final class IslandWindowController {
     private let model: IslandModel
     private let panel: IslandPanel
     private var monitors: [Any] = []
+    /// The drag pasteboard's change count when the mouse went down, to tell a new file drag from an old one.
+    private var dragCountAtMouseDown = NSPasteboard(name: .drag).changeCount
+    private var handledDragCount: Int?
 
     init(model: IslandModel) {
         self.model = model
@@ -109,7 +112,9 @@ final class IslandWindowController {
         // A click anywhere else (delivered to another app) closes the island.
         if let clicks = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { [weak self] _ in
             MainActor.assumeIsolated {
-                guard let self, !self.model.hoverZone.contains(NSEvent.mouseLocation) else { return }
+                guard let self else { return }
+                self.dragCountAtMouseDown = NSPasteboard(name: .drag).changeCount
+                guard !self.model.hoverZone.contains(NSEvent.mouseLocation) else { return }
                 self.model.close()
             }
         }) {
@@ -121,6 +126,18 @@ final class IslandWindowController {
         let inside = model.hoverZone.contains(NSEvent.mouseLocation)
         if panel.ignoresMouseEvents == inside { panel.ignoresMouseEvents = !inside }
         model.setHovering(inside)
+        if inside { openForFileDrag() }
+    }
+
+    /// Files dragged from another app onto the notch open the shelf, even without hover to open.
+    private func openForFileDrag() {
+        guard NSEvent.pressedMouseButtons & 1 != 0 else { return }
+        let pasteboard = NSPasteboard(name: .drag)
+        let count = pasteboard.changeCount
+        guard count != dragCountAtMouseDown, count != handledDragCount,
+              pasteboard.types?.contains(.fileURL) == true else { return }
+        handledDragCount = count
+        model.showShelfForDrop()
     }
 
     /// Re-evaluates the pointer whenever the island changes shape under it.

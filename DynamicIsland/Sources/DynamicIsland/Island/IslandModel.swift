@@ -85,7 +85,7 @@ final class IslandModel {
     @ObservationIgnored private var permissionPoll: Timer?
 
     init(media: NowPlayingService, audio: AudioService, brightness: BrightnessService, home: HomeService,
-         posture: PostureService, system: SystemService, calendar: CalendarService, shelf: FileShelf = FileShelf(),
+         posture: PostureService, system: SystemService, calendar: CalendarService, shelf: FileShelf? = nil,
          settings: AppSettings) {
         self.media = media
         self.audio = audio
@@ -94,7 +94,7 @@ final class IslandModel {
         self.posture = posture
         self.system = system
         self.calendar = calendar
-        self.shelf = shelf
+        self.shelf = shelf ?? FileShelf()
         self.settings = settings
 
         media.onTrackChange = { [weak self] in self?.showTrackPeek() }

@@ -189,6 +189,7 @@ private struct ShelfDragArea: NSViewRepresentable {
 }
 
 /// Removes the file from the shelf once it lands somewhere that takes it.
+@MainActor
 final class ShelfDragSource: NSObject, NSDraggingSource {
     /// The drag in progress, kept alive for the length of the session.
     static var current: ShelfDragSource?

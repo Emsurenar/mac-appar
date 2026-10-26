@@ -88,7 +88,7 @@ final class IslandModel {
 
     init(media: NowPlayingService, audio: AudioService, brightness: BrightnessService, home: HomeService,
          posture: PostureService, system: SystemService, calendar: CalendarService,
-         screenshots: ScreenshotService = ScreenshotService(), settings: AppSettings) {
+         screenshots: ScreenshotService? = nil, settings: AppSettings) {
         self.media = media
         self.audio = audio
         self.brightness = brightness
@@ -96,13 +96,14 @@ final class IslandModel {
         self.posture = posture
         self.system = system
         self.calendar = calendar
-        self.screenshots = screenshots
+        // Default arguments run outside the main actor, so the default service is made here.
+        self.screenshots = screenshots ?? ScreenshotService()
         self.settings = settings
 
         media.onTrackChange = { [weak self] in self?.showTrackPeek() }
         posture.onAlert = { [weak self] _ in self?.showPostureAlert() }
         calendar.onReminder = { [weak self] _ in self?.showCalendarReminder() }
-        screenshots.onNewScreenshot = { [weak self] _ in self?.showScreenshot() }
+        self.screenshots.onNewScreenshot = { [weak self] _ in self?.showScreenshot() }
         calendar.leadMinutes = { [weak settings] in settings?.calendarLeadMinutes ?? 15 }
         calendar.hiddenCalendars = { [weak settings] in settings?.hiddenCalendarIDs ?? [] }
         audio.onExternalVolumeChange = { [weak self] in

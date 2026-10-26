@@ -86,6 +86,8 @@ final class IslandModel {
     private(set) var isShowingScreenshot = false
     /// The screenshot is being dragged; the island keeps it until the drag ends.
     private(set) var isDraggingScreenshot = false
+    /// A screenshot came in while the island was open; it pops out once the island closes.
+    @ObservationIgnored private var hasPendingScreenshot = false
     var tab: IslandTab = .media
 
     @ObservationIgnored var onOpenSettings: (() -> Void)?
@@ -327,6 +329,7 @@ final class IslandModel {
         guard isOpen else { return }
         isOpen = false
         isChoosingShortcuts = false
+        if hasPendingScreenshot { showScreenshot() }
     }
 
     func setChoosingShortcuts(_ choosing: Bool) {
@@ -405,7 +408,9 @@ final class IslandModel {
     }
 
     func showScreenshot() {
-        guard settings.showScreenshots, !isOpen else { return }
+        guard settings.showScreenshots else { return }
+        hasPendingScreenshot = isOpen
+        guard !isOpen else { return }
         isPeeking = false
         isShowingScreenshot = true
         scheduleScreenshotDismissal(after: 8)

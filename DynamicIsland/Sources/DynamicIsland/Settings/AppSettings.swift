@@ -14,6 +14,9 @@ final class AppSettings {
     var showPostureLiveActivity: Bool { didSet { store(showPostureLiveActivity, Key.showPostureLiveActivity) } }
     var showCalendarTab: Bool { didSet { store(showCalendarTab, Key.showCalendarTab) } }
     var showCalendarReminders: Bool { didSet { store(showCalendarReminders, Key.showCalendarReminders) } }
+    var showClipboardTab: Bool { didSet { store(showClipboardTab, Key.showClipboardTab) } }
+    /// Picking an item from the clipboard history also pastes it, not just copies it.
+    var pasteFromClipboardHistory: Bool { didSet { store(pasteFromClipboardHistory, Key.pasteFromClipboardHistory) } }
     var showScreenshots: Bool { didSet { store(showScreenshots, Key.showScreenshots) } }
     /// Minutes before an event that its reminder appears.
     var calendarLeadMinutes: Int { didSet { defaults.set(calendarLeadMinutes, forKey: Key.calendarLeadMinutes) } }
@@ -21,6 +24,10 @@ final class AppSettings {
     var hiddenCalendarIDs: Set<String> {
         didSet { defaults.set(Array(hiddenCalendarIDs), forKey: Key.hiddenCalendarIDs) }
     }
+    var showWaterReminders: Bool { didSet { store(showWaterReminders, Key.showWaterReminders) } }
+    /// Minutes at the Mac between water reminders.
+    var waterIntervalMinutes: Int { didSet { defaults.set(waterIntervalMinutes, forKey: Key.waterIntervalMinutes) } }
+    var waterDailyGoal: Int { didSet { defaults.set(waterDailyGoal, forKey: Key.waterDailyGoal) } }
     /// The welcome window has been shown and closed once.
     var hasSeenWelcome: Bool { didSet { store(hasSeenWelcome, Key.hasSeenWelcome) } }
     var homeFolderName: String { didSet { defaults.set(homeFolderName, forKey: Key.homeFolderName) } }
@@ -52,6 +59,11 @@ final class AppSettings {
         static let showScreenshots = "showScreenshots"
         static let calendarLeadMinutes = "calendarLeadMinutes"
         static let hiddenCalendarIDs = "hiddenCalendarIDs"
+        static let showWaterReminders = "showWaterReminders"
+        static let waterIntervalMinutes = "waterIntervalMinutes"
+        static let waterDailyGoal = "waterDailyGoal"
+        static let showClipboardTab = "showClipboardTab"
+        static let pasteFromClipboardHistory = "pasteFromClipboardHistory"
     }
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -77,6 +89,11 @@ final class AppSettings {
             Key.showCalendarReminders: true,
             Key.showScreenshots: true,
             Key.calendarLeadMinutes: 15,
+            Key.showWaterReminders: true,
+            Key.waterIntervalMinutes: 45,
+            Key.waterDailyGoal: 8,
+            Key.showClipboardTab: true,
+            Key.pasteFromClipboardHistory: true,
         ])
         hoverToOpen = defaults.bool(forKey: Key.hoverToOpen)
         hasSeenWelcome = defaults.bool(forKey: Key.hasSeenWelcome)
@@ -94,7 +111,12 @@ final class AppSettings {
         showCalendarReminders = defaults.bool(forKey: Key.showCalendarReminders)
         showScreenshots = defaults.bool(forKey: Key.showScreenshots)
         calendarLeadMinutes = defaults.integer(forKey: Key.calendarLeadMinutes)
+        showClipboardTab = defaults.bool(forKey: Key.showClipboardTab)
+        pasteFromClipboardHistory = defaults.bool(forKey: Key.pasteFromClipboardHistory)
         hiddenCalendarIDs = Set(defaults.stringArray(forKey: Key.hiddenCalendarIDs) ?? [])
+        showWaterReminders = defaults.bool(forKey: Key.showWaterReminders)
+        waterIntervalMinutes = defaults.integer(forKey: Key.waterIntervalMinutes)
+        waterDailyGoal = defaults.integer(forKey: Key.waterDailyGoal)
         homeFolderName = defaults.string(forKey: Key.homeFolderName) ?? "Home"
     }
 

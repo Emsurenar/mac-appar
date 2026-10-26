@@ -55,6 +55,9 @@ struct IslandRootView: View {
             case .calendarReminder:
                 CalendarReminderView()
                     .transition(.islandContent(scale: 0.85))
+            case .waterReminder:
+                WaterReminderView()
+                    .transition(.islandContent(scale: 0.85))
             case .screenshot:
                 ScreenshotShelfView()
                     .transition(.islandContent(scale: 0.85))

@@ -18,6 +18,11 @@ final class AppSettingsTests: XCTestCase {
             XCTAssertFalse(settings.replaceSystemHUD, "needs Accessibility, so it starts off")
             XCTAssertEqual(settings.homeFolderName, "Home")
             XCTAssertTrue(settings.hiddenCalendarIDs.isEmpty)
+            XCTAssertTrue(settings.showWaterReminders)
+            XCTAssertEqual(settings.waterIntervalMinutes, 45)
+            XCTAssertEqual(settings.waterDailyGoal, 8)
+            XCTAssertTrue(settings.showClipboardTab)
+            XCTAssertTrue(settings.pasteFromClipboardHistory)
             XCTAssertTrue(settings.showScreenshots)
         }
     }

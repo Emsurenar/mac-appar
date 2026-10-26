@@ -151,7 +151,7 @@ The history lives in memory only and is gone when the app quits. Passwords copie
 
 ## Settings
 
-Right-click the island, or click the gear, and choose **Settings**. It has one section per feature, in the same order as the island: General, Now Playing, Volume and Brightness, Home, Calendar, Shelf, Clipboard, System and Posture, then the pop-ups for Screenshots and Water. Each tab and each pop-up has its own switch.
+Right-click the island, or click the gear, and choose **Settings**. A sidebar lists one page per feature, like System Settings: General, then the island's tabs (Now Playing, Home, Calendar, Shelf, Clipboard, System and Posture), then what pops out of the notch on its own (Volume and Brightness, Screenshots and Water), and About. Each tab and each pop-up has its own switch.
 
 ## Permissions and privacy
 

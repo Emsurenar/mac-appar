@@ -21,7 +21,10 @@ struct SettingsView: View {
             .onReceive(permissionTimer) { _ in
                 hasAccessibility = MediaKeyInterceptor.hasPermission
             }
-            .onAppear { model.home.refresh() }
+            .onAppear {
+                model.home.refresh()
+                TileColorPanel.shared.detach()
+            }
     }
 
     /// Everything inside the scroll view (also rendered on its own by `--snapshots`).
@@ -63,6 +66,14 @@ struct SettingsView: View {
                         Spacer()
                         Text(homeStatus).foregroundStyle(.secondary)
                         Chevron()
+                    }
+                }
+
+                if settings.showHomeTab && !model.home.shortcuts.isEmpty {
+                    SettingsSection("Tile Colors", footer: "Click a color to open the color wheel. You can also right-click a tile in the island and choose Choose Color…") {
+                        ForEach(model.home.shortcuts) { shortcut in
+                            TileColorRow(shortcut: shortcut)
+                        }
                     }
                 }
 
@@ -246,6 +257,39 @@ private struct SettingsToggle: View {
             Toggle("", isOn: $isOn)
                 .labelsHidden()
                 .toggleStyle(.switch)
+        }
+    }
+}
+
+/// One island tile with a color well; the well opens the system color panel.
+private struct TileColorRow: View {
+    @Environment(IslandModel.self) private var model
+    let shortcut: HomeShortcut
+
+    var body: some View {
+        let home = model.home
+        let color = home.color(for: shortcut)
+        SettingsRow {
+            Group {
+                if let emoji = shortcut.emoji {
+                    Text(emoji).font(.system(size: 13))
+                } else {
+                    Image(systemName: shortcut.symbol)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+            }
+            .frame(width: 26, height: 26)
+            .background(Circle().fill(Color(nsColor: color ?? .systemGray)))
+            Text(shortcut.title)
+            Spacer(minLength: 12)
+            if color != nil {
+                Button("Reset") { home.setColor(nil, for: shortcut) }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+            }
+            ColorPicker("", selection: home.colorBinding(for: shortcut), supportsOpacity: false)
+                .labelsHidden()
         }
     }
 }

@@ -6,7 +6,7 @@ import SwiftUI
 /// white rows on a soft gray background, scrolling when it doesn't fit.
 struct SettingsView: View {
     @Environment(IslandModel.self) private var model
-    @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    @State private var launchAtLogin = LoginItem.isEnabled
     @State private var hasAccessibility = MediaKeyInterceptor.hasPermission
     var onClose: () -> Void = {}
 
@@ -140,6 +140,11 @@ struct SettingsView: View {
                 }
 
                 SettingsSection("About") {
+                    SettingsRow(action: { model.onOpenWelcome?() }) {
+                        Text("Show welcome")
+                        Spacer()
+                        Chevron()
+                    }
                     SettingsRow {
                         Text("Version")
                         Spacer()
@@ -200,11 +205,8 @@ struct SettingsView: View {
     }
 
     private func setLaunchAtLogin(_ enabled: Bool) {
-        do {
-            if enabled { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
-        } catch {
-            launchAtLogin = SMAppService.mainApp.status == .enabled
-        }
+        let isEnabled = LoginItem.set(enabled)
+        if isEnabled != launchAtLogin { launchAtLogin = isEnabled }
     }
 
     private func openAccessibilitySettings() {
@@ -217,7 +219,7 @@ struct SettingsView: View {
 
 // MARK: - Grouped rows
 
-private struct SettingsSection<Content: View>: View {
+struct SettingsSection<Content: View>: View {
     let title: String
     let footer: String?
     @ViewBuilder let content: Content
@@ -263,7 +265,7 @@ private struct SettingsSection<Content: View>: View {
 }
 
 /// A row with the sheet's padding; tappable when given an action.
-private struct SettingsRow<Content: View>: View {
+struct SettingsRow<Content: View>: View {
     var action: (() -> Void)?
     @ViewBuilder let content: Content
     @State private var isHovering = false
@@ -291,7 +293,7 @@ private struct SettingsRow<Content: View>: View {
     }
 }
 
-private struct SettingsToggle: View {
+struct SettingsToggle: View {
     let title: String
     @Binding var isOn: Bool
 
@@ -376,7 +378,7 @@ private struct CalendarSourceRow: View {
     }
 }
 
-private struct Chevron: View {
+struct Chevron: View {
     var body: some View {
         Image(systemName: "chevron.right")
             .font(.system(size: 12, weight: .semibold))

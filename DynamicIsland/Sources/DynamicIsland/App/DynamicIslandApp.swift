@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var model: IslandModel?
     private var islandWindow: IslandWindowController?
     private var settingsWindow: SettingsWindowController?
+    private var welcomeWindow: WelcomeWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let media = NowPlayingService()
@@ -28,6 +29,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                 posture: posture, system: SystemService(), calendar: calendar, settings: settings)
         let settingsWindow = SettingsWindowController(model: model)
         model.onOpenSettings = { [weak settingsWindow] in settingsWindow?.show() }
+        let welcomeWindow = WelcomeWindowController(model: model)
+        model.onOpenWelcome = { [weak welcomeWindow] in welcomeWindow?.show() }
 
         let islandWindow = IslandWindowController(model: model)
         islandWindow.show()
@@ -40,6 +43,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.model = model
         self.islandWindow = islandWindow
         self.settingsWindow = settingsWindow
+        self.welcomeWindow = welcomeWindow
+        if !settings.hasSeenWelcome && !CommandLine.arguments.contains("--snapshots") {
+            welcomeWindow.show()
+        }
 
         #if DEBUG
         if let flag = CommandLine.arguments.firstIndex(of: "--snapshots"), flag + 1 < CommandLine.arguments.count {

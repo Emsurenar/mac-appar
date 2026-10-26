@@ -29,6 +29,7 @@
 - **Apple Home and Shortcuts.** Pick any shortcut, like a Home scene, and run it with one click from a tile.
 - **Calendar.** Your next events, Google Calendar included, with a reminder in the notch 15 minutes before each one and a Join button for Meet, Zoom and Teams links.
 - **Water reminders.** A nudge from the notch every 45 minutes at the Mac (you pick the interval), with a daily glass count. Time away and sleep don't count.
+- **Clipboard history.** The last 20 things you copied, text and images. Click one to paste it again.
 - **Posture companion.** With the [Posture](../Hallning) app running, the island shows your posture and nudges you when you slouch.
 - **Feels like a Mac.** Spring animations, blur-and-scale transitions, rubber-band sliders, SF Symbols and trackpad haptics. It never steals focus from the app you're using.
 
@@ -123,11 +124,17 @@ The island reads events from the macOS **Calendar** app, so any account added th
 
 The tab lists the rest of today's events, or tomorrow's once the day is done. A few minutes before an event starts, a reminder drops out of the notch. Choose how early, from 1 to 30 minutes, under **Calendar** in settings. Click the reminder to open the calendar tab, or **Join** to open a Meet, Zoom or Teams link.
 
+### Clipboard
+
+The clipboard tab keeps the last 20 things you copied, newest first, with the app each came from. Click an item to put it back on the clipboard and paste it into the app you're in. Pasting sends ⌘V, so it needs Accessibility access; without it, or with **Paste the item you pick** turned off, the item is only copied. Hover over an item to remove it, or use **Clear**.
+
+The history lives in memory only and is gone when the app quits. Passwords copied from password managers that mark them as concealed, like 1Password, are never kept.
+
 ## Permissions and privacy
 
 | Permission | Used for | Required |
 |---|---|:---:|
-| Accessibility | Replacing the system volume and brightness HUD | Optional |
+| Accessibility | Replacing the system volume and brightness HUD, pasting from the clipboard history | Optional |
 | Calendars | The Calendar tab and event reminders | Optional |
 
 Everything else, like Now Playing, volume, outputs and brightness, works without any prompts. Shortcuts may ask for access to Home the first time a Home shortcut runs.

@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 enum IslandTab: Hashable {
-    case media, home, controls, posture, calendar, system
+    case media, home, controls, posture, calendar, clipboard, system
 }
 
 enum HUDKind: Equatable {
@@ -45,6 +45,9 @@ enum IslandLayout {
     static let calendarRowHeight: CGFloat = 40
     static let maxCalendarRows = 4
     static let calendarEmptyHeight: CGFloat = 112
+    static let clipboardRowHeight: CGFloat = 36
+    static let maxClipboardRows = 5
+    static let clipboardEmptyHeight: CGFloat = 112
 }
 
 @MainActor @Observable
@@ -56,6 +59,7 @@ final class IslandModel {
     let posture: PostureService
     let system: SystemService
     let calendar: CalendarService
+    let clipboard: ClipboardService
     let water: WaterService
     let settings: AppSettings
 
@@ -84,7 +88,8 @@ final class IslandModel {
     @ObservationIgnored private var permissionPoll: Timer?
 
     init(media: NowPlayingService, audio: AudioService, brightness: BrightnessService, home: HomeService,
-         posture: PostureService, system: SystemService, calendar: CalendarService, water: WaterService, settings: AppSettings) {
+         posture: PostureService, system: SystemService, calendar: CalendarService, clipboard: ClipboardService,
+         water: WaterService, settings: AppSettings) {
         self.media = media
         self.audio = audio
         self.brightness = brightness
@@ -92,6 +97,7 @@ final class IslandModel {
         self.posture = posture
         self.system = system
         self.calendar = calendar
+        self.clipboard = clipboard
         self.water = water
         self.settings = settings
 
@@ -141,6 +147,7 @@ final class IslandModel {
 
     var showsPostureTab: Bool { settings.showPostureTab && posture.isConnected }
     var showsCalendarTab: Bool { settings.showCalendarTab }
+    var showsClipboardTab: Bool { settings.showClipboardTab }
 
     var animation: Animation {
         switch presentation {
@@ -170,6 +177,7 @@ final class IslandModel {
         case .home where !settings.showHomeTab: .media
         case .posture where !showsPostureTab: .media
         case .calendar where !showsCalendarTab: .media
+        case .clipboard where !showsClipboardTab: .media
         default: tab
         }
     }
@@ -195,6 +203,10 @@ final class IslandModel {
             guard calendar.access == .granted, !calendar.events.isEmpty else { return IslandLayout.calendarEmptyHeight }
             let rows = CGFloat(min(calendar.events.count, IslandLayout.maxCalendarRows))
             return 4 + IslandLayout.sectionHeaderHeight + rows * IslandLayout.calendarRowHeight + 16
+        case .clipboard:
+            guard !clipboard.items.isEmpty else { return IslandLayout.clipboardEmptyHeight }
+            let rows = CGFloat(min(clipboard.items.count, IslandLayout.maxClipboardRows))
+            return 4 + IslandLayout.sectionHeaderHeight + rows * IslandLayout.clipboardRowHeight + 16
         case .system:
             return 4 + CGFloat(system.rowCount) * IslandLayout.systemRowHeight + 16
         case .controls:
@@ -263,6 +275,12 @@ final class IslandModel {
     }
 
     func toggle() { isOpen ? close() : open() }
+
+    /// Copies an older clipboard item again and, if allowed, pastes it into the app in front.
+    func useClipboardItem(_ item: ClipboardItem) {
+        clipboard.use(item, paste: settings.pasteFromClipboardHistory)
+        close()
+    }
 
     func select(_ tab: IslandTab) {
         if tab == .home { home.refresh() }

@@ -26,9 +26,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let posture = PostureService()
         let calendar = CalendarService()
         let clipboard = ClipboardService()
+        let water = WaterService()
         let model = IslandModel(media: media, audio: audio, brightness: BrightnessService(), home: home,
                                 posture: posture, system: SystemService(), calendar: calendar, clipboard: clipboard,
-                                settings: settings)
+                                water: water, settings: settings)
         let settingsWindow = SettingsWindowController(model: model)
         model.onOpenSettings = { [weak settingsWindow] in settingsWindow?.show() }
         let welcomeWindow = WelcomeWindowController(model: model)
@@ -42,6 +43,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         posture.start()
         calendar.start()
         clipboard.start()
+        water.start()
 
         self.model = model
         self.islandWindow = islandWindow
@@ -69,5 +71,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model?.posture.stop()
         model?.calendar.stop()
         model?.clipboard.stop()
+        model?.water.stop()
     }
 }

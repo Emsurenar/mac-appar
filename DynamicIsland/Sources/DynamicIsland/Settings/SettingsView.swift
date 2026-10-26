@@ -117,6 +117,14 @@ struct SettingsView: View {
                     .disabled(model.calendar.access == .granted)
                 }
 
+                if model.calendar.access == .granted {
+                    SettingsSection("Calendars", footer: "Missing your Google calendar? In System Settings › Internet Accounts, open your Google account and turn on Calendars, then open the Calendar app once so it syncs.") {
+                        ForEach(model.calendar.sources) { source in
+                            CalendarSourceRow(source: source)
+                        }
+                    }
+                }
+
                 SettingsSection("Volume and Brightness", footer: "The volume and brightness keys then show only in the island. Hold ⌥⇧ for finer steps.") {
                     SettingsToggle("Show volume changes in the island", isOn: $settings.showVolumeHUD)
                     SettingsToggle("Replace the system volume and brightness HUD", isOn: $settings.replaceSystemHUD)
@@ -332,6 +340,38 @@ private struct TileColorRow: View {
             }
             ColorPicker("", selection: home.colorBinding(for: shortcut), supportsOpacity: false)
                 .labelsHidden()
+        }
+    }
+}
+
+/// A calendar with a switch for whether the island shows it.
+private struct CalendarSourceRow: View {
+    @Environment(IslandModel.self) private var model
+    let source: CalendarService.Source
+
+    var body: some View {
+        let settings = model.settings
+        let isOn = Binding(
+            get: { !settings.hiddenCalendarIDs.contains(source.id) },
+            set: { shown in
+                if shown { settings.hiddenCalendarIDs.remove(source.id) } else { settings.hiddenCalendarIDs.insert(source.id) }
+                model.calendar.reload()
+            }
+        )
+        SettingsRow {
+            Circle()
+                .fill(Color(nsColor: source.color))
+                .frame(width: 12, height: 12)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(source.title)
+                Text(source.account)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 12)
+            Toggle("", isOn: isOn)
+                .labelsHidden()
+                .toggleStyle(.switch)
         }
     }
 }

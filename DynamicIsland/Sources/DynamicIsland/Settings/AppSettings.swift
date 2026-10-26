@@ -16,6 +16,10 @@ final class AppSettings {
     var showCalendarReminders: Bool { didSet { store(showCalendarReminders, Key.showCalendarReminders) } }
     /// Minutes before an event that its reminder appears.
     var calendarLeadMinutes: Int { didSet { defaults.set(calendarLeadMinutes, forKey: Key.calendarLeadMinutes) } }
+    /// Identifiers of the calendars the island leaves out.
+    var hiddenCalendarIDs: Set<String> {
+        didSet { defaults.set(Array(hiddenCalendarIDs), forKey: Key.hiddenCalendarIDs) }
+    }
     var homeFolderName: String { didSet { defaults.set(homeFolderName, forKey: Key.homeFolderName) } }
     var replaceSystemHUD: Bool {
         didSet {
@@ -42,6 +46,7 @@ final class AppSettings {
         static let showCalendarTab = "showCalendarTab"
         static let showCalendarReminders = "showCalendarReminders"
         static let calendarLeadMinutes = "calendarLeadMinutes"
+        static let hiddenCalendarIDs = "hiddenCalendarIDs"
     }
 
     @ObservationIgnored private let defaults = UserDefaults.standard
@@ -78,6 +83,7 @@ final class AppSettings {
         showCalendarTab = defaults.bool(forKey: Key.showCalendarTab)
         showCalendarReminders = defaults.bool(forKey: Key.showCalendarReminders)
         calendarLeadMinutes = defaults.integer(forKey: Key.calendarLeadMinutes)
+        hiddenCalendarIDs = Set(defaults.stringArray(forKey: Key.hiddenCalendarIDs) ?? [])
         homeFolderName = defaults.string(forKey: Key.homeFolderName) ?? "Home"
     }
 

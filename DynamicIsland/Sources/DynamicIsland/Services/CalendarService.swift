@@ -19,6 +19,14 @@ final class CalendarService {
         func isHappening(at date: Date) -> Bool { start <= date && date < end }
     }
 
+    /// One calendar from an account, for picking which ones the island shows.
+    struct Source: Identifiable, Equatable {
+        let id: String
+        let title: String
+        let account: String
+        let color: NSColor
+    }
+
     enum Access: Equatable {
         case unknown, granted, denied
     }
@@ -27,12 +35,16 @@ final class CalendarService {
     /// Timed events from now until the end of today, or tomorrow's when today is done.
     private(set) var events: [Event] = []
     private(set) var showsTomorrow = false
+    /// Every event calendar on the Mac, grouped by account.
+    private(set) var sources: [Source] = []
     /// The event the reminder in the island is about.
     private(set) var reminder: Event?
 
     var onReminder: ((Event) -> Void)?
     /// Minutes before an event that the reminder appears.
     var leadMinutes: @MainActor () -> Int = { 15 }
+    /// Calendars the user turned off.
+    var hiddenCalendars: @MainActor () -> Set<String> = { [] }
 
     @ObservationIgnored private let store = EKEventStore()
     @ObservationIgnored private var timer: Timer?
@@ -79,6 +91,15 @@ final class CalendarService {
             if !events.isEmpty { events = [] }
             return
         }
+        let calendars = store.calendars(for: .event)
+        let sources = calendars
+            .map { Source(id: $0.calendarIdentifier, title: $0.title, account: $0.source?.title ?? "Other",
+                          color: $0.color ?? .systemBlue) }
+            .sorted { ($0.account, $0.title) < ($1.account, $1.title) }
+        if sources != self.sources { self.sources = sources }
+        let hidden = hiddenCalendars()
+        let shown = calendars.filter { !hidden.contains($0.calendarIdentifier) }
+
         let now = Date()
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: now)
@@ -86,9 +107,9 @@ final class CalendarService {
         let dayAfter = calendar.date(byAdding: .day, value: 2, to: today)!
 
         // Runs every 20 seconds, so only touch the properties when something changed.
-        let upcoming = fetch(from: now, to: tomorrow)
+        let upcoming = fetch(shown, from: now, to: tomorrow)
         let isTomorrow = upcoming.isEmpty
-        let events = isTomorrow ? fetch(from: tomorrow, to: dayAfter) : upcoming
+        let events = isTomorrow ? fetch(shown, from: tomorrow, to: dayAfter) : upcoming
         if events != self.events { self.events = events }
         if isTomorrow != showsTomorrow { showsTomorrow = isTomorrow }
         tick()
@@ -131,8 +152,10 @@ final class CalendarService {
         if access != self.access { self.access = access }
     }
 
-    private func fetch(from start: Date, to end: Date) -> [Event] {
-        let predicate = store.predicateForEvents(withStart: start, end: end, calendars: nil)
+    private func fetch(_ calendars: [EKCalendar], from start: Date, to end: Date) -> [Event] {
+        // An empty list would mean every calendar to EventKit.
+        guard !calendars.isEmpty else { return [] }
+        let predicate = store.predicateForEvents(withStart: start, end: end, calendars: calendars)
         return store.events(matching: predicate)
             .filter { !$0.isAllDay && $0.status != .canceled && !Self.isDeclined($0) }
             .sorted { $0.compareStartDate(with: $1) == .orderedAscending }

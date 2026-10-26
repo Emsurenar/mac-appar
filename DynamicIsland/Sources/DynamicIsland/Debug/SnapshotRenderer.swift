@@ -26,9 +26,14 @@ enum SnapshotRenderer {
             render("8-open-controls", model, directory)
             model.select(.home)
             try? await Task.sleep(for: .seconds(1.5))
+            model.open()  // The hover tracker may have closed it while waiting.
             render("9-open-home-empty", model, directory)
             model.home.showPreviewShortcuts()
             render("10-open-home", model, directory)
+            // On: 0 (light orange), 3 (dark purple). Running: 1. Idle light: 2. Failed: 4.
+            model.home.showPreviewColors(["#FF9500", "#0A84FF", "#FFD60A", "#5E2CA5", "#FFCC00", "#FF375F", nil])
+            render("10c-open-home-colors", model, directory)
+            model.home.showPreviewColors([])
             model.setChoosingShortcuts(true)
             model.home.showPreviewShortcuts(limit: 5)
             render("10b-home-picker", model, directory)

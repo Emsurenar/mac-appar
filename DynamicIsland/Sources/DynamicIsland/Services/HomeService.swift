@@ -193,6 +193,13 @@ final class HomeService {
         toggleStates = Dictionary(uniqueKeysWithValues: [0, 3].filter { $0 < tiles.count }.map { (tiles[$0].id, true) })
         runStates = tiles.count > 4 ? [tiles[1].id: .running, tiles[4].id: .failed] : [:]
     }
+
+    /// Colors the preview tiles without saving them; nil clears them again.
+    func showPreviewColors(_ hexes: [String?]) {
+        tileColors = Dictionary(uniqueKeysWithValues: zip(shortcuts, hexes).compactMap { tile, hex in
+            hex.map { (tile.id, $0) }
+        })
+    }
     #endif
 
     private func finish(_ shortcut: HomeShortcut, succeeded: Bool, output: String) {
@@ -271,10 +278,9 @@ final class TileColorPanel: NSObject {
         guard onChange != nil else { return }
         onChange = nil
         let panel = NSColorPanel.shared
-        if panel.target === self {
-            panel.setTarget(nil)
-            panel.setAction(nil)
-        }
+        // NSColorPanel has no target getter; detach only runs while the panel is ours.
+        panel.setTarget(nil)
+        panel.setAction(nil)
         NotificationCenter.default.removeObserver(self, name: NSWindow.willCloseNotification, object: panel)
     }
 

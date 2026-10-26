@@ -350,7 +350,7 @@ private struct HomeTile: View {
                     } else {
                         Image(systemName: shortcut.symbol)
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(tint?.isLight == true ? Color.black : Color.white)
                     }
                 }
                 .symbolEffect(.bounce, value: successCount)
@@ -362,7 +362,9 @@ private struct HomeTile: View {
 
     private func iconFill(isActive: Bool) -> Color {
         if let tint {
-            // On a colored tile the circle stays neutral so the tile's color carries it.
+            // On a colored tile the circle stays neutral so the tile's color carries it,
+            // and darkens behind the orange warning so it doesn't sink into a warm color.
+            if state == .failed { return Color.black.opacity(0.35) }
             return isActive ? Color.black.opacity(0.18) : Color(nsColor: tint).opacity(0.9)
         }
         return isActive ? accent : Color.white.opacity(0.14)

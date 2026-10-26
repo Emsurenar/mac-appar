@@ -24,7 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let home = HomeService(settings: settings)
         let posture = PostureService()
         let model = IslandModel(media: media, audio: audio, brightness: BrightnessService(), home: home,
-                                posture: posture, settings: settings)
+                                posture: posture, system: SystemService(), settings: settings)
         let settingsWindow = SettingsWindowController(model: model)
         model.onOpenSettings = { [weak settingsWindow] in settingsWindow?.show() }
 

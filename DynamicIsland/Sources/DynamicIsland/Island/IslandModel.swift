@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 enum IslandTab: Hashable {
-    case media, home, controls, posture
+    case media, home, controls, posture, system
 }
 
 enum HUDKind: Equatable {
@@ -37,6 +37,7 @@ enum IslandLayout {
     static let maxHomeRows = 3
     static let homeEmptyHeight: CGFloat = 112
     static let postureContentHeight: CGFloat = 150
+    static let systemRowHeight: CGFloat = 34
 }
 
 @MainActor @Observable
@@ -46,6 +47,7 @@ final class IslandModel {
     let brightness: BrightnessService
     let home: HomeService
     let posture: PostureService
+    let system: SystemService
     let settings: AppSettings
 
     var metrics = NotchMetrics.fallback
@@ -68,12 +70,13 @@ final class IslandModel {
     @ObservationIgnored private var permissionPoll: Timer?
 
     init(media: NowPlayingService, audio: AudioService, brightness: BrightnessService, home: HomeService,
-         posture: PostureService, settings: AppSettings) {
+         posture: PostureService, system: SystemService, settings: AppSettings) {
         self.media = media
         self.audio = audio
         self.brightness = brightness
         self.home = home
         self.posture = posture
+        self.system = system
         self.settings = settings
 
         media.onTrackChange = { [weak self] in self?.showTrackPeek() }
@@ -197,6 +200,8 @@ final class IslandModel {
             return 4 + rows * IslandLayout.homeTileHeight + (rows - 1) * IslandLayout.homeTileSpacing + 18
         case .posture:
             return IslandLayout.postureContentHeight
+        case .system:
+            return 4 + CGFloat(system.rowCount) * IslandLayout.systemRowHeight + 16
         case .controls:
             let sliders: CGFloat = brightness.isAvailable ? 2 : 1
             let rows = CGFloat(min(audio.devices.count, IslandLayout.maxVisibleDevices))

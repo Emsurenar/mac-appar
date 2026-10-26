@@ -44,11 +44,27 @@
 
 - A Mac with Apple silicon. It's designed for MacBooks with a notch. Other displays get a virtual notch at the top center (untested).
 - macOS 14 Sonoma or later. Developed and tested on macOS 26 Tahoe.
-- Xcode 16 or later, or just the Command Line Tools (`xcode-select --install`).
 
 ## Install
 
-There's no prebuilt download yet. Building from source takes a minute or two:
+Paste this in Terminal:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Emsurenar/mac-appar/main/DynamicIsland/install.sh | bash
+```
+
+It downloads the latest release into `/Applications` and opens it. Run it again to update. To remove the app and its settings, add `-s -- --uninstall` after `bash`.
+
+<details>
+<summary>Download the zip yourself instead</summary>
+
+Get `DynamicIsland.zip` from the [latest release](https://github.com/Emsurenar/mac-appar/releases?q=island-v), unzip it and drag **Dynamic Island** to Applications. The app isn't notarized by Apple, so the first time macOS says it can't check it for malware. Open **System Settings › Privacy & Security**, scroll down and click **Open Anyway**. The install script above skips this step, because macOS only checks apps downloaded by a browser.
+</details>
+
+<details>
+<summary>Build it from source</summary>
+
+You need Xcode 16 or later, or just the Command Line Tools (`xcode-select --install`).
 
 ```bash
 git clone https://github.com/Emsurenar/mac-appar.git
@@ -56,9 +72,19 @@ cd mac-appar/DynamicIsland
 ./build.sh --run
 ```
 
-This builds `build/Dynamic Island.app` and launches it. Move it to `/Applications` if you want to keep it, then turn on **Launch at login** in its settings.
+This builds `build/Dynamic Island.app` and launches it. The script signs the app with the first code-signing identity in your keychain, or ad hoc if there is none. A stable identity keeps the Accessibility permission across rebuilds. Choose one with `SIGN_IDENTITY="Your Identity" ./build.sh`.
+</details>
 
-The script signs the app with the first code-signing identity in your keychain, or ad hoc if there is none. A stable identity keeps the Accessibility permission across rebuilds. Choose one with `SIGN_IDENTITY="Your Identity" ./build.sh`.
+## First launch
+
+A welcome window explains where the island is and sets up the basics in one place:
+
+- **Move to Applications**, if the app runs from somewhere else, like Downloads.
+- **Launch at login** and whether the island opens on hover.
+- **Optional permissions**, each asked for only when you turn its feature on: Calendars for upcoming events, Accessibility for showing volume and brightness in the notch.
+- **Home scenes**, which jumps straight to picking shortcuts.
+
+Click **Show me the island** and it opens once, so you see where it lives. You can show the welcome again under **Settings › About**.
 
 ## Using it
 
@@ -122,7 +148,7 @@ The panel is much larger than the island, so it lets clicks through (`ignoresMou
 
 `NotchShape` is an animatable SwiftUI `Shape` with concave "ears" where it meets the top of the screen and rounded bottom corners. Both radii animate together with the size, so the outline morphs between states instead of cross-fading. Every state has its own spring: a slight bounce when opening and a calm, critically damped close. Content enters with a blur and scale from the notch, and the artwork moves between states with `matchedGeometryEffect`.
 
-A single computed property, `IslandModel.presentation`, decides what the island shows by picking the most important state: open, HUD, posture reminder, track peek, music live activity, posture live activity, and finally closed.
+`IslandPresentation(_:)` decides what the island shows by picking the most important state: open, HUD, calendar reminder, posture reminder, track peek, music live activity, posture live activity, and finally closed. `IslandGeometry` turns that into a size, corner radii and the hover zone. Both are plain values, so the tests cover them without any windows or services.
 </details>
 
 <details>
@@ -154,29 +180,42 @@ This technique was pioneered by [ungive/mediaremote-adapter](https://github.com/
 ```
 DynamicIsland/
 ├── build.sh                    # Builds, bundles and signs the .app
+├── install.sh                  # Installs the latest release
 ├── Package.swift
 ├── Bridge/NowPlayingBridge.m   # MediaRemote bridge, runs inside /usr/bin/perl
 ├── Resources/                  # Info.plist, app icon
 ├── Scripts/make-icon.swift     # Draws AppIcon.icns
 └── Sources/DynamicIsland/
     ├── App/                    # Entry point and app delegate
-    ├── Island/                 # Window, notch geometry, state model
+    ├── Island/                 # Window, presentation and geometry, state model
     ├── Services/               # Now Playing, audio, brightness, keys, Home, Posture
     ├── Settings/               # Preferences and settings window
+    ├── Welcome/                # First-launch window, moving to Applications, login item
     ├── Views/                  # Island shape, live activities, tabs, components
     └── Debug/                  # Snapshot renderer (debug builds only)
+Tests/DynamicIslandTests/       # Unit tests: presentation, geometry, Home, settings
 ```
 
 ## Development
 
 ```bash
 CONFIG=debug ./build.sh            # debug build
+swift test                         # unit tests (needs Xcode)
 "build/Dynamic Island.app/Contents/MacOS/DynamicIsland" --snapshots /tmp/island   # render every state to PNG
 "build/Dynamic Island.app/Contents/MacOS/DynamicIsland" --trace    # log every state change
 swift Scripts/make-icon.swift .    # redraw the app icon
 ```
 
 The screenshots in this README come from `--snapshots`.
+
+To publish a release, push a tag like `island-v1.1.0`. The **Dynamic Island release** workflow builds the app and attaches `DynamicIsland.zip` to a GitHub release, which `install.sh` picks up.
+
+## Troubleshooting
+
+- **Nothing appears at the top of the screen.** The app has no Dock icon. Point at the notch, or at the top center of the screen on a display without one. Open the app again from Applications to bring up Settings.
+- **"Dynamic Island can't be opened" or "Apple could not verify…".** The app isn't notarized. Use **Open Anyway** in **System Settings › Privacy & Security**, or install it with the script above.
+- **The volume keys stopped showing in the island after an update.** Releases are signed ad hoc, so macOS sees each version as a new app. Remove Dynamic Island under **System Settings › Privacy & Security › Accessibility** and turn the setting on again.
+- **No song shows up.** The app playing must report to Control Center. Check that it shows there.
 
 ## Known limitations
 

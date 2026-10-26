@@ -299,7 +299,7 @@ final class IslandModel {
     }
 
     func showShelfForDrop() {
-        guard showsShelfTab, !ShelfDragSource.isDragging, !isDraggingScreenshot else { return }
+        guard acceptsFileDrops else { return }
         closeTask?.cancel()
         if isOpen {
             select(.shelf)
@@ -309,16 +309,14 @@ final class IslandModel {
         }
     }
 
-    /// Keeps the dropped files. Returns false for drags that started on the shelf itself.
-    func dropFiles(_ providers: [NSItemProvider]) -> Bool {
+    /// Whether files dragged over the island can go on the shelf; not the island's own screenshot or shelf files.
+    var acceptsFileDrops: Bool { showsShelfTab && !ShelfDragSource.isDragging && !isDraggingScreenshot }
+
+    /// Keeps the dropped files.
+    func dropFiles(_ urls: [URL]) -> Bool {
         isDropTargeted = false
-        guard showsShelfTab, !ShelfDragSource.isDragging, !isDraggingScreenshot else {
-            NSLog("%@", "Shelf: drop refused (tab shown: \(showsShelfTab), shelf drag: \(ShelfDragSource.isDragging), "
-                  + "screenshot drag: \(isDraggingScreenshot))")
-            return false
-        }
-        NSLog("%@", "Shelf: drop of \(providers.map(\.registeredTypeIdentifiers))")
-        shelf.add(from: providers)
+        guard acceptsFileDrops, !urls.isEmpty else { return false }
+        shelf.add(urls)
         if !isOpen { showShelfForDrop() }
         return true
     }

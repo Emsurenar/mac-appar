@@ -1,5 +1,4 @@
 import AppKit
-import UniformTypeIdentifiers
 
 /// Files dropped on the island. They stay on the shelf, also across launches, until they're dragged out.
 /// The shelf only keeps references: the files themselves never move.
@@ -49,35 +48,6 @@ final class FileShelf {
         guard existing != files else { return }
         files = existing
         save()
-    }
-
-    /// Reads the file URLs from a drop and adds them as they arrive.
-    /// Asks for the raw file-URL item: Finder hands that over reliably, unlike `loadObject(ofClass: URL.self)`.
-    func add(from providers: [NSItemProvider]) {
-        let type = UTType.fileURL.identifier
-        for provider in providers where provider.hasItemConformingToTypeIdentifier(type) {
-            provider.loadItem(forTypeIdentifier: type, options: nil) { [weak self] item, error in
-                guard let url = Self.fileURL(from: item) else {
-                    NSLog("Shelf: no file URL in drop (%@)", error?.localizedDescription ?? "unknown item")
-                    return
-                }
-                DispatchQueue.main.async {
-                    MainActor.assumeIsolated { self?.add([url]) }
-                }
-            }
-        }
-    }
-
-    /// A dropped file-URL item comes as data, a URL or a string, depending on the source app.
-    nonisolated static func fileURL(from item: Any?) -> URL? {
-        let url: URL? = switch item {
-        case let data as Data: URL(dataRepresentation: data, relativeTo: nil)
-        case let url as URL: url
-        case let string as String: URL(string: string)
-        default: nil
-        }
-        guard let url, url.isFileURL else { return nil }
-        return url
     }
 
     private func save() {

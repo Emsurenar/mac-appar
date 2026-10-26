@@ -61,13 +61,4 @@ final class FileShelfTests: XCTestCase {
             XCTAssertTrue(AppSettings(defaults: defaults).showShelfTab)
         }
     }
-
-    func testReadsDroppedFileURLsInEveryForm() {
-        let data = report.dataRepresentation
-        XCTAssertEqual(FileShelf.fileURL(from: data), report)
-        XCTAssertEqual(FileShelf.fileURL(from: report), report)
-        XCTAssertEqual(FileShelf.fileURL(from: report.absoluteString), report)
-        XCTAssertNil(FileShelf.fileURL(from: URL(string: "https://example.com")!))
-        XCTAssertNil(FileShelf.fileURL(from: nil))
-    }
 }

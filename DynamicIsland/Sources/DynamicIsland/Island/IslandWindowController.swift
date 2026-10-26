@@ -29,7 +29,35 @@ final class IslandPanel: NSPanel {
 }
 
 private final class IslandHostingView<Content: View>: NSHostingView<Content> {
+    /// Takes file drops for the shelf. Handled here in AppKit, because SwiftUI's drop target
+    /// is lost when the island changes shape under the drag.
+    weak var model: IslandModel?
+
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation { fileDragOperation(sender) }
+    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation { fileDragOperation(sender) }
+    override func draggingExited(_ sender: NSDraggingInfo?) { model?.setDropTargeted(false) }
+    override func draggingEnded(_ sender: NSDraggingInfo) { model?.setDropTargeted(false) }
+    override func prepareForDragOperation(_ sender: NSDraggingInfo) -> Bool { fileDragOperation(sender) != [] }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        let urls = sender.draggingPasteboard.readObjects(forClasses: [NSURL.self],
+                                                         options: [.urlReadingFileURLsOnly: true]) as? [URL]
+        NSLog("%@", "Shelf: drop of \(urls?.count ?? 0) files")
+        return model?.dropFiles(urls ?? []) ?? false
+    }
+
+    /// Copy over the island, nothing over the transparent rest of the window.
+    private func fileDragOperation(_ sender: NSDraggingInfo) -> NSDragOperation {
+        guard let model, model.acceptsFileDrops, let window,
+              sender.draggingPasteboard.canReadObject(forClasses: [NSURL.self],
+                                                      options: [.urlReadingFileURLsOnly: true]) else { return [] }
+        let point = window.convertPoint(toScreen: sender.draggingLocation)
+        let inside = model.hoverZone.contains(point)
+        model.setDropTargeted(inside)
+        return inside ? .copy : []
+    }
 }
 
 @MainActor
@@ -51,6 +79,8 @@ final class IslandWindowController {
         let hostingView = IslandHostingView(rootView: IslandRootView().environment(model))
         hostingView.sizingOptions = []
         hostingView.frame = NSRect(origin: .zero, size: Self.canvasSize)
+        hostingView.model = model
+        hostingView.registerForDraggedTypes([.fileURL])
         panel.contentView = hostingView
 
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification,
@@ -123,7 +153,8 @@ final class IslandWindowController {
     }
 
     private func updatePointer() {
-        let inside = model.hoverZone.contains(NSEvent.mouseLocation)
+        // A file drag over the island keeps it hit-testable until the drag leaves or drops.
+        let inside = model.hoverZone.contains(NSEvent.mouseLocation) || model.isDropTargeted
         if panel.ignoresMouseEvents == inside { panel.ignoresMouseEvents = !inside }
         model.setHovering(inside)
         if inside { openForFileDrag() }

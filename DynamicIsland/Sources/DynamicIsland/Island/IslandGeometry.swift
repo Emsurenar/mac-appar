@@ -5,6 +5,7 @@ import CoreGraphics
 struct PresentationState: Equatable {
     var isOpen = false
     var hud: HUDKind?
+    var showsScreenshot = false
     var showsCalendarReminder = false
     var showsPostureAlert = false
     var showsTrackPeek = false
@@ -14,10 +15,11 @@ struct PresentationState: Equatable {
 
 extension IslandPresentation {
     /// Picks the presentation with the highest priority: an open island first, then HUDs,
-    /// reminders, the track peek and last the live activities.
+    /// a fresh screenshot, reminders, the track peek and last the live activities.
     init(_ state: PresentationState) {
         if state.isOpen { self = .open }
         else if let hud = state.hud { self = .hud(hud) }
+        else if state.showsScreenshot { self = .screenshot }
         else if state.showsCalendarReminder { self = .calendarReminder }
         else if state.showsPostureAlert { self = .postureAlert }
         else if state.showsTrackPeek { self = .peek }
@@ -45,7 +47,7 @@ struct IslandGeometry: Equatable {
         switch presentation {
         case .closed: isHovering ? 6 : 0
         case .compact, .postureCompact, .hud(.volume), .hud(.brightness): 8
-        case .peek, .postureAlert, .calendarReminder, .hud(.outputDevice): 10
+        case .peek, .postureAlert, .calendarReminder, .screenshot, .hud(.outputDevice): 10
         case .open: 14
         }
     }
@@ -55,7 +57,7 @@ struct IslandGeometry: Equatable {
         case .closed: isHovering ? 12 : 8
         case .compact, .postureCompact, .hud(.volume), .hud(.brightness): 13
         case .peek, .hud(.outputDevice): 22
-        case .postureAlert, .calendarReminder: 24
+        case .postureAlert, .calendarReminder, .screenshot: 24
         case .open: 32
         }
     }
@@ -74,6 +76,8 @@ struct IslandGeometry: Equatable {
             return CGSize(width: notch.width + 260 + ears, height: notch.height + 64)
         case .calendarReminder:
             return CGSize(width: notch.width + 300 + ears, height: notch.height + 64)
+        case .screenshot:
+            return CGSize(width: notch.width + 300 + ears, height: notch.height + 80)
         case .hud(.volume), .hud(.brightness):
             return CGSize(width: notch.width + hudSideWidth * 2 + ears, height: notch.height)
         case .peek:

@@ -42,8 +42,14 @@ final class GeometryTests: XCTestCase {
         }
     }
 
+    func testScreenshotShelfFitsItsThumbnailBelowTheNotch() {
+        let shelf = geometry(.screenshot)
+        XCTAssertGreaterThanOrEqual(shelf.size.height, 32 + IslandLayout.screenshotThumbnailSize.height + 12)
+        XCTAssertGreaterThan(shelf.size.width, notched.notchSize.width + IslandLayout.screenshotThumbnailSize.width)
+    }
+
     func testHoverZoneIsCenteredOnTheNotchAndTouchesTheTop() {
-        for presentation: IslandPresentation in [.closed, .compact, .peek, .open] {
+        for presentation: IslandPresentation in [.closed, .compact, .peek, .screenshot, .open] {
             let zone = geometry(presentation, content: 162).hoverZone
             XCTAssertEqual(zone.midX, notched.centerX, accuracy: 0.5, "\(presentation)")
             XCTAssertGreaterThanOrEqual(zone.maxY, notched.screenFrame.maxY, "\(presentation)")

@@ -14,6 +14,7 @@ final class AppSettings {
     var showPostureLiveActivity: Bool { didSet { store(showPostureLiveActivity, Key.showPostureLiveActivity) } }
     var showCalendarTab: Bool { didSet { store(showCalendarTab, Key.showCalendarTab) } }
     var showCalendarReminders: Bool { didSet { store(showCalendarReminders, Key.showCalendarReminders) } }
+    var showScreenshots: Bool { didSet { store(showScreenshots, Key.showScreenshots) } }
     /// Minutes before an event that its reminder appears.
     var calendarLeadMinutes: Int { didSet { defaults.set(calendarLeadMinutes, forKey: Key.calendarLeadMinutes) } }
     /// Identifiers of the calendars the island leaves out.
@@ -48,6 +49,7 @@ final class AppSettings {
         static let showPostureLiveActivity = "showPostureLiveActivity"
         static let showCalendarTab = "showCalendarTab"
         static let showCalendarReminders = "showCalendarReminders"
+        static let showScreenshots = "showScreenshots"
         static let calendarLeadMinutes = "calendarLeadMinutes"
         static let hiddenCalendarIDs = "hiddenCalendarIDs"
     }
@@ -73,6 +75,7 @@ final class AppSettings {
             Key.showPostureLiveActivity: true,
             Key.showCalendarTab: true,
             Key.showCalendarReminders: true,
+            Key.showScreenshots: true,
             Key.calendarLeadMinutes: 15,
         ])
         hoverToOpen = defaults.bool(forKey: Key.hoverToOpen)
@@ -89,6 +92,7 @@ final class AppSettings {
         showPostureLiveActivity = defaults.bool(forKey: Key.showPostureLiveActivity)
         showCalendarTab = defaults.bool(forKey: Key.showCalendarTab)
         showCalendarReminders = defaults.bool(forKey: Key.showCalendarReminders)
+        showScreenshots = defaults.bool(forKey: Key.showScreenshots)
         calendarLeadMinutes = defaults.integer(forKey: Key.calendarLeadMinutes)
         hiddenCalendarIDs = Set(defaults.stringArray(forKey: Key.hiddenCalendarIDs) ?? [])
         homeFolderName = defaults.string(forKey: Key.homeFolderName) ?? "Home"

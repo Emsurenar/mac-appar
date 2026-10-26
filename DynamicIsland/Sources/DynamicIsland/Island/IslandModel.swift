@@ -22,6 +22,8 @@ enum IslandPresentation: Equatable {
     case postureCompact
     /// An event from the calendar is about to start.
     case calendarReminder
+    /// A screenshot was just taken; it can be dragged out of the island.
+    case screenshot
     case open
 }
 
@@ -43,6 +45,7 @@ enum IslandLayout {
     static let calendarRowHeight: CGFloat = 40
     static let maxCalendarRows = 4
     static let calendarEmptyHeight: CGFloat = 112
+    static let screenshotThumbnailSize = CGSize(width: 96, height: 60)
 }
 
 @MainActor @Observable
@@ -54,6 +57,7 @@ final class IslandModel {
     let posture: PostureService
     let system: SystemService
     let calendar: CalendarService
+    let screenshots: ScreenshotService
     let settings: AppSettings
 
     var metrics = NotchMetrics.fallback
@@ -65,6 +69,9 @@ final class IslandModel {
     private(set) var isChoosingShortcuts = false
     private(set) var isShowingPostureAlert = false
     private(set) var isShowingCalendarReminder = false
+    private(set) var isShowingScreenshot = false
+    /// The screenshot is being dragged; the island keeps it until the drag ends.
+    private(set) var isDraggingScreenshot = false
     var tab: IslandTab = .media
 
     @ObservationIgnored var onOpenSettings: (() -> Void)?
@@ -75,11 +82,13 @@ final class IslandModel {
     @ObservationIgnored private var peekTask: Task<Void, Never>?
     @ObservationIgnored private var postureAlertTask: Task<Void, Never>?
     @ObservationIgnored private var calendarReminderTask: Task<Void, Never>?
+    @ObservationIgnored private var screenshotTask: Task<Void, Never>?
     @ObservationIgnored private let keyInterceptor = MediaKeyInterceptor()
     @ObservationIgnored private var permissionPoll: Timer?
 
     init(media: NowPlayingService, audio: AudioService, brightness: BrightnessService, home: HomeService,
-         posture: PostureService, system: SystemService, calendar: CalendarService, settings: AppSettings) {
+         posture: PostureService, system: SystemService, calendar: CalendarService,
+         screenshots: ScreenshotService = ScreenshotService(), settings: AppSettings) {
         self.media = media
         self.audio = audio
         self.brightness = brightness
@@ -87,11 +96,13 @@ final class IslandModel {
         self.posture = posture
         self.system = system
         self.calendar = calendar
+        self.screenshots = screenshots
         self.settings = settings
 
         media.onTrackChange = { [weak self] in self?.showTrackPeek() }
         posture.onAlert = { [weak self] _ in self?.showPostureAlert() }
         calendar.onReminder = { [weak self] _ in self?.showCalendarReminder() }
+        screenshots.onNewScreenshot = { [weak self] _ in self?.showScreenshot() }
         calendar.leadMinutes = { [weak settings] in settings?.calendarLeadMinutes ?? 15 }
         calendar.hiddenCalendars = { [weak settings] in settings?.hiddenCalendarIDs ?? [] }
         audio.onExternalVolumeChange = { [weak self] in
@@ -115,6 +126,7 @@ final class IslandModel {
         IslandPresentation(PresentationState(
             isOpen: isOpen,
             hud: hud,
+            showsScreenshot: (isShowingScreenshot || isDraggingScreenshot) && screenshots.latest != nil,
             showsCalendarReminder: isShowingCalendarReminder && calendar.reminder != nil,
             showsPostureAlert: isShowingPostureAlert && posture.latestAlert != nil,
             showsTrackPeek: isPeeking && media.hasMedia,
@@ -203,7 +215,10 @@ final class IslandModel {
 
         if hovering {
             closeTask?.cancel()
-            if settings.hoverToOpen && !isOpen {
+            // Hovering the screenshot holds it in place instead of opening the island over it.
+            if presentation == .screenshot {
+                screenshotTask?.cancel()
+            } else if settings.hoverToOpen && !isOpen {
                 // Trackpad haptics only play while a finger touches the pad, so they go out
                 // with the movement that reached the notch, not with the delayed open.
                 performHaptic(.levelChange)
@@ -214,6 +229,7 @@ final class IslandModel {
             if isOpen {
                 closeTask = schedule(after: 0.22) { $0.close() }
             }
+            if isShowingScreenshot && !isDraggingScreenshot { scheduleScreenshotDismissal(after: 3) }
         }
     }
 
@@ -224,11 +240,13 @@ final class IslandModel {
         peekTask?.cancel()
         postureAlertTask?.cancel()
         calendarReminderTask?.cancel()
+        screenshotTask?.cancel()
         if isShowingCalendarReminder && showsCalendarTab { tab = .calendar }
         hud = nil
         isPeeking = false
         isShowingPostureAlert = false
         isShowingCalendarReminder = false
+        isShowingScreenshot = false
         if currentTab == .home { home.refresh() }
         if currentTab == .calendar { calendar.reload() }
         isOpen = true
@@ -294,6 +312,34 @@ final class IslandModel {
         performHaptic(.generic)
         calendarReminderTask?.cancel()
         calendarReminderTask = schedule(after: 12) { $0.isShowingCalendarReminder = false }
+    }
+
+    func showScreenshot() {
+        guard settings.showScreenshots, !isOpen else { return }
+        isPeeking = false
+        isShowingScreenshot = true
+        scheduleScreenshotDismissal(after: 8)
+    }
+
+    func dismissScreenshot() {
+        screenshotTask?.cancel()
+        isShowingScreenshot = false
+    }
+
+    func beginScreenshotDrag() {
+        screenshotTask?.cancel()
+        isDraggingScreenshot = true
+    }
+
+    /// A drop somewhere else is done with the screenshot; a cancelled drag puts it back for a moment.
+    func endScreenshotDrag(dropped: Bool) {
+        isDraggingScreenshot = false
+        if dropped { dismissScreenshot() } else { scheduleScreenshotDismissal(after: 3) }
+    }
+
+    private func scheduleScreenshotDismissal(after seconds: Double) {
+        screenshotTask?.cancel()
+        screenshotTask = schedule(after: seconds) { $0.isShowingScreenshot = false }
     }
 
     // MARK: Keyboard

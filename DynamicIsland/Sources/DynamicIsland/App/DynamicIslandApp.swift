@@ -25,8 +25,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let home = HomeService(settings: settings)
         let posture = PostureService()
         let calendar = CalendarService()
+        let screenshots = ScreenshotService()
         let model = IslandModel(media: media, audio: audio, brightness: BrightnessService(), home: home,
-                                posture: posture, system: SystemService(), calendar: calendar, settings: settings)
+                                posture: posture, system: SystemService(), calendar: calendar,
+                                screenshots: screenshots, settings: settings)
         let settingsWindow = SettingsWindowController(model: model)
         model.onOpenSettings = { [weak settingsWindow] in settingsWindow?.show() }
         let welcomeWindow = WelcomeWindowController(model: model)
@@ -39,6 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         home.refresh()
         posture.start()
         calendar.start()
+        screenshots.start()
 
         self.model = model
         self.islandWindow = islandWindow
@@ -65,5 +68,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model?.media.stop()
         model?.posture.stop()
         model?.calendar.stop()
+        model?.screenshots.stop()
     }
 }

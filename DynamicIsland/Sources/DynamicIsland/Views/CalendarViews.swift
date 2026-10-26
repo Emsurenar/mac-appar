@@ -26,7 +26,7 @@ struct CalendarTab: View {
             HStack {
                 Text(calendar.showsTomorrow ? "Tomorrow" : "Today")
                 Spacer()
-                Button("Open Calendar") { calendar.openCalendarApp() }
+                Button("Open Google Calendar") { calendar.openCalendar(at: calendar.events.first?.start ?? Date()) }
                     .buttonStyle(.plain)
                     .foregroundStyle(.white.opacity(0.45))
             }
@@ -53,7 +53,7 @@ struct CalendarTab: View {
             VStack(spacing: 0) {
                 ForEach(model.calendar.events) { event in
                     EventRow(event: event, now: context.date,
-                             onSelect: { model.calendar.openCalendarApp() },
+                             onSelect: { model.calendar.openCalendar(at: event.start) },
                              onJoin: { model.calendar.join(event) })
                 }
             }
@@ -74,7 +74,9 @@ struct CalendarTab: View {
         CalendarMessage(
             title: model.calendar.showsTomorrow ? "Nothing tomorrow either" : "Nothing more today",
             detail: "Upcoming events show up here.",
-            action: .init(title: "Open Calendar") { model.calendar.openCalendarApp() }
+            action: .init(title: "Open Calendar") {
+                model.calendar.openCalendar(at: Date().addingTimeInterval(model.calendar.showsTomorrow ? 86_400 : 0))
+            }
         )
     }
 }
@@ -155,7 +157,7 @@ private struct EventRow: View {
         }
         .buttonStyle(.plain)
         .onHover { isHovering = $0 }
-        .help("Show in Calendar")
+        .help("Show in Google Calendar")
     }
 
     private var startsSoon: Bool { event.start.timeIntervalSince(now) <= 5 * 60 }

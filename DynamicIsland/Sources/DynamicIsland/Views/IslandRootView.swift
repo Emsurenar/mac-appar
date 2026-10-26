@@ -52,6 +52,9 @@ struct IslandRootView: View {
             case .postureAlert:
                 PostureAlertView()
                     .transition(.islandContent(scale: 0.85))
+            case .calendarReminder:
+                CalendarReminderView()
+                    .transition(.islandContent(scale: 0.85))
             case .postureCompact:
                 CompactPostureView()
                     .transition(.islandContent(scale: 0.8))

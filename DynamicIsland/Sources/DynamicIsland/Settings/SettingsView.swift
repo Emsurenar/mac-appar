@@ -23,6 +23,7 @@ struct SettingsView: View {
             }
             .onAppear {
                 model.home.refresh()
+                model.calendar.reload()
                 TileColorPanel.shared.detach()
             }
     }
@@ -91,6 +92,31 @@ struct SettingsView: View {
                     }
                 }
 
+                SettingsSection("Calendar", footer: "Events come from the Calendar app. To see your Google Calendar, add your Google account under System Settings › Internet Accounts and turn on Calendars.") {
+                    SettingsToggle("Show Calendar tab", isOn: $settings.showCalendarTab)
+                    SettingsToggle("Remind me before events", isOn: $settings.showCalendarReminders)
+                    SettingsRow {
+                        Text("Remind me")
+                        Spacer()
+                        Picker("", selection: $settings.calendarLeadMinutes) {
+                            ForEach([1, 5, 10, 15, 30], id: \.self) { Text("\($0) min before").tag($0) }
+                        }
+                        .labelsHidden()
+                        .fixedSize()
+                    }
+                    .disabled(!settings.showCalendarReminders)
+                    SettingsRow(action: { model.calendar.requestAccess() }) {
+                        Image(systemName: calendarAccessSymbol)
+                            .foregroundStyle(model.calendar.access == .granted ? Color.green
+                                : model.calendar.access == .denied ? Color.orange : Color.secondary)
+                        Text("Calendar access")
+                        Spacer()
+                        Text(calendarAccessStatus).foregroundStyle(.secondary)
+                        if model.calendar.access != .granted { Chevron() }
+                    }
+                    .disabled(model.calendar.access == .granted)
+                }
+
                 SettingsSection("Volume and Brightness", footer: "The volume and brightness keys then show only in the island. Hold ⌥⇧ for finer steps.") {
                     SettingsToggle("Show volume changes in the island", isOn: $settings.showVolumeHUD)
                     SettingsToggle("Replace the system volume and brightness HUD", isOn: $settings.replaceSystemHUD)
@@ -142,6 +168,22 @@ struct SettingsView: View {
         }
         .padding(.top, 14)
         .padding(.bottom, 4)
+    }
+
+    private var calendarAccessSymbol: String {
+        switch model.calendar.access {
+        case .granted: "checkmark.circle.fill"
+        case .denied: "exclamationmark.triangle.fill"
+        case .unknown: "circle.dashed"
+        }
+    }
+
+    private var calendarAccessStatus: String {
+        switch model.calendar.access {
+        case .granted: "\(model.calendar.events.count) upcoming"
+        case .denied: "Open Settings"
+        case .unknown: "Allow"
+        }
     }
 
     private var homeStatus: String {

@@ -14,6 +14,9 @@ final class AppSettings {
     var showPostureLiveActivity: Bool { didSet { store(showPostureLiveActivity, Key.showPostureLiveActivity) } }
     var showCalendarTab: Bool { didSet { store(showCalendarTab, Key.showCalendarTab) } }
     var showCalendarReminders: Bool { didSet { store(showCalendarReminders, Key.showCalendarReminders) } }
+    var showClipboardTab: Bool { didSet { store(showClipboardTab, Key.showClipboardTab) } }
+    /// Picking an item from the clipboard history also pastes it, not just copies it.
+    var pasteFromClipboardHistory: Bool { didSet { store(pasteFromClipboardHistory, Key.pasteFromClipboardHistory) } }
     /// Minutes before an event that its reminder appears.
     var calendarLeadMinutes: Int { didSet { defaults.set(calendarLeadMinutes, forKey: Key.calendarLeadMinutes) } }
     /// Identifiers of the calendars the island leaves out.
@@ -50,6 +53,8 @@ final class AppSettings {
         static let showCalendarReminders = "showCalendarReminders"
         static let calendarLeadMinutes = "calendarLeadMinutes"
         static let hiddenCalendarIDs = "hiddenCalendarIDs"
+        static let showClipboardTab = "showClipboardTab"
+        static let pasteFromClipboardHistory = "pasteFromClipboardHistory"
     }
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -74,6 +79,8 @@ final class AppSettings {
             Key.showCalendarTab: true,
             Key.showCalendarReminders: true,
             Key.calendarLeadMinutes: 15,
+            Key.showClipboardTab: true,
+            Key.pasteFromClipboardHistory: true,
         ])
         hoverToOpen = defaults.bool(forKey: Key.hoverToOpen)
         hasSeenWelcome = defaults.bool(forKey: Key.hasSeenWelcome)
@@ -90,6 +97,8 @@ final class AppSettings {
         showCalendarTab = defaults.bool(forKey: Key.showCalendarTab)
         showCalendarReminders = defaults.bool(forKey: Key.showCalendarReminders)
         calendarLeadMinutes = defaults.integer(forKey: Key.calendarLeadMinutes)
+        showClipboardTab = defaults.bool(forKey: Key.showClipboardTab)
+        pasteFromClipboardHistory = defaults.bool(forKey: Key.pasteFromClipboardHistory)
         hiddenCalendarIDs = Set(defaults.stringArray(forKey: Key.hiddenCalendarIDs) ?? [])
         homeFolderName = defaults.string(forKey: Key.homeFolderName) ?? "Home"
     }

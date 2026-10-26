@@ -18,6 +18,8 @@ final class AppSettingsTests: XCTestCase {
             XCTAssertFalse(settings.replaceSystemHUD, "needs Accessibility, so it starts off")
             XCTAssertEqual(settings.homeFolderName, "Home")
             XCTAssertTrue(settings.hiddenCalendarIDs.isEmpty)
+            XCTAssertTrue(settings.showClipboardTab)
+            XCTAssertTrue(settings.pasteFromClipboardHistory)
         }
     }
 

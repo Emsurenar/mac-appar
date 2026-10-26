@@ -49,6 +49,10 @@ struct SettingsView: View {
                     SettingsToggle("Show audio output changes", isOn: $settings.showDeviceChanges)
                 }
 
+                SettingsSection("Screenshots", footer: "A new screenshot pops out of the notch for a few seconds. Drag it into any app, or click it to open it.") {
+                    SettingsToggle("Show new screenshots", isOn: $settings.showScreenshots)
+                }
+
                 SettingsSection("Home", footer: "Pick any shortcut with the + tile in the island’s Home tab. Shortcuts in this folder get a tile automatically. A leading emoji becomes the tile’s icon, and a shortcut that outputs “on” or “off” shows that state.") {
                     SettingsToggle("Show Home tab", isOn: $settings.showHomeTab)
                     SettingsRow {

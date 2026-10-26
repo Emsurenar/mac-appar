@@ -17,6 +17,7 @@ final class AppSettings {
     var showClipboardTab: Bool { didSet { store(showClipboardTab, Key.showClipboardTab) } }
     /// Picking an item from the clipboard history also pastes it, not just copies it.
     var pasteFromClipboardHistory: Bool { didSet { store(pasteFromClipboardHistory, Key.pasteFromClipboardHistory) } }
+    var showScreenshots: Bool { didSet { store(showScreenshots, Key.showScreenshots) } }
     /// Minutes before an event that its reminder appears.
     var calendarLeadMinutes: Int { didSet { defaults.set(calendarLeadMinutes, forKey: Key.calendarLeadMinutes) } }
     /// Identifiers of the calendars the island leaves out.
@@ -55,6 +56,7 @@ final class AppSettings {
         static let showPostureLiveActivity = "showPostureLiveActivity"
         static let showCalendarTab = "showCalendarTab"
         static let showCalendarReminders = "showCalendarReminders"
+        static let showScreenshots = "showScreenshots"
         static let calendarLeadMinutes = "calendarLeadMinutes"
         static let hiddenCalendarIDs = "hiddenCalendarIDs"
         static let showWaterReminders = "showWaterReminders"
@@ -85,6 +87,7 @@ final class AppSettings {
             Key.showPostureLiveActivity: true,
             Key.showCalendarTab: true,
             Key.showCalendarReminders: true,
+            Key.showScreenshots: true,
             Key.calendarLeadMinutes: 15,
             Key.showWaterReminders: true,
             Key.waterIntervalMinutes: 45,
@@ -106,6 +109,7 @@ final class AppSettings {
         showPostureLiveActivity = defaults.bool(forKey: Key.showPostureLiveActivity)
         showCalendarTab = defaults.bool(forKey: Key.showCalendarTab)
         showCalendarReminders = defaults.bool(forKey: Key.showCalendarReminders)
+        showScreenshots = defaults.bool(forKey: Key.showScreenshots)
         calendarLeadMinutes = defaults.integer(forKey: Key.calendarLeadMinutes)
         showClipboardTab = defaults.bool(forKey: Key.showClipboardTab)
         pasteFromClipboardHistory = defaults.bool(forKey: Key.pasteFromClipboardHistory)

@@ -30,6 +30,7 @@
 - **Calendar.** Your next events, Google Calendar included, with a reminder in the notch 15 minutes before each one and a Join button for Meet, Zoom and Teams links.
 - **Water reminders.** A nudge from the notch every 45 minutes at the Mac (you pick the interval), with a daily glass count. Time away and sleep don't count.
 - **Clipboard history.** The last 20 things you copied, text and images. Click one to paste it again.
+- **Screenshot shelf.** A new screenshot pops out of the notch. Drag it straight into Mail, Slack or a folder, or copy, reveal or trash it from there. The first time, macOS may ask to let the app read the folder your screenshots go to.
 - **Posture companion.** With the [Posture](../Hallning) app running, the island shows your posture and nudges you when you slouch.
 - **Feels like a Mac.** Spring animations, blur-and-scale transitions, rubber-band sliders, SF Symbols and trackpad haptics. It never steals focus from the app you're using.
 

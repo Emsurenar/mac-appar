@@ -24,6 +24,8 @@ enum IslandPresentation: Equatable {
     case calendarReminder
     /// Time for a glass of water.
     case waterReminder
+    /// A screenshot was just taken; it can be dragged out of the island.
+    case screenshot
     case open
 }
 
@@ -48,6 +50,7 @@ enum IslandLayout {
     static let clipboardRowHeight: CGFloat = 36
     static let maxClipboardRows = 5
     static let clipboardEmptyHeight: CGFloat = 112
+    static let screenshotThumbnailSize = CGSize(width: 96, height: 60)
 }
 
 @MainActor @Observable
@@ -61,6 +64,7 @@ final class IslandModel {
     let calendar: CalendarService
     let clipboard: ClipboardService
     let water: WaterService
+    let screenshots: ScreenshotService
     let settings: AppSettings
 
     var metrics = NotchMetrics.fallback
@@ -73,6 +77,9 @@ final class IslandModel {
     private(set) var isShowingPostureAlert = false
     private(set) var isShowingCalendarReminder = false
     private(set) var isShowingWaterReminder = false
+    private(set) var isShowingScreenshot = false
+    /// The screenshot is being dragged; the island keeps it until the drag ends.
+    private(set) var isDraggingScreenshot = false
     var tab: IslandTab = .media
 
     @ObservationIgnored var onOpenSettings: (() -> Void)?
@@ -84,12 +91,13 @@ final class IslandModel {
     @ObservationIgnored private var postureAlertTask: Task<Void, Never>?
     @ObservationIgnored private var calendarReminderTask: Task<Void, Never>?
     @ObservationIgnored private var waterReminderTask: Task<Void, Never>?
+    @ObservationIgnored private var screenshotTask: Task<Void, Never>?
     @ObservationIgnored private let keyInterceptor = MediaKeyInterceptor()
     @ObservationIgnored private var permissionPoll: Timer?
 
     init(media: NowPlayingService, audio: AudioService, brightness: BrightnessService, home: HomeService,
          posture: PostureService, system: SystemService, calendar: CalendarService, clipboard: ClipboardService,
-         water: WaterService, settings: AppSettings) {
+         water: WaterService, screenshots: ScreenshotService, settings: AppSettings) {
         self.media = media
         self.audio = audio
         self.brightness = brightness
@@ -99,11 +107,13 @@ final class IslandModel {
         self.calendar = calendar
         self.clipboard = clipboard
         self.water = water
+        self.screenshots = screenshots
         self.settings = settings
 
         media.onTrackChange = { [weak self] in self?.showTrackPeek() }
         posture.onAlert = { [weak self] _ in self?.showPostureAlert() }
         calendar.onReminder = { [weak self] _ in self?.showCalendarReminder() }
+        self.screenshots.onNewScreenshot = { [weak self] _ in self?.showScreenshot() }
         calendar.leadMinutes = { [weak settings] in settings?.calendarLeadMinutes ?? 15 }
         calendar.hiddenCalendars = { [weak settings] in settings?.hiddenCalendarIDs ?? [] }
         water.onDue = { [weak self] in self?.showWaterReminder() }
@@ -130,6 +140,7 @@ final class IslandModel {
         IslandPresentation(PresentationState(
             isOpen: isOpen,
             hud: hud,
+            showsScreenshot: (isShowingScreenshot || isDraggingScreenshot) && screenshots.latest != nil,
             showsCalendarReminder: isShowingCalendarReminder && calendar.reminder != nil,
             showsWaterReminder: isShowingWaterReminder && water.isDue,
             showsPostureAlert: isShowingPostureAlert && posture.latestAlert != nil,
@@ -225,8 +236,11 @@ final class IslandModel {
 
         if hovering {
             closeTask?.cancel()
+            // Hovering the screenshot holds it in place instead of opening the island over it.
+            if presentation == .screenshot {
+                screenshotTask?.cancel()
             // The water reminder has its own buttons, so hovering it doesn't open the island.
-            if settings.hoverToOpen && !isOpen && presentation != .waterReminder {
+            } else if settings.hoverToOpen && !isOpen && presentation != .waterReminder {
                 // Trackpad haptics only play while a finger touches the pad, so they go out
                 // with the movement that reached the notch, not with the delayed open.
                 performHaptic(.levelChange)
@@ -237,6 +251,7 @@ final class IslandModel {
             if isOpen {
                 closeTask = schedule(after: 0.22) { $0.close() }
             }
+            if isShowingScreenshot && !isDraggingScreenshot { scheduleScreenshotDismissal(after: 3) }
         }
     }
 
@@ -248,11 +263,13 @@ final class IslandModel {
         postureAlertTask?.cancel()
         calendarReminderTask?.cancel()
         if isShowingWaterReminder { dismissWaterReminder(drank: false) }
+        screenshotTask?.cancel()
         if isShowingCalendarReminder && showsCalendarTab { tab = .calendar }
         hud = nil
         isPeeking = false
         isShowingPostureAlert = false
         isShowingCalendarReminder = false
+        isShowingScreenshot = false
         if currentTab == .home { home.refresh() }
         if currentTab == .calendar { calendar.reload() }
         isOpen = true
@@ -341,6 +358,34 @@ final class IslandModel {
         waterReminderTask?.cancel()
         if drank { water.drink() } else { water.snooze() }
         isShowingWaterReminder = false
+    }
+
+    func showScreenshot() {
+        guard settings.showScreenshots, !isOpen else { return }
+        isPeeking = false
+        isShowingScreenshot = true
+        scheduleScreenshotDismissal(after: 8)
+    }
+
+    func dismissScreenshot() {
+        screenshotTask?.cancel()
+        isShowingScreenshot = false
+    }
+
+    func beginScreenshotDrag() {
+        screenshotTask?.cancel()
+        isDraggingScreenshot = true
+    }
+
+    /// A drop somewhere else is done with the screenshot; a cancelled drag puts it back for a moment.
+    func endScreenshotDrag(dropped: Bool) {
+        isDraggingScreenshot = false
+        if dropped { dismissScreenshot() } else { scheduleScreenshotDismissal(after: 3) }
+    }
+
+    private func scheduleScreenshotDismissal(after seconds: Double) {
+        screenshotTask?.cancel()
+        screenshotTask = schedule(after: seconds) { $0.isShowingScreenshot = false }
     }
 
     // MARK: Keyboard

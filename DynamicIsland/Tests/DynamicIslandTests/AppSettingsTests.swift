@@ -23,6 +23,7 @@ final class AppSettingsTests: XCTestCase {
             XCTAssertEqual(settings.waterDailyGoal, 8)
             XCTAssertTrue(settings.showClipboardTab)
             XCTAssertTrue(settings.pasteFromClipboardHistory)
+            XCTAssertTrue(settings.showScreenshots)
         }
     }
 

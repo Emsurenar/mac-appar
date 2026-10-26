@@ -111,14 +111,15 @@ final class IslandModel {
     // MARK: Presentation
 
     var presentation: IslandPresentation {
-        if isOpen { return .open }
-        if let hud { return .hud(hud) }
-        if isShowingCalendarReminder && calendar.reminder != nil { return .calendarReminder }
-        if isShowingPostureAlert && posture.latestAlert != nil { return .postureAlert }
-        if isPeeking && media.hasMedia { return .peek }
-        if settings.showLiveActivity && media.hasMedia && media.isPlaying { return .compact }
-        if showsPostureCompact { return .postureCompact }
-        return .closed
+        IslandPresentation(PresentationState(
+            isOpen: isOpen,
+            hud: hud,
+            showsCalendarReminder: isShowingCalendarReminder && calendar.reminder != nil,
+            showsPostureAlert: isShowingPostureAlert && posture.latestAlert != nil,
+            showsTrackPeek: isPeeking && media.hasMedia,
+            showsMediaActivity: settings.showLiveActivity && media.hasMedia && media.isPlaying,
+            showsPostureActivity: showsPostureCompact
+        ))
     }
 
     /// Bad posture for a while, and no music taking the spot.
@@ -140,55 +141,17 @@ final class IslandModel {
 
     // MARK: Geometry
 
+    var geometry: IslandGeometry {
+        IslandGeometry(presentation: presentation, metrics: metrics, isHovering: isHovering,
+                       openContentHeight: isOpen ? openContentHeight : 0)
+    }
+
     var notch: CGSize { metrics.notchSize }
-
-    var compactSideWidth: CGFloat { notch.height + 4 }
-    var hudSideWidth: CGFloat { 66 }
-
-    /// Width of the concave "ears" that blend the island into the top edge.
-    var earRadius: CGFloat {
-        switch presentation {
-        case .closed: isHovering ? 6 : 0
-        case .compact, .postureCompact, .hud(.volume), .hud(.brightness): 8
-        case .peek, .postureAlert, .calendarReminder, .hud(.outputDevice): 10
-        case .open: 14
-        }
-    }
-
-    var bottomRadius: CGFloat {
-        switch presentation {
-        case .closed: isHovering ? 12 : 8
-        case .compact, .postureCompact, .hud(.volume), .hud(.brightness): 13
-        case .peek, .hud(.outputDevice): 22
-        case .postureAlert, .calendarReminder: 24
-        case .open: 32
-        }
-    }
-
-    var openWidth: CGFloat { max(notch.width + 340, 500) }
-
-    var size: CGSize {
-        let ears = earRadius * 2
-        switch presentation {
-        case .closed:
-            if !metrics.hasNotch { return CGSize(width: notch.width, height: isHovering ? 8 : 0) }
-            return isHovering ? CGSize(width: notch.width + 16 + ears, height: notch.height + 4) : notch
-        case .compact, .postureCompact:
-            return CGSize(width: notch.width + compactSideWidth * 2 + ears, height: notch.height)
-        case .postureAlert:
-            return CGSize(width: notch.width + 260 + ears, height: notch.height + 64)
-        case .calendarReminder:
-            return CGSize(width: notch.width + 300 + ears, height: notch.height + 64)
-        case .hud(.volume), .hud(.brightness):
-            return CGSize(width: notch.width + hudSideWidth * 2 + ears, height: notch.height)
-        case .peek:
-            return CGSize(width: notch.width + 200 + ears, height: notch.height + 52)
-        case .hud(.outputDevice):
-            return CGSize(width: notch.width + 170 + ears, height: notch.height + 50)
-        case .open:
-            return CGSize(width: openWidth + ears, height: notch.height + openContentHeight)
-        }
-    }
+    var hudSideWidth: CGFloat { geometry.hudSideWidth }
+    var earRadius: CGFloat { geometry.earRadius }
+    var bottomRadius: CGFloat { geometry.bottomRadius }
+    var size: CGSize { geometry.size }
+    var hoverZone: CGRect { geometry.hoverZone }
 
     /// The selected tab, falling back to media when the Home or posture tab is hidden.
     var currentTab: IslandTab {
@@ -229,26 +192,6 @@ final class IslandModel {
             return 4 + sliders * IslandLayout.sliderRowHeight + 8 + IslandLayout.sectionHeaderHeight
                 + rows * IslandLayout.deviceRowHeight + 16
         }
-    }
-
-    /// The region (in screen coordinates) where the pointer counts as "on the island".
-    var hoverZone: CGRect {
-        let size = size
-        let screen = metrics.screenFrame
-        var rect = CGRect(x: metrics.centerX - size.width / 2, y: screen.maxY - size.height,
-                          width: size.width, height: size.height)
-        switch presentation {
-        case .closed:
-            let height = max(notch.height, 8)
-            rect = CGRect(x: metrics.centerX - notch.width / 2 - 10, y: screen.maxY - height,
-                          width: notch.width + 20, height: height)
-        case .open:
-            rect = rect.insetBy(dx: -8, dy: -8)
-        default:
-            rect = rect.insetBy(dx: -2, dy: -2)
-        }
-        rect.size.height += 8 // the pointer can sit on the very top edge
-        return rect
     }
 
     // MARK: Interaction

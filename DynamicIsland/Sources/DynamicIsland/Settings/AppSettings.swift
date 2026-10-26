@@ -49,9 +49,11 @@ final class AppSettings {
         static let hiddenCalendarIDs = "hiddenCalendarIDs"
     }
 
-    @ObservationIgnored private let defaults = UserDefaults.standard
+    @ObservationIgnored private let defaults: UserDefaults
 
-    init() {
+    /// Tests pass their own suite, so they never touch the real settings.
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         defaults.register(defaults: [
             Key.hoverToOpen: true,
             Key.hapticFeedback: true,

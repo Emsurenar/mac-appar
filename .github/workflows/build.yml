@@ -26,3 +26,7 @@ jobs:
       - name: Build
         working-directory: ${{ matrix.app }}
         run: swift build -c release --arch arm64
+      - name: Test
+        if: matrix.app == 'DynamicIsland'
+        working-directory: ${{ matrix.app }}
+        run: swift test

@@ -8,6 +8,11 @@ let package = Package(
         .executableTarget(
             name: "DynamicIsland",
             path: "Sources/DynamicIsland"
-        )
+        ),
+        .testTarget(
+            name: "DynamicIslandTests",
+            dependencies: ["DynamicIsland"],
+            path: "Tests/DynamicIslandTests"
+        ),
     ]
 )

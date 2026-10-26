@@ -214,7 +214,8 @@ final class HomeService {
         }
     }
 
-    private static func toggleState(from output: String) -> Bool? {
+    /// Reads a shortcut's output as on/off; nil when it says neither.
+    nonisolated static func toggleState(from output: String) -> Bool? {
         switch output.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
         case "på", "on", "true", "1", "ja", "yes", "öppen", "upplåst", "open", "unlocked": true
         case "av", "off", "false", "0", "nej", "no", "stängd", "låst", "closed", "locked": false
@@ -222,7 +223,8 @@ final class HomeService {
         }
     }
 
-    private nonisolated static func parse(_ line: String) -> HomeShortcut? {
+    /// Reads one line of `shortcuts list --show-identifiers`.
+    nonisolated static func parse(_ line: String) -> HomeShortcut? {
         // "Name (UUID)"
         guard line.hasSuffix(")"), let open = line.range(of: " (", options: .backwards) else { return nil }
         let id = String(line[open.upperBound..<line.index(before: line.endIndex)])

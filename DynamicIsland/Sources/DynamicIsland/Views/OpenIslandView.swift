@@ -19,6 +19,9 @@ struct OpenIslandView: View {
                 case .posture:
                     PostureTab()
                         .transition(.islandContent(scale: 0.97))
+                case .system:
+                    SystemTab()
+                        .transition(.islandContent(scale: 0.97))
                 case .controls:
                     ControlsTab()
                         .transition(.islandContent(scale: 0.97))
@@ -43,6 +46,7 @@ struct OpenIslandView: View {
                 }
             }
             Spacer(minLength: model.notch.width + 12)
+            tabButton(.system, symbol: "gauge.with.dots.needle.67percent", help: "System")
             Button { model.onOpenSettings?() } label: {
                 Image(systemName: "gearshape.fill").font(.system(size: 12, weight: .semibold))
             }

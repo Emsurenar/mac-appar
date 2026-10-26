@@ -75,7 +75,7 @@ Native Mac apps can't use HomeKit. It's only available to Mac Catalyst apps with
 3. A leading emoji becomes the tile's icon. Otherwise an SF Symbol is picked from the name: light, lamp, lock, door, heat, fan, blinds, TV, night, morning and more, in English or Swedish.
 4. To make a tile show **On/Off**, end the shortcut by outputting the text `on` or `off`.
 
-Right-click a tile to remove it or to edit it in Shortcuts. Shortcuts in a folder named **Home** also get a tile automatically. You can change or clear that folder name in settings.
+Right-click a tile to give it its own color from the color wheel, to remove it, or to edit it in Shortcuts. The colors can also be set under **Tile Colors** in settings. Shortcuts in a folder named **Home** also get a tile automatically. You can change or clear that folder name in settings.
 
 | | |
 |:---:|:---:|

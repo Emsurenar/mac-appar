@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 
 struct HomeShortcut: Identifiable, Equatable {
     let id: String
@@ -68,16 +69,20 @@ final class HomeService {
     private(set) var runStates: [String: HomeRunState] = [:]
     /// Last on/off state reported by a shortcut's output ("på"/"av", "on"/"off" …).
     private(set) var toggleStates: [String: Bool]
+    /// Tile colors the user picked, as sRGB hex ("#FF9500") by shortcut id.
+    private(set) var tileColors: [String: String]
 
     @ObservationIgnored private let settings: AppSettings
     @ObservationIgnored private var isRefreshing = false
     @ObservationIgnored private static let toggleStatesKey = "homeToggleStates"
     @ObservationIgnored private static let pinnedKey = "pinnedShortcuts"
+    @ObservationIgnored private static let tileColorsKey = "homeTileColors"
 
     init(settings: AppSettings) {
         self.settings = settings
         toggleStates = UserDefaults.standard.dictionary(forKey: Self.toggleStatesKey) as? [String: Bool] ?? [:]
         pinnedIDs = UserDefaults.standard.stringArray(forKey: Self.pinnedKey) ?? []
+        tileColors = UserDefaults.standard.dictionary(forKey: Self.tileColorsKey) as? [String: String] ?? [:]
     }
 
     /// The tiles: picked shortcuts first, then the rest of the folder.
@@ -88,6 +93,31 @@ final class HomeService {
 
     func isPinned(_ shortcut: HomeShortcut) -> Bool { pinnedIDs.contains(shortcut.id) }
     func isInFolder(_ shortcut: HomeShortcut) -> Bool { folderShortcuts.contains { $0.id == shortcut.id } }
+
+    func color(for shortcut: HomeShortcut) -> NSColor? {
+        tileColors[shortcut.id].flatMap(NSColor.init(hex:))
+    }
+
+    /// Sets the tile's color; nil goes back to the plain gray tile.
+    func setColor(_ color: NSColor?, for shortcut: HomeShortcut) {
+        tileColors[shortcut.id] = color?.hexString
+        UserDefaults.standard.set(tileColors, forKey: Self.tileColorsKey)
+    }
+
+    /// A binding for `ColorPicker`; gray until a color is picked.
+    func colorBinding(for shortcut: HomeShortcut) -> Binding<Color> {
+        Binding(
+            get: { Color(nsColor: self.color(for: shortcut) ?? .systemGray) },
+            set: { self.setColor(NSColor($0), for: shortcut) }
+        )
+    }
+
+    /// Opens the system color panel (with its color wheel) for one tile; changes apply live.
+    func chooseColor(for shortcut: HomeShortcut) {
+        TileColorPanel.shared.show(initial: color(for: shortcut)) { [weak self] color in
+            self?.setColor(color, for: shortcut)
+        }
+    }
 
     func togglePin(_ shortcut: HomeShortcut) {
         if let index = pinnedIDs.firstIndex(of: shortcut.id) {
@@ -209,5 +239,74 @@ final class HomeService {
     private static func openApp(_ bundleIdentifier: String) {
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier) else { return }
         NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+    }
+}
+
+/// Drives the shared `NSColorPanel` for a tile picked from the island.
+@MainActor
+final class TileColorPanel: NSObject {
+    static let shared = TileColorPanel()
+    private var onChange: ((NSColor) -> Void)?
+
+    func show(initial: NSColor?, onChange: @escaping (NSColor) -> Void) {
+        let panel = NSColorPanel.shared
+        // Set the color before taking over the panel, so it doesn't fire for the old one.
+        detach()
+        panel.showsAlpha = false
+        panel.mode = .wheel
+        if let initial { panel.color = initial }
+        self.onChange = onChange
+        panel.setTarget(self)
+        panel.setAction(#selector(colorDidChange(_:)))
+        panel.isContinuous = true
+        NotificationCenter.default.addObserver(self, selector: #selector(panelWillClose(_:)),
+                                               name: NSWindow.willCloseNotification, object: panel)
+        NSApp.activate()
+        panel.center()
+        panel.makeKeyAndOrderFront(nil)
+    }
+
+    /// Lets go of the panel, so color wells elsewhere (Settings) don't also recolor the tile.
+    func detach() {
+        guard onChange != nil else { return }
+        onChange = nil
+        let panel = NSColorPanel.shared
+        if panel.target === self {
+            panel.setTarget(nil)
+            panel.setAction(nil)
+        }
+        NotificationCenter.default.removeObserver(self, name: NSWindow.willCloseNotification, object: panel)
+    }
+
+    @objc private func colorDidChange(_ panel: NSColorPanel) {
+        onChange?(panel.color)
+    }
+
+    @objc private func panelWillClose(_ note: Notification) {
+        detach()
+    }
+}
+
+extension NSColor {
+    convenience init?(hex: String) {
+        let digits = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+        guard digits.count == 6, let value = UInt32(digits, radix: 16) else { return nil }
+        self.init(srgbRed: CGFloat((value >> 16) & 0xFF) / 255,
+                  green: CGFloat((value >> 8) & 0xFF) / 255,
+                  blue: CGFloat(value & 0xFF) / 255,
+                  alpha: 1)
+    }
+
+    var hexString: String? {
+        guard let rgb = usingColorSpace(.sRGB) else { return nil }
+        let channels = [rgb.redComponent, rgb.greenComponent, rgb.blueComponent]
+            .map { Int((min(max($0, 0), 1) * 255).rounded()) }
+        return String(format: "#%02X%02X%02X", channels[0], channels[1], channels[2])
+    }
+
+    /// Whether black text reads better than white on this color.
+    var isLight: Bool {
+        guard let rgb = usingColorSpace(.sRGB) else { return false }
+        return 0.299 * rgb.redComponent + 0.587 * rgb.greenComponent + 0.114 * rgb.blueComponent > 0.62
     }
 }

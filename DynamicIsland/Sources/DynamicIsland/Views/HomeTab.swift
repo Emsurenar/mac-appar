@@ -47,10 +47,16 @@ struct HomeTab: View {
                         case .shortcut(let shortcut):
                             HomeTile(shortcut: shortcut,
                                      state: home.runStates[shortcut.id] ?? .idle,
-                                     isOn: home.toggleStates[shortcut.id]) {
+                                     isOn: home.toggleStates[shortcut.id],
+                                     tint: home.color(for: shortcut)) {
                                 home.run(shortcut)
                             }
                             .contextMenu {
+                                Button("Choose Color…") { home.chooseColor(for: shortcut) }
+                                if home.tileColors[shortcut.id] != nil {
+                                    Button("Remove Color") { home.setColor(nil, for: shortcut) }
+                                }
+                                Divider()
                                 if home.isPinned(shortcut) {
                                     Button("Remove from Island") { home.togglePin(shortcut) }
                                 }
@@ -253,6 +259,8 @@ private struct HomeTile: View {
     let shortcut: HomeShortcut
     let state: HomeRunState
     let isOn: Bool?
+    /// The color the user picked for this tile, if any.
+    var tint: NSColor? = nil
     let action: () -> Void
 
     @State private var isHovering = false
@@ -276,12 +284,12 @@ private struct HomeTile: View {
                         .contentTransition(.opacity)
                 }
             }
-            .foregroundStyle(isActive ? Color.black : Color.white)
+            .foregroundStyle(usesDarkText(isActive: isActive) ? Color.black : Color.white)
             .padding(10)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(isActive ? Color.white.opacity(0.94) : Color.white.opacity(isHovering ? 0.15 : 0.09))
+                    .fill(background(isActive: isActive))
             )
             .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
@@ -290,10 +298,26 @@ private struct HomeTile: View {
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: isActive)
         .animation(.easeOut(duration: 0.15), value: isHovering)
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: state)
+        .animation(.easeOut(duration: 0.2), value: tint)
         .onChange(of: state) { _, newState in
             if newState == .succeeded { successCount += 1 }
         }
         .help(shortcut.name)
+    }
+
+    /// Plain tiles are translucent gray and turn white when on. A colored tile is
+    /// a deep wash of its color, and fills with it when on.
+    private func background(isActive: Bool) -> Color {
+        if let tint {
+            let color = Color(nsColor: tint)
+            return isActive ? color : color.opacity(isHovering ? 0.55 : 0.42)
+        }
+        return isActive ? Color.white.opacity(0.94) : Color.white.opacity(isHovering ? 0.15 : 0.09)
+    }
+
+    private func usesDarkText(isActive: Bool) -> Bool {
+        guard isActive else { return false }
+        return tint?.isLight ?? true
     }
 
     private var status: String? {
@@ -308,10 +332,10 @@ private struct HomeTile: View {
     @ViewBuilder
     private func icon(isActive: Bool) -> some View {
         ZStack {
-            Circle().fill(isActive ? accent : Color.white.opacity(0.14))
+            Circle().fill(iconFill(isActive: isActive))
             switch state {
             case .running:
-                Spinner(color: isActive ? .black : .white)
+                Spinner(color: usesDarkText(isActive: isActive) ? .black : .white)
                     .frame(width: 14, height: 14)
                     .transition(.scale.combined(with: .opacity))
             case .failed:
@@ -334,6 +358,14 @@ private struct HomeTile: View {
             }
         }
         .frame(width: 28, height: 28)
+    }
+
+    private func iconFill(isActive: Bool) -> Color {
+        if let tint {
+            // On a colored tile the circle stays neutral so the tile's color carries it.
+            return isActive ? Color.black.opacity(0.18) : Color(nsColor: tint).opacity(0.9)
+        }
+        return isActive ? accent : Color.white.opacity(0.14)
     }
 
     private var accent: Color {

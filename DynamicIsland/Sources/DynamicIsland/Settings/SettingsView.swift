@@ -49,6 +49,10 @@ struct SettingsView: View {
                     SettingsToggle("Show audio output changes", isOn: $settings.showDeviceChanges)
                 }
 
+                SettingsSection("Screenshots", footer: "A new screenshot pops out of the notch for a few seconds. Drag it into any app, or click it to open it.") {
+                    SettingsToggle("Show new screenshots", isOn: $settings.showScreenshots)
+                }
+
                 SettingsSection("Home", footer: "Pick any shortcut with the + tile in the island’s Home tab. Shortcuts in this folder get a tile automatically. A leading emoji becomes the tile’s icon, and a shortcut that outputs “on” or “off” shows that state.") {
                     SettingsToggle("Show Home tab", isOn: $settings.showHomeTab)
                     SettingsRow {
@@ -127,6 +131,42 @@ struct SettingsView: View {
 
                 SettingsSection("Shelf", footer: "Drag files onto the notch to keep them on the shelf. They stay there until you drag them out, and the files themselves never move.") {
                     SettingsToggle("Show Shelf tab", isOn: $settings.showShelfTab)
+                }
+
+                SettingsSection("Water", footer: "Only time at the Mac counts: the timer pauses while you're away and while the Mac sleeps. Later asks again in 10 minutes.") {
+                    SettingsToggle("Remind me to drink water", isOn: $settings.showWaterReminders)
+                    SettingsRow {
+                        Text("Remind me every")
+                        Spacer()
+                        Picker("", selection: $settings.waterIntervalMinutes) {
+                            ForEach([20, 30, 45, 60, 90, 120], id: \.self) { Text("\($0) min").tag($0) }
+                        }
+                        .labelsHidden()
+                        .fixedSize()
+                    }
+                    .disabled(!settings.showWaterReminders)
+                    SettingsRow {
+                        Text("Daily goal")
+                        Spacer()
+                        Text("\(model.water.glassesToday) today").foregroundStyle(.secondary)
+                        Stepper("\(settings.waterDailyGoal) glasses", value: $settings.waterDailyGoal, in: 1...20)
+                            .fixedSize()
+                    }
+                    .disabled(!settings.showWaterReminders)
+                }
+
+                SettingsSection("Clipboard", footer: "The last 20 things you copied, newest first. They stay in memory only, and passwords from password managers are skipped. Pasting needs Accessibility access; without it, an item is just copied.") {
+                    SettingsToggle("Show Clipboard tab", isOn: $settings.showClipboardTab)
+                    SettingsToggle("Paste the item you pick", isOn: $settings.pasteFromClipboardHistory)
+                    if settings.pasteFromClipboardHistory && !hasAccessibility {
+                        SettingsRow(action: openAccessibilitySettings) {
+                            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                            Text("Pasting requires Accessibility permission")
+                            Spacer()
+                            Text("Open Settings").foregroundStyle(.secondary)
+                            Chevron()
+                        }
+                    }
                 }
 
                 SettingsSection("Volume and Brightness", footer: "The volume and brightness keys then show only in the island. Hold ⌥⇧ for finer steps.") {

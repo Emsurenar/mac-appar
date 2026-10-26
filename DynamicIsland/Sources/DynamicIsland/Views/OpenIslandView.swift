@@ -25,6 +25,9 @@ struct OpenIslandView: View {
                 case .calendar:
                     CalendarTab()
                         .transition(.islandContent(scale: 0.97))
+                case .clipboard:
+                    ClipboardTab()
+                        .transition(.islandContent(scale: 0.97))
                 case .system:
                     SystemTab()
                         .transition(.islandContent(scale: 0.97))
@@ -57,6 +60,9 @@ struct OpenIslandView: View {
             }
             if model.showsCalendarTab {
                 tabButton(.calendar, symbol: "calendar", help: "Calendar")
+            }
+            if model.showsClipboardTab {
+                tabButton(.clipboard, symbol: "doc.on.clipboard", help: "Clipboard")
             }
             tabButton(.system, symbol: "gauge.with.dots.needle.67percent", help: "System")
             Button { model.onOpenSettings?() } label: {

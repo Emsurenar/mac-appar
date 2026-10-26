@@ -232,7 +232,7 @@ struct CalendarReminderView: View {
 
 // MARK: - Buttons
 
-private struct CapsuleButtonStyle: ButtonStyle {
+struct CapsuleButtonStyle: ButtonStyle {
     var isProminent = false
 
     func makeBody(configuration: Configuration) -> some View {

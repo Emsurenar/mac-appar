@@ -18,9 +18,22 @@ final class PresentationTests: XCTestCase {
         XCTAssertEqual(IslandPresentation(state), .hud(.brightness))
     }
 
+    func testScreenshotWinsOverRemindersButNotHUDs() {
+        let state = PresentationState(showsScreenshot: true, showsCalendarReminder: true, showsTrackPeek: true)
+        XCTAssertEqual(IslandPresentation(state), .screenshot)
+        XCTAssertEqual(IslandPresentation(PresentationState(hud: .volume, showsScreenshot: true)), .hud(.volume))
+    }
+
     func testCalendarReminderWinsOverPostureAlert() {
         let state = PresentationState(showsCalendarReminder: true, showsPostureAlert: true)
         XCTAssertEqual(IslandPresentation(state), .calendarReminder)
+    }
+
+    func testWaterReminderSitsBetweenCalendarAndPosture() {
+        XCTAssertEqual(IslandPresentation(PresentationState(showsCalendarReminder: true, showsWaterReminder: true)),
+                       .calendarReminder)
+        XCTAssertEqual(IslandPresentation(PresentationState(showsWaterReminder: true, showsPostureAlert: true)),
+                       .waterReminder)
     }
 
     func testTrackPeekWinsOverLiveActivities() {

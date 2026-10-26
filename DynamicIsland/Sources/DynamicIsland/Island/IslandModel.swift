@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 enum IslandTab: Hashable {
-    case media, home, controls, posture, shelf, calendar, system
+    case media, home, controls, posture, shelf, calendar, clipboard, system
 }
 
 enum HUDKind: Equatable {
@@ -22,6 +22,10 @@ enum IslandPresentation: Equatable {
     case postureCompact
     /// An event from the calendar is about to start.
     case calendarReminder
+    /// Time for a glass of water.
+    case waterReminder
+    /// A screenshot was just taken; it can be dragged out of the island.
+    case screenshot
     case open
 }
 
@@ -46,6 +50,10 @@ enum IslandLayout {
     static let shelfTileWidth: CGFloat = 76
     static let shelfTileHeight: CGFloat = 78
     static let shelfContentHeight: CGFloat = 4 + sectionHeaderHeight + shelfTileHeight + 8 + 16
+    static let clipboardRowHeight: CGFloat = 36
+    static let maxClipboardRows = 5
+    static let clipboardEmptyHeight: CGFloat = 112
+    static let screenshotThumbnailSize = CGSize(width: 96, height: 60)
 }
 
 @MainActor @Observable
@@ -58,6 +66,9 @@ final class IslandModel {
     let system: SystemService
     let calendar: CalendarService
     let shelf: FileShelf
+    let clipboard: ClipboardService
+    let water: WaterService
+    let screenshots: ScreenshotService
     let settings: AppSettings
 
     var metrics = NotchMetrics.fallback
@@ -71,6 +82,10 @@ final class IslandModel {
     private(set) var isShowingCalendarReminder = false
     /// Files are being dragged over the island.
     private(set) var isDropTargeted = false
+    private(set) var isShowingWaterReminder = false
+    private(set) var isShowingScreenshot = false
+    /// The screenshot is being dragged; the island keeps it until the drag ends.
+    private(set) var isDraggingScreenshot = false
     var tab: IslandTab = .media
 
     @ObservationIgnored var onOpenSettings: (() -> Void)?
@@ -81,12 +96,14 @@ final class IslandModel {
     @ObservationIgnored private var peekTask: Task<Void, Never>?
     @ObservationIgnored private var postureAlertTask: Task<Void, Never>?
     @ObservationIgnored private var calendarReminderTask: Task<Void, Never>?
+    @ObservationIgnored private var waterReminderTask: Task<Void, Never>?
+    @ObservationIgnored private var screenshotTask: Task<Void, Never>?
     @ObservationIgnored private let keyInterceptor = MediaKeyInterceptor()
     @ObservationIgnored private var permissionPoll: Timer?
 
     init(media: NowPlayingService, audio: AudioService, brightness: BrightnessService, home: HomeService,
-         posture: PostureService, system: SystemService, calendar: CalendarService, shelf: FileShelf? = nil,
-         settings: AppSettings) {
+         posture: PostureService, system: SystemService, calendar: CalendarService, clipboard: ClipboardService,
+         water: WaterService, screenshots: ScreenshotService, shelf: FileShelf? = nil, settings: AppSettings) {
         self.media = media
         self.audio = audio
         self.brightness = brightness
@@ -95,13 +112,20 @@ final class IslandModel {
         self.system = system
         self.calendar = calendar
         self.shelf = shelf ?? FileShelf()
+        self.clipboard = clipboard
+        self.water = water
+        self.screenshots = screenshots
         self.settings = settings
 
         media.onTrackChange = { [weak self] in self?.showTrackPeek() }
         posture.onAlert = { [weak self] _ in self?.showPostureAlert() }
         calendar.onReminder = { [weak self] _ in self?.showCalendarReminder() }
+        self.screenshots.onNewScreenshot = { [weak self] _ in self?.showScreenshot() }
         calendar.leadMinutes = { [weak settings] in settings?.calendarLeadMinutes ?? 15 }
         calendar.hiddenCalendars = { [weak settings] in settings?.hiddenCalendarIDs ?? [] }
+        water.onDue = { [weak self] in self?.showWaterReminder() }
+        water.isEnabled = { [weak settings] in settings?.showWaterReminders ?? false }
+        water.interval = { [weak settings] in TimeInterval((settings?.waterIntervalMinutes ?? 45) * 60) }
         audio.onExternalVolumeChange = { [weak self] in
             guard let self, self.settings.showVolumeHUD || self.isReplacingSystemHUD else { return }
             self.showHUD(.volume)
@@ -123,7 +147,9 @@ final class IslandModel {
         IslandPresentation(PresentationState(
             isOpen: isOpen,
             hud: hud,
+            showsScreenshot: (isShowingScreenshot || isDraggingScreenshot) && screenshots.latest != nil,
             showsCalendarReminder: isShowingCalendarReminder && calendar.reminder != nil,
+            showsWaterReminder: isShowingWaterReminder && water.isDue,
             showsPostureAlert: isShowingPostureAlert && posture.latestAlert != nil,
             showsTrackPeek: isPeeking && media.hasMedia,
             showsMediaActivity: settings.showLiveActivity && media.hasMedia && media.isPlaying,
@@ -140,6 +166,7 @@ final class IslandModel {
     var showsPostureTab: Bool { settings.showPostureTab && posture.isConnected }
     var showsCalendarTab: Bool { settings.showCalendarTab }
     var showsShelfTab: Bool { settings.showShelfTab }
+    var showsClipboardTab: Bool { settings.showClipboardTab }
 
     var animation: Animation {
         switch presentation {
@@ -170,6 +197,7 @@ final class IslandModel {
         case .posture where !showsPostureTab: .media
         case .calendar where !showsCalendarTab: .media
         case .shelf where !showsShelfTab: .media
+        case .clipboard where !showsClipboardTab: .media
         default: tab
         }
     }
@@ -197,6 +225,10 @@ final class IslandModel {
             return 4 + IslandLayout.sectionHeaderHeight + rows * IslandLayout.calendarRowHeight + 16
         case .shelf:
             return IslandLayout.shelfContentHeight
+        case .clipboard:
+            guard !clipboard.items.isEmpty else { return IslandLayout.clipboardEmptyHeight }
+            let rows = CGFloat(min(clipboard.items.count, IslandLayout.maxClipboardRows))
+            return 4 + IslandLayout.sectionHeaderHeight + rows * IslandLayout.clipboardRowHeight + 16
         case .system:
             return 4 + CGFloat(system.rowCount) * IslandLayout.systemRowHeight + 16
         case .controls:
@@ -215,7 +247,11 @@ final class IslandModel {
 
         if hovering {
             closeTask?.cancel()
-            if settings.hoverToOpen && !isOpen {
+            // Hovering the screenshot holds it in place instead of opening the island over it.
+            if presentation == .screenshot {
+                screenshotTask?.cancel()
+            // The water reminder has its own buttons, so hovering it doesn't open the island.
+            } else if settings.hoverToOpen && !isOpen && presentation != .waterReminder {
                 // Trackpad haptics only play while a finger touches the pad, so they go out
                 // with the movement that reached the notch, not with the delayed open.
                 performHaptic(.levelChange)
@@ -226,6 +262,7 @@ final class IslandModel {
             if isOpen {
                 closeTask = schedule(after: 0.22) { $0.close() }
             }
+            if isShowingScreenshot && !isDraggingScreenshot { scheduleScreenshotDismissal(after: 3) }
         }
     }
 
@@ -236,11 +273,14 @@ final class IslandModel {
         peekTask?.cancel()
         postureAlertTask?.cancel()
         calendarReminderTask?.cancel()
+        if isShowingWaterReminder { dismissWaterReminder(drank: false) }
+        screenshotTask?.cancel()
         if isShowingCalendarReminder && showsCalendarTab { tab = .calendar }
         hud = nil
         isPeeking = false
         isShowingPostureAlert = false
         isShowingCalendarReminder = false
+        isShowingScreenshot = false
         if currentTab == .home { home.refresh() }
         if currentTab == .calendar { calendar.reload() }
         if currentTab == .shelf { shelf.prune() }
@@ -257,7 +297,7 @@ final class IslandModel {
     }
 
     func showShelfForDrop() {
-        guard showsShelfTab, !ShelfDragSource.isDragging else { return }
+        guard showsShelfTab, !ShelfDragSource.isDragging, !isDraggingScreenshot else { return }
         closeTask?.cancel()
         if isOpen {
             select(.shelf)
@@ -270,7 +310,7 @@ final class IslandModel {
     /// Keeps the dropped files. Returns false for drags that started on the shelf itself.
     func dropFiles(_ providers: [NSItemProvider]) -> Bool {
         isDropTargeted = false
-        guard showsShelfTab, !ShelfDragSource.isDragging else { return false }
+        guard showsShelfTab, !ShelfDragSource.isDragging, !isDraggingScreenshot else { return false }
         shelf.add(from: providers)
         if !isOpen { showShelfForDrop() }
         return true
@@ -293,6 +333,12 @@ final class IslandModel {
     }
 
     func toggle() { isOpen ? close() : open() }
+
+    /// Copies an older clipboard item again and, if allowed, pastes it into the app in front.
+    func useClipboardItem(_ item: ClipboardItem) {
+        clipboard.use(item, paste: settings.pasteFromClipboardHistory)
+        close()
+    }
 
     func select(_ tab: IslandTab) {
         if tab == .home { home.refresh() }
@@ -337,6 +383,51 @@ final class IslandModel {
         performHaptic(.generic)
         calendarReminderTask?.cancel()
         calendarReminderTask = schedule(after: 12) { $0.isShowingCalendarReminder = false }
+    }
+
+    /// Pops out of the notch until the user answers; left alone, it asks again later.
+    func showWaterReminder() {
+        guard settings.showWaterReminders, !isOpen, !isShowingWaterReminder else { return }
+        isPeeking = false
+        isShowingPostureAlert = false
+        isShowingWaterReminder = true
+        performHaptic(.generic)
+        waterReminderTask?.cancel()
+        waterReminderTask = schedule(after: 20) { $0.dismissWaterReminder(drank: false) }
+    }
+
+    func dismissWaterReminder(drank: Bool) {
+        waterReminderTask?.cancel()
+        if drank { water.drink() } else { water.snooze() }
+        isShowingWaterReminder = false
+    }
+
+    func showScreenshot() {
+        guard settings.showScreenshots, !isOpen else { return }
+        isPeeking = false
+        isShowingScreenshot = true
+        scheduleScreenshotDismissal(after: 8)
+    }
+
+    func dismissScreenshot() {
+        screenshotTask?.cancel()
+        isShowingScreenshot = false
+    }
+
+    func beginScreenshotDrag() {
+        screenshotTask?.cancel()
+        isDraggingScreenshot = true
+    }
+
+    /// A drop somewhere else is done with the screenshot; a cancelled drag puts it back for a moment.
+    func endScreenshotDrag(dropped: Bool) {
+        isDraggingScreenshot = false
+        if dropped { dismissScreenshot() } else { scheduleScreenshotDismissal(after: 3) }
+    }
+
+    private func scheduleScreenshotDismissal(after seconds: Double) {
+        screenshotTask?.cancel()
+        screenshotTask = schedule(after: seconds) { $0.isShowingScreenshot = false }
     }
 
     // MARK: Keyboard

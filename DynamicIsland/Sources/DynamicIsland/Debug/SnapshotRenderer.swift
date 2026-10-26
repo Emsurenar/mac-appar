@@ -75,8 +75,27 @@ enum SnapshotRenderer {
             render("16-open-calendar", model, directory)
             model.select(.media)
             model.close()
+            model.water.showPreview(glasses: 3)
+            model.showWaterReminder()
+            try? await Task.sleep(for: .seconds(0.5))
+            render("17-water-reminder", model, directory)
+            model.screenshots.showPreview(previewScreenshot())
+            model.showScreenshot()
+            try? await Task.sleep(for: .seconds(0.5))
+            render("18-screenshot", model, directory)
+            model.dismissScreenshot()
             NSApp.terminate(nil)
         }
+    }
+
+    /// A stand-in screenshot: the wallpaper with a window on it.
+    private static func previewScreenshot() -> NSImage {
+        let view = ZStack {
+            Wallpaper()
+            RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.9)).padding(40)
+        }
+        .frame(width: 480, height: 300)
+        return ImageRenderer(content: view).nsImage ?? NSImage()
     }
 
     /// One state on a wallpaper-like background, sized to the island.

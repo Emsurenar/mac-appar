@@ -15,12 +15,20 @@ final class AppSettings {
     var showCalendarTab: Bool { didSet { store(showCalendarTab, Key.showCalendarTab) } }
     var showCalendarReminders: Bool { didSet { store(showCalendarReminders, Key.showCalendarReminders) } }
     var showShelfTab: Bool { didSet { store(showShelfTab, Key.showShelfTab) } }
+    var showClipboardTab: Bool { didSet { store(showClipboardTab, Key.showClipboardTab) } }
+    /// Picking an item from the clipboard history also pastes it, not just copies it.
+    var pasteFromClipboardHistory: Bool { didSet { store(pasteFromClipboardHistory, Key.pasteFromClipboardHistory) } }
+    var showScreenshots: Bool { didSet { store(showScreenshots, Key.showScreenshots) } }
     /// Minutes before an event that its reminder appears.
     var calendarLeadMinutes: Int { didSet { defaults.set(calendarLeadMinutes, forKey: Key.calendarLeadMinutes) } }
     /// Identifiers of the calendars the island leaves out.
     var hiddenCalendarIDs: Set<String> {
         didSet { defaults.set(Array(hiddenCalendarIDs), forKey: Key.hiddenCalendarIDs) }
     }
+    var showWaterReminders: Bool { didSet { store(showWaterReminders, Key.showWaterReminders) } }
+    /// Minutes at the Mac between water reminders.
+    var waterIntervalMinutes: Int { didSet { defaults.set(waterIntervalMinutes, forKey: Key.waterIntervalMinutes) } }
+    var waterDailyGoal: Int { didSet { defaults.set(waterDailyGoal, forKey: Key.waterDailyGoal) } }
     /// The welcome window has been shown and closed once.
     var hasSeenWelcome: Bool { didSet { store(hasSeenWelcome, Key.hasSeenWelcome) } }
     var homeFolderName: String { didSet { defaults.set(homeFolderName, forKey: Key.homeFolderName) } }
@@ -49,9 +57,15 @@ final class AppSettings {
         static let showPostureLiveActivity = "showPostureLiveActivity"
         static let showCalendarTab = "showCalendarTab"
         static let showCalendarReminders = "showCalendarReminders"
+        static let showScreenshots = "showScreenshots"
         static let calendarLeadMinutes = "calendarLeadMinutes"
         static let hiddenCalendarIDs = "hiddenCalendarIDs"
         static let showShelfTab = "showShelfTab"
+        static let showWaterReminders = "showWaterReminders"
+        static let waterIntervalMinutes = "waterIntervalMinutes"
+        static let waterDailyGoal = "waterDailyGoal"
+        static let showClipboardTab = "showClipboardTab"
+        static let pasteFromClipboardHistory = "pasteFromClipboardHistory"
     }
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -75,8 +89,14 @@ final class AppSettings {
             Key.showPostureLiveActivity: true,
             Key.showCalendarTab: true,
             Key.showCalendarReminders: true,
+            Key.showScreenshots: true,
             Key.calendarLeadMinutes: 15,
             Key.showShelfTab: true,
+            Key.showWaterReminders: true,
+            Key.waterIntervalMinutes: 45,
+            Key.waterDailyGoal: 8,
+            Key.showClipboardTab: true,
+            Key.pasteFromClipboardHistory: true,
         ])
         hoverToOpen = defaults.bool(forKey: Key.hoverToOpen)
         hasSeenWelcome = defaults.bool(forKey: Key.hasSeenWelcome)
@@ -93,8 +113,14 @@ final class AppSettings {
         showCalendarTab = defaults.bool(forKey: Key.showCalendarTab)
         showCalendarReminders = defaults.bool(forKey: Key.showCalendarReminders)
         showShelfTab = defaults.bool(forKey: Key.showShelfTab)
+        showScreenshots = defaults.bool(forKey: Key.showScreenshots)
         calendarLeadMinutes = defaults.integer(forKey: Key.calendarLeadMinutes)
+        showClipboardTab = defaults.bool(forKey: Key.showClipboardTab)
+        pasteFromClipboardHistory = defaults.bool(forKey: Key.pasteFromClipboardHistory)
         hiddenCalendarIDs = Set(defaults.stringArray(forKey: Key.hiddenCalendarIDs) ?? [])
+        showWaterReminders = defaults.bool(forKey: Key.showWaterReminders)
+        waterIntervalMinutes = defaults.integer(forKey: Key.waterIntervalMinutes)
+        waterDailyGoal = defaults.integer(forKey: Key.waterDailyGoal)
         homeFolderName = defaults.string(forKey: Key.homeFolderName) ?? "Home"
     }
 

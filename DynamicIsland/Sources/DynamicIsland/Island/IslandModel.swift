@@ -68,6 +68,7 @@ final class IslandModel {
     var tab: IslandTab = .media
 
     @ObservationIgnored var onOpenSettings: (() -> Void)?
+    @ObservationIgnored var onOpenWelcome: (() -> Void)?
     @ObservationIgnored private var openTask: Task<Void, Never>?
     @ObservationIgnored private var closeTask: Task<Void, Never>?
     @ObservationIgnored private var hudTask: Task<Void, Never>?

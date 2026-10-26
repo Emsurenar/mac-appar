@@ -20,6 +20,8 @@ final class AppSettings {
     var hiddenCalendarIDs: Set<String> {
         didSet { defaults.set(Array(hiddenCalendarIDs), forKey: Key.hiddenCalendarIDs) }
     }
+    /// The welcome window has been shown and closed once.
+    var hasSeenWelcome: Bool { didSet { store(hasSeenWelcome, Key.hasSeenWelcome) } }
     var homeFolderName: String { didSet { defaults.set(homeFolderName, forKey: Key.homeFolderName) } }
     var replaceSystemHUD: Bool {
         didSet {
@@ -32,6 +34,7 @@ final class AppSettings {
 
     private enum Key {
         static let hoverToOpen = "hoverToOpen"
+        static let hasSeenWelcome = "hasSeenWelcome"
         static let hapticFeedback = "hapticFeedback"
         static let showLiveActivity = "showLiveActivity"
         static let showTrackChanges = "showTrackChanges"
@@ -56,6 +59,7 @@ final class AppSettings {
         self.defaults = defaults
         defaults.register(defaults: [
             Key.hoverToOpen: true,
+            Key.hasSeenWelcome: false,
             Key.hapticFeedback: true,
             Key.showLiveActivity: true,
             Key.showTrackChanges: true,
@@ -72,6 +76,7 @@ final class AppSettings {
             Key.calendarLeadMinutes: 15,
         ])
         hoverToOpen = defaults.bool(forKey: Key.hoverToOpen)
+        hasSeenWelcome = defaults.bool(forKey: Key.hasSeenWelcome)
         hapticFeedback = defaults.bool(forKey: Key.hapticFeedback)
         showLiveActivity = defaults.bool(forKey: Key.showLiveActivity)
         showTrackChanges = defaults.bool(forKey: Key.showTrackChanges)

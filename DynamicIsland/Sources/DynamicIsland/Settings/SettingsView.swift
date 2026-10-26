@@ -125,6 +125,28 @@ struct SettingsView: View {
                     }
                 }
 
+                SettingsSection("Water", footer: "Only time at the Mac counts: the timer pauses while you're away and while the Mac sleeps. Later asks again in 10 minutes.") {
+                    SettingsToggle("Remind me to drink water", isOn: $settings.showWaterReminders)
+                    SettingsRow {
+                        Text("Remind me every")
+                        Spacer()
+                        Picker("", selection: $settings.waterIntervalMinutes) {
+                            ForEach([20, 30, 45, 60, 90, 120], id: \.self) { Text("\($0) min").tag($0) }
+                        }
+                        .labelsHidden()
+                        .fixedSize()
+                    }
+                    .disabled(!settings.showWaterReminders)
+                    SettingsRow {
+                        Text("Daily goal")
+                        Spacer()
+                        Text("\(model.water.glassesToday) today").foregroundStyle(.secondary)
+                        Stepper("\(settings.waterDailyGoal) glasses", value: $settings.waterDailyGoal, in: 1...20)
+                            .fixedSize()
+                    }
+                    .disabled(!settings.showWaterReminders)
+                }
+
                 SettingsSection("Volume and Brightness", footer: "The volume and brightness keys then show only in the island. Hold ⌥⇧ for finer steps.") {
                     SettingsToggle("Show volume changes in the island", isOn: $settings.showVolumeHUD)
                     SettingsToggle("Replace the system volume and brightness HUD", isOn: $settings.replaceSystemHUD)

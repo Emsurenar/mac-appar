@@ -75,6 +75,10 @@ enum SnapshotRenderer {
             render("16-open-calendar", model, directory)
             model.select(.media)
             model.close()
+            model.water.showPreview(glasses: 3)
+            model.showWaterReminder()
+            try? await Task.sleep(for: .seconds(0.5))
+            render("17-water-reminder", model, directory)
             NSApp.terminate(nil)
         }
     }

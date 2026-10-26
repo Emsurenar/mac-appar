@@ -22,6 +22,8 @@ enum IslandPresentation: Equatable {
     case postureCompact
     /// An event from the calendar is about to start.
     case calendarReminder
+    /// Time for a glass of water.
+    case waterReminder
     case open
 }
 
@@ -54,6 +56,7 @@ final class IslandModel {
     let posture: PostureService
     let system: SystemService
     let calendar: CalendarService
+    let water: WaterService
     let settings: AppSettings
 
     var metrics = NotchMetrics.fallback
@@ -65,6 +68,7 @@ final class IslandModel {
     private(set) var isChoosingShortcuts = false
     private(set) var isShowingPostureAlert = false
     private(set) var isShowingCalendarReminder = false
+    private(set) var isShowingWaterReminder = false
     var tab: IslandTab = .media
 
     @ObservationIgnored var onOpenSettings: (() -> Void)?
@@ -75,11 +79,12 @@ final class IslandModel {
     @ObservationIgnored private var peekTask: Task<Void, Never>?
     @ObservationIgnored private var postureAlertTask: Task<Void, Never>?
     @ObservationIgnored private var calendarReminderTask: Task<Void, Never>?
+    @ObservationIgnored private var waterReminderTask: Task<Void, Never>?
     @ObservationIgnored private let keyInterceptor = MediaKeyInterceptor()
     @ObservationIgnored private var permissionPoll: Timer?
 
     init(media: NowPlayingService, audio: AudioService, brightness: BrightnessService, home: HomeService,
-         posture: PostureService, system: SystemService, calendar: CalendarService, settings: AppSettings) {
+         posture: PostureService, system: SystemService, calendar: CalendarService, water: WaterService, settings: AppSettings) {
         self.media = media
         self.audio = audio
         self.brightness = brightness
@@ -87,6 +92,7 @@ final class IslandModel {
         self.posture = posture
         self.system = system
         self.calendar = calendar
+        self.water = water
         self.settings = settings
 
         media.onTrackChange = { [weak self] in self?.showTrackPeek() }
@@ -94,6 +100,9 @@ final class IslandModel {
         calendar.onReminder = { [weak self] _ in self?.showCalendarReminder() }
         calendar.leadMinutes = { [weak settings] in settings?.calendarLeadMinutes ?? 15 }
         calendar.hiddenCalendars = { [weak settings] in settings?.hiddenCalendarIDs ?? [] }
+        water.onDue = { [weak self] in self?.showWaterReminder() }
+        water.isEnabled = { [weak settings] in settings?.showWaterReminders ?? false }
+        water.interval = { [weak settings] in TimeInterval((settings?.waterIntervalMinutes ?? 45) * 60) }
         audio.onExternalVolumeChange = { [weak self] in
             guard let self, self.settings.showVolumeHUD || self.isReplacingSystemHUD else { return }
             self.showHUD(.volume)
@@ -116,6 +125,7 @@ final class IslandModel {
             isOpen: isOpen,
             hud: hud,
             showsCalendarReminder: isShowingCalendarReminder && calendar.reminder != nil,
+            showsWaterReminder: isShowingWaterReminder && water.isDue,
             showsPostureAlert: isShowingPostureAlert && posture.latestAlert != nil,
             showsTrackPeek: isPeeking && media.hasMedia,
             showsMediaActivity: settings.showLiveActivity && media.hasMedia && media.isPlaying,
@@ -203,7 +213,8 @@ final class IslandModel {
 
         if hovering {
             closeTask?.cancel()
-            if settings.hoverToOpen && !isOpen {
+            // The water reminder has its own buttons, so hovering it doesn't open the island.
+            if settings.hoverToOpen && !isOpen && presentation != .waterReminder {
                 // Trackpad haptics only play while a finger touches the pad, so they go out
                 // with the movement that reached the notch, not with the delayed open.
                 performHaptic(.levelChange)
@@ -224,6 +235,7 @@ final class IslandModel {
         peekTask?.cancel()
         postureAlertTask?.cancel()
         calendarReminderTask?.cancel()
+        if isShowingWaterReminder { dismissWaterReminder(drank: false) }
         if isShowingCalendarReminder && showsCalendarTab { tab = .calendar }
         hud = nil
         isPeeking = false
@@ -294,6 +306,23 @@ final class IslandModel {
         performHaptic(.generic)
         calendarReminderTask?.cancel()
         calendarReminderTask = schedule(after: 12) { $0.isShowingCalendarReminder = false }
+    }
+
+    /// Pops out of the notch until the user answers; left alone, it asks again later.
+    func showWaterReminder() {
+        guard settings.showWaterReminders, !isOpen, !isShowingWaterReminder else { return }
+        isPeeking = false
+        isShowingPostureAlert = false
+        isShowingWaterReminder = true
+        performHaptic(.generic)
+        waterReminderTask?.cancel()
+        waterReminderTask = schedule(after: 20) { $0.dismissWaterReminder(drank: false) }
+    }
+
+    func dismissWaterReminder(drank: Bool) {
+        waterReminderTask?.cancel()
+        if drank { water.drink() } else { water.snooze() }
+        isShowingWaterReminder = false
     }
 
     // MARK: Keyboard

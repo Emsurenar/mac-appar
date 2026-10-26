@@ -20,6 +20,10 @@ final class AppSettings {
     var hiddenCalendarIDs: Set<String> {
         didSet { defaults.set(Array(hiddenCalendarIDs), forKey: Key.hiddenCalendarIDs) }
     }
+    var showWaterReminders: Bool { didSet { store(showWaterReminders, Key.showWaterReminders) } }
+    /// Minutes at the Mac between water reminders.
+    var waterIntervalMinutes: Int { didSet { defaults.set(waterIntervalMinutes, forKey: Key.waterIntervalMinutes) } }
+    var waterDailyGoal: Int { didSet { defaults.set(waterDailyGoal, forKey: Key.waterDailyGoal) } }
     /// The welcome window has been shown and closed once.
     var hasSeenWelcome: Bool { didSet { store(hasSeenWelcome, Key.hasSeenWelcome) } }
     var homeFolderName: String { didSet { defaults.set(homeFolderName, forKey: Key.homeFolderName) } }
@@ -50,6 +54,9 @@ final class AppSettings {
         static let showCalendarReminders = "showCalendarReminders"
         static let calendarLeadMinutes = "calendarLeadMinutes"
         static let hiddenCalendarIDs = "hiddenCalendarIDs"
+        static let showWaterReminders = "showWaterReminders"
+        static let waterIntervalMinutes = "waterIntervalMinutes"
+        static let waterDailyGoal = "waterDailyGoal"
     }
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -74,6 +81,9 @@ final class AppSettings {
             Key.showCalendarTab: true,
             Key.showCalendarReminders: true,
             Key.calendarLeadMinutes: 15,
+            Key.showWaterReminders: true,
+            Key.waterIntervalMinutes: 45,
+            Key.waterDailyGoal: 8,
         ])
         hoverToOpen = defaults.bool(forKey: Key.hoverToOpen)
         hasSeenWelcome = defaults.bool(forKey: Key.hasSeenWelcome)
@@ -91,6 +101,9 @@ final class AppSettings {
         showCalendarReminders = defaults.bool(forKey: Key.showCalendarReminders)
         calendarLeadMinutes = defaults.integer(forKey: Key.calendarLeadMinutes)
         hiddenCalendarIDs = Set(defaults.stringArray(forKey: Key.hiddenCalendarIDs) ?? [])
+        showWaterReminders = defaults.bool(forKey: Key.showWaterReminders)
+        waterIntervalMinutes = defaults.integer(forKey: Key.waterIntervalMinutes)
+        waterDailyGoal = defaults.integer(forKey: Key.waterDailyGoal)
         homeFolderName = defaults.string(forKey: Key.homeFolderName) ?? "Home"
     }
 

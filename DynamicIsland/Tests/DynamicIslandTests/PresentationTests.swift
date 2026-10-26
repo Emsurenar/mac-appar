@@ -23,6 +23,13 @@ final class PresentationTests: XCTestCase {
         XCTAssertEqual(IslandPresentation(state), .calendarReminder)
     }
 
+    func testWaterReminderSitsBetweenCalendarAndPosture() {
+        XCTAssertEqual(IslandPresentation(PresentationState(showsCalendarReminder: true, showsWaterReminder: true)),
+                       .calendarReminder)
+        XCTAssertEqual(IslandPresentation(PresentationState(showsWaterReminder: true, showsPostureAlert: true)),
+                       .waterReminder)
+    }
+
     func testTrackPeekWinsOverLiveActivities() {
         let state = PresentationState(showsTrackPeek: true, showsMediaActivity: true, showsPostureActivity: true)
         XCTAssertEqual(IslandPresentation(state), .peek)

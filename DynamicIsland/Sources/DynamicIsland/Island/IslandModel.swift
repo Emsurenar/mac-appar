@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 enum IslandTab: Hashable {
-    case media, home, controls, posture, system
+    case media, home, controls, posture, calendar, system
 }
 
 enum HUDKind: Equatable {
@@ -20,6 +20,8 @@ enum IslandPresentation: Equatable {
     case postureAlert
     /// Live activity: the posture figure and the progress towards a reminder.
     case postureCompact
+    /// An event from the calendar is about to start.
+    case calendarReminder
     case open
 }
 
@@ -38,6 +40,9 @@ enum IslandLayout {
     static let homeEmptyHeight: CGFloat = 112
     static let postureContentHeight: CGFloat = 150
     static let systemRowHeight: CGFloat = 34
+    static let calendarRowHeight: CGFloat = 40
+    static let maxCalendarRows = 4
+    static let calendarEmptyHeight: CGFloat = 112
 }
 
 @MainActor @Observable
@@ -48,6 +53,7 @@ final class IslandModel {
     let home: HomeService
     let posture: PostureService
     let system: SystemService
+    let calendar: CalendarService
     let settings: AppSettings
 
     var metrics = NotchMetrics.fallback
@@ -58,6 +64,7 @@ final class IslandModel {
     /// The Home tab is showing the list for picking shortcuts.
     private(set) var isChoosingShortcuts = false
     private(set) var isShowingPostureAlert = false
+    private(set) var isShowingCalendarReminder = false
     var tab: IslandTab = .media
 
     @ObservationIgnored var onOpenSettings: (() -> Void)?
@@ -66,21 +73,25 @@ final class IslandModel {
     @ObservationIgnored private var hudTask: Task<Void, Never>?
     @ObservationIgnored private var peekTask: Task<Void, Never>?
     @ObservationIgnored private var postureAlertTask: Task<Void, Never>?
+    @ObservationIgnored private var calendarReminderTask: Task<Void, Never>?
     @ObservationIgnored private let keyInterceptor = MediaKeyInterceptor()
     @ObservationIgnored private var permissionPoll: Timer?
 
     init(media: NowPlayingService, audio: AudioService, brightness: BrightnessService, home: HomeService,
-         posture: PostureService, system: SystemService, settings: AppSettings) {
+         posture: PostureService, system: SystemService, calendar: CalendarService, settings: AppSettings) {
         self.media = media
         self.audio = audio
         self.brightness = brightness
         self.home = home
         self.posture = posture
         self.system = system
+        self.calendar = calendar
         self.settings = settings
 
         media.onTrackChange = { [weak self] in self?.showTrackPeek() }
         posture.onAlert = { [weak self] _ in self?.showPostureAlert() }
+        calendar.onReminder = { [weak self] _ in self?.showCalendarReminder() }
+        calendar.leadMinutes = { [weak settings] in settings?.calendarLeadMinutes ?? 15 }
         audio.onExternalVolumeChange = { [weak self] in
             guard let self, self.settings.showVolumeHUD || self.isReplacingSystemHUD else { return }
             self.showHUD(.volume)
@@ -101,6 +112,7 @@ final class IslandModel {
     var presentation: IslandPresentation {
         if isOpen { return .open }
         if let hud { return .hud(hud) }
+        if isShowingCalendarReminder && calendar.reminder != nil { return .calendarReminder }
         if isShowingPostureAlert && posture.latestAlert != nil { return .postureAlert }
         if isPeeking && media.hasMedia { return .peek }
         if settings.showLiveActivity && media.hasMedia && media.isPlaying { return .compact }
@@ -115,6 +127,7 @@ final class IslandModel {
     }
 
     var showsPostureTab: Bool { settings.showPostureTab && posture.isConnected }
+    var showsCalendarTab: Bool { settings.showCalendarTab }
 
     var animation: Animation {
         switch presentation {
@@ -136,7 +149,7 @@ final class IslandModel {
         switch presentation {
         case .closed: isHovering ? 6 : 0
         case .compact, .postureCompact, .hud(.volume), .hud(.brightness): 8
-        case .peek, .postureAlert, .hud(.outputDevice): 10
+        case .peek, .postureAlert, .calendarReminder, .hud(.outputDevice): 10
         case .open: 14
         }
     }
@@ -146,7 +159,7 @@ final class IslandModel {
         case .closed: isHovering ? 12 : 8
         case .compact, .postureCompact, .hud(.volume), .hud(.brightness): 13
         case .peek, .hud(.outputDevice): 22
-        case .postureAlert: 24
+        case .postureAlert, .calendarReminder: 24
         case .open: 32
         }
     }
@@ -163,6 +176,8 @@ final class IslandModel {
             return CGSize(width: notch.width + compactSideWidth * 2 + ears, height: notch.height)
         case .postureAlert:
             return CGSize(width: notch.width + 260 + ears, height: notch.height + 64)
+        case .calendarReminder:
+            return CGSize(width: notch.width + 300 + ears, height: notch.height + 64)
         case .hud(.volume), .hud(.brightness):
             return CGSize(width: notch.width + hudSideWidth * 2 + ears, height: notch.height)
         case .peek:
@@ -179,6 +194,7 @@ final class IslandModel {
         switch tab {
         case .home where !settings.showHomeTab: .media
         case .posture where !showsPostureTab: .media
+        case .calendar where !showsCalendarTab: .media
         default: tab
         }
     }
@@ -200,6 +216,10 @@ final class IslandModel {
             return 4 + rows * IslandLayout.homeTileHeight + (rows - 1) * IslandLayout.homeTileSpacing + 18
         case .posture:
             return IslandLayout.postureContentHeight
+        case .calendar:
+            guard calendar.access == .granted, !calendar.events.isEmpty else { return IslandLayout.calendarEmptyHeight }
+            let rows = CGFloat(min(calendar.events.count, IslandLayout.maxCalendarRows))
+            return 4 + IslandLayout.sectionHeaderHeight + rows * IslandLayout.calendarRowHeight + 16
         case .system:
             return 4 + CGFloat(system.rowCount) * IslandLayout.systemRowHeight + 16
         case .controls:
@@ -258,10 +278,14 @@ final class IslandModel {
         hudTask?.cancel()
         peekTask?.cancel()
         postureAlertTask?.cancel()
+        calendarReminderTask?.cancel()
+        if isShowingCalendarReminder && showsCalendarTab { tab = .calendar }
         hud = nil
         isPeeking = false
         isShowingPostureAlert = false
+        isShowingCalendarReminder = false
         if currentTab == .home { home.refresh() }
+        if currentTab == .calendar { calendar.reload() }
         isOpen = true
     }
 
@@ -285,6 +309,7 @@ final class IslandModel {
 
     func select(_ tab: IslandTab) {
         if tab == .home { home.refresh() }
+        if tab == .calendar { calendar.reload() }
         isChoosingShortcuts = false
         guard tab != self.tab else { return }
         withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { self.tab = tab }
@@ -314,6 +339,16 @@ final class IslandModel {
         performHaptic(.generic)
         postureAlertTask?.cancel()
         postureAlertTask = schedule(after: 6) { $0.isShowingPostureAlert = false }
+    }
+
+    func showCalendarReminder() {
+        guard settings.showCalendarReminders, !isOpen else { return }
+        isPeeking = false
+        isShowingPostureAlert = false
+        isShowingCalendarReminder = true
+        performHaptic(.generic)
+        calendarReminderTask?.cancel()
+        calendarReminderTask = schedule(after: 12) { $0.isShowingCalendarReminder = false }
     }
 
     // MARK: Keyboard

@@ -28,6 +28,10 @@
 	<string>14.0</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Dynamic Island shows your upcoming events and reminds you before they start.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Dynamic Island shows your upcoming events and reminds you before they start.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 </dict>

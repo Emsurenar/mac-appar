@@ -55,6 +55,24 @@ enum SnapshotRenderer {
                                             progress: 0, score: 91, todayGood: 0.86, headPitch: 2, airpods: true,
                                             interval: 10, lastCheck: Date(), pausedUntil: nil))
             render("14-open-posture-good", model, directory)
+            model.close()
+            let now = Date()
+            let events: [CalendarService.Event] = [
+                .init(id: "1", title: "Standup", start: now.addingTimeInterval(-600), end: now.addingTimeInterval(300),
+                      location: nil, color: .systemGreen, meetingURL: URL(string: "https://meet.google.com/abc-defg-hij")),
+                .init(id: "2", title: "Möte med Erik", start: now.addingTimeInterval(900), end: now.addingTimeInterval(4500),
+                      location: "Konferensrum 3", color: .systemBlue, meetingURL: nil),
+                .init(id: "3", title: "Lunch", start: now.addingTimeInterval(7200), end: now.addingTimeInterval(10800),
+                      location: nil, color: .systemOrange, meetingURL: nil),
+            ]
+            model.calendar.showPreview(events)
+            model.calendar.showPreviewReminder(events[1])
+            model.showCalendarReminder()
+            try? await Task.sleep(for: .seconds(0.5))
+            render("15-calendar-reminder", model, directory)
+            model.open()
+            model.select(.calendar)
+            render("16-open-calendar", model, directory)
             model.select(.media)
             model.close()
             NSApp.terminate(nil)

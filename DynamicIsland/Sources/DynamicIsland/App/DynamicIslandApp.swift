@@ -23,8 +23,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let settings = AppSettings()
         let home = HomeService(settings: settings)
         let posture = PostureService()
+        let calendar = CalendarService()
         let model = IslandModel(media: media, audio: audio, brightness: BrightnessService(), home: home,
-                                posture: posture, system: SystemService(), settings: settings)
+                                posture: posture, system: SystemService(), calendar: calendar, settings: settings)
         let settingsWindow = SettingsWindowController(model: model)
         model.onOpenSettings = { [weak settingsWindow] in settingsWindow?.show() }
 
@@ -34,6 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         audio.start()
         home.refresh()
         posture.start()
+        calendar.start()
 
         self.model = model
         self.islandWindow = islandWindow
@@ -55,5 +57,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         model?.media.stop()
         model?.posture.stop()
+        model?.calendar.stop()
     }
 }

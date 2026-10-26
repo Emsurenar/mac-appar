@@ -12,6 +12,10 @@ final class AppSettings {
     var showPostureTab: Bool { didSet { store(showPostureTab, Key.showPostureTab) } }
     var showPostureAlerts: Bool { didSet { store(showPostureAlerts, Key.showPostureAlerts) } }
     var showPostureLiveActivity: Bool { didSet { store(showPostureLiveActivity, Key.showPostureLiveActivity) } }
+    var showCalendarTab: Bool { didSet { store(showCalendarTab, Key.showCalendarTab) } }
+    var showCalendarReminders: Bool { didSet { store(showCalendarReminders, Key.showCalendarReminders) } }
+    /// Minutes before an event that its reminder appears.
+    var calendarLeadMinutes: Int { didSet { defaults.set(calendarLeadMinutes, forKey: Key.calendarLeadMinutes) } }
     var homeFolderName: String { didSet { defaults.set(homeFolderName, forKey: Key.homeFolderName) } }
     var replaceSystemHUD: Bool {
         didSet {
@@ -35,6 +39,9 @@ final class AppSettings {
         static let showPostureTab = "showPostureTab"
         static let showPostureAlerts = "showPostureAlerts"
         static let showPostureLiveActivity = "showPostureLiveActivity"
+        static let showCalendarTab = "showCalendarTab"
+        static let showCalendarReminders = "showCalendarReminders"
+        static let calendarLeadMinutes = "calendarLeadMinutes"
     }
 
     @ObservationIgnored private let defaults = UserDefaults.standard
@@ -53,6 +60,9 @@ final class AppSettings {
             Key.showPostureTab: true,
             Key.showPostureAlerts: true,
             Key.showPostureLiveActivity: true,
+            Key.showCalendarTab: true,
+            Key.showCalendarReminders: true,
+            Key.calendarLeadMinutes: 15,
         ])
         hoverToOpen = defaults.bool(forKey: Key.hoverToOpen)
         hapticFeedback = defaults.bool(forKey: Key.hapticFeedback)
@@ -65,6 +75,9 @@ final class AppSettings {
         showPostureTab = defaults.bool(forKey: Key.showPostureTab)
         showPostureAlerts = defaults.bool(forKey: Key.showPostureAlerts)
         showPostureLiveActivity = defaults.bool(forKey: Key.showPostureLiveActivity)
+        showCalendarTab = defaults.bool(forKey: Key.showCalendarTab)
+        showCalendarReminders = defaults.bool(forKey: Key.showCalendarReminders)
+        calendarLeadMinutes = defaults.integer(forKey: Key.calendarLeadMinutes)
         homeFolderName = defaults.string(forKey: Key.homeFolderName) ?? "Home"
     }
 

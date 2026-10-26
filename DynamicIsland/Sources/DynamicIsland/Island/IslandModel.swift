@@ -312,7 +312,12 @@ final class IslandModel {
     /// Keeps the dropped files. Returns false for drags that started on the shelf itself.
     func dropFiles(_ providers: [NSItemProvider]) -> Bool {
         isDropTargeted = false
-        guard showsShelfTab, !ShelfDragSource.isDragging, !isDraggingScreenshot else { return false }
+        guard showsShelfTab, !ShelfDragSource.isDragging, !isDraggingScreenshot else {
+            NSLog("Shelf: drop refused (tab shown: %d, shelf drag: %d, screenshot drag: %d)",
+                  showsShelfTab, ShelfDragSource.isDragging, isDraggingScreenshot)
+            return false
+        }
+        NSLog("Shelf: drop of %@", providers.map(\.registeredTypeIdentifiers).description)
         shelf.add(from: providers)
         if !isOpen { showShelfForDrop() }
         return true

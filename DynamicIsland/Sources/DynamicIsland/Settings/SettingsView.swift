@@ -5,7 +5,7 @@ import SwiftUI
 /// The pages in the settings sidebar, grouped like the island:
 /// the tabs, then what pops out of the notch on its own.
 enum SettingsPage: String, CaseIterable, Identifiable {
-    case general, nowPlaying, home, calendar, shelf, clipboard, system, posture
+    case general, nowPlaying, home, calendar, clipboard, system, posture
     case volume, screenshots, water
     case about
 
@@ -13,7 +13,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
 
     static let groups: [[SettingsPage]] = [
         [.general],
-        [.nowPlaying, .home, .calendar, .shelf, .clipboard, .system, .posture],
+        [.nowPlaying, .home, .calendar, .clipboard, .system, .posture],
         [.volume, .screenshots, .water],
         [.about],
     ]
@@ -24,8 +24,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         case .nowPlaying: "Now Playing"
         case .home: "Home"
         case .calendar: "Calendar"
-        case .shelf: "Shelf"
-        case .clipboard: "Clipboard"
+        case .clipboard: "Clipboard and Files"
         case .system: "System"
         case .posture: "Posture"
         case .volume: "Volume and Brightness"
@@ -41,7 +40,6 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         case .nowPlaying: "music.note"
         case .home: "house.fill"
         case .calendar: "calendar"
-        case .shelf: "tray.full.fill"
         case .clipboard: "doc.on.clipboard.fill"
         case .system: "gauge.with.dots.needle.67percent"
         case .posture: "figure.stand"
@@ -58,7 +56,6 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         case .nowPlaying: .pink
         case .home: .orange
         case .calendar: .red
-        case .shelf: .indigo
         case .clipboard: .blue
         case .system: .green
         case .posture: .teal
@@ -186,13 +183,12 @@ struct SettingsView: View {
                         }
                     }
                 }
-            case .shelf:
-                SettingsSection(footer: "Drag files onto the notch to keep them on the shelf. They stay there until you drag them out, and the files themselves never move.") {
-                    SettingsToggle("Show Shelf tab", isOn: $settings.showShelfTab)
-                }
             case .clipboard:
-                SettingsSection(footer: "The last 20 things you copied, newest first. They stay in memory only, and passwords from password managers are skipped. Pasting needs Accessibility access; without it, an item is just copied.") {
-                    SettingsToggle("Show Clipboard tab", isOn: $settings.showClipboardTab)
+                SettingsSection("Files", footer: "Drag files onto the notch to keep them at the top of this tab. They stay there until you drag them out, and the files themselves never move.") {
+                    SettingsToggle("Keep files you drop on the notch", isOn: $settings.showShelfTab)
+                }
+                SettingsSection("Clipboard", footer: "The last 20 things you copied, newest first. They stay in memory only, and passwords from password managers are skipped. Pasting needs Accessibility access; without it, an item is just copied.") {
+                    SettingsToggle("Show clipboard history", isOn: $settings.showClipboardTab)
                     SettingsToggle("Paste the item you pick", isOn: $settings.pasteFromClipboardHistory)
                     if settings.pasteFromClipboardHistory && !hasAccessibility {
                         SettingsRow(action: openAccessibilitySettings) {

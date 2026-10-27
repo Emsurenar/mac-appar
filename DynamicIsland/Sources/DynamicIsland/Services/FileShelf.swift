@@ -50,18 +50,6 @@ final class FileShelf {
         save()
     }
 
-    /// Reads the file URLs from a drop and adds them as they arrive.
-    func add(from providers: [NSItemProvider]) {
-        for provider in providers where provider.canLoadObject(ofClass: URL.self) {
-            _ = provider.loadObject(ofClass: URL.self) { [weak self] url, _ in
-                guard let url else { return }
-                DispatchQueue.main.async {
-                    MainActor.assumeIsolated { self?.add([url]) }
-                }
-            }
-        }
-    }
-
     private func save() {
         defaults.set(files.map(\.path), forKey: Self.key)
     }

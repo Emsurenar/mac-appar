@@ -115,19 +115,22 @@ final class CalendarService {
         tick()
     }
 
-    /// Opens the event's meeting link, or the day in Calendar when it has none.
+    /// Opens the event's meeting link, or its day in Google Calendar when it has none.
     func join(_ event: Event) {
         if let url = event.meetingURL {
             NSWorkspace.shared.open(url)
         } else {
-            openCalendarApp()
+            openCalendar(at: event.start)
         }
         dismissReminder()
     }
 
-    func openCalendarApp() {
-        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.iCal") {
-            NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+    /// Opens Google Calendar in the browser on the day of `date`.
+    func openCalendar(at date: Date = Date()) {
+        let day = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        let path = [day.year, day.month, day.day].compactMap { $0.map(String.init) }.joined(separator: "/")
+        if let url = URL(string: "https://calendar.google.com/calendar/r/day/" + path) {
+            NSWorkspace.shared.open(url)
         }
     }
 

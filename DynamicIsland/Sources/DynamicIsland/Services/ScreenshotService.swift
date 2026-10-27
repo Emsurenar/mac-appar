@@ -1,7 +1,9 @@
 import AppKit
+import os
 
-/// Notices new screenshots through Spotlight, which tags every capture with `kMDItemIsScreenCapture`
-/// wherever it is saved, so a changed screenshot folder needs no setting.
+/// Notices new screenshots. macOS marks every capture with `kMDItemIsScreenCapture`. The service
+/// watches the screenshot folder for files carrying that mark, and asks Spotlight too, for captures
+/// saved somewhere else.
 @MainActor @Observable
 final class ScreenshotService {
     struct Screenshot: Equatable, Identifiable {
@@ -17,6 +19,8 @@ final class ScreenshotService {
     @ObservationIgnored var onNewScreenshot: ((Screenshot) -> Void)?
     @ObservationIgnored private var query: NSMetadataQuery?
     @ObservationIgnored private var observer: NSObjectProtocol?
+    @ObservationIgnored private var folderSource: DispatchSourceFileSystemObject?
+    private nonisolated static let log = Logger(subsystem: "com.emresunar.DynamicIsland", category: "screenshots")
     @ObservationIgnored private var startDate = Date()
 
     func start() {
@@ -34,6 +38,7 @@ final class ScreenshotService {
         }
         query.start()
         self.query = query
+        watchFolder()
     }
 
     func stop() {
@@ -41,6 +46,59 @@ final class ScreenshotService {
         query = nil
         if let observer { NotificationCenter.default.removeObserver(observer) }
         observer = nil
+        folderSource?.cancel()
+        folderSource = nil
+    }
+
+    // MARK: Screenshot folder
+
+    /// Where screenshots go: the folder picked in the Screenshot app, or the Desktop.
+    nonisolated static func screenshotFolder() -> URL {
+        if let path = UserDefaults(suiteName: "com.apple.screencapture")?.string(forKey: "location"), !path.isEmpty {
+            return URL(fileURLWithPath: (path as NSString).expandingTildeInPath, isDirectory: true)
+        }
+        return FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Desktop", isDirectory: true)
+    }
+
+    /// The mark macOS puts on its captures, and what Spotlight reads `kMDItemIsScreenCapture` from.
+    nonisolated static func isScreenCapture(_ url: URL) -> Bool {
+        getxattr(url.path, "com.apple.metadata:kMDItemIsScreenCapture", nil, 0, 0, 0) > 0
+    }
+
+    private func watchFolder() {
+        let folder = Self.screenshotFolder()
+        // The Desktop is protected: listing it asks for access once. Without that access Spotlight
+        // leaves its files out too, so the query alone never sees a screenshot there.
+        _ = try? FileManager.default.contentsOfDirectory(atPath: folder.path)
+        let descriptor = Darwin.open(folder.path, O_EVTONLY)
+        guard descriptor >= 0 else {
+            Self.log.error("Can't watch \(folder.path, privacy: .public)")
+            return
+        }
+        let source = DispatchSource.makeFileSystemObjectSource(fileDescriptor: descriptor, eventMask: .write, queue: .main)
+        source.setEventHandler { [weak self] in
+            MainActor.assumeIsolated {
+                self?.scan(folder)
+                // The mark can land just after the file appears, so look once more a moment later.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    MainActor.assumeIsolated { self?.scan(folder) }
+                }
+            }
+        }
+        source.setCancelHandler { Darwin.close(descriptor) }
+        source.resume()
+        folderSource = source
+    }
+
+    private func scan(_ folder: URL) {
+        let files = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.creationDateKey],
+                                                                  options: .skipsHiddenFiles)) ?? []
+        let candidates = files.compactMap { url -> Screenshot? in
+            guard let date = try? url.resourceValues(forKeys: [.creationDateKey]).creationDate,
+                  date >= startDate, Self.isScreenCapture(url) else { return nil }
+            return Screenshot(url: url, date: date)
+        }
+        consider(candidates)
     }
 
     /// Picks the screenshot to show from the ones Spotlight just reported: the newest one taken
@@ -62,6 +120,7 @@ final class ScreenshotService {
     private func consider(_ candidates: [Screenshot]) {
         let existing = candidates.filter { FileManager.default.fileExists(atPath: $0.url.path) }
         guard let shot = Self.newest(existing, after: startDate, current: latest) else { return }
+        Self.log.info("New screenshot \(shot.url.lastPathComponent, privacy: .public)")
         latest = shot
         thumbnail = NSImage(contentsOf: shot.url)
         onNewScreenshot?(shot)

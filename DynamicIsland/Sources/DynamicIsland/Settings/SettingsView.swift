@@ -2,10 +2,78 @@ import AppKit
 import ServiceManagement
 import SwiftUI
 
-/// Settings laid out like a Home app sheet: a rounded card with grouped,
-/// white rows on a soft gray background, scrolling when it doesn't fit.
+/// The pages in the settings sidebar, grouped like the island:
+/// the tabs, then what pops out of the notch on its own.
+enum SettingsPage: String, CaseIterable, Identifiable {
+    case general, nowPlaying, home, calendar, shelf, clipboard, system, posture
+    case volume, screenshots, water
+    case about
+
+    var id: Self { self }
+
+    static let groups: [[SettingsPage]] = [
+        [.general],
+        [.nowPlaying, .home, .calendar, .shelf, .clipboard, .system, .posture],
+        [.volume, .screenshots, .water],
+        [.about],
+    ]
+
+    var title: String {
+        switch self {
+        case .general: "General"
+        case .nowPlaying: "Now Playing"
+        case .home: "Home"
+        case .calendar: "Calendar"
+        case .shelf: "Shelf"
+        case .clipboard: "Clipboard"
+        case .system: "System"
+        case .posture: "Posture"
+        case .volume: "Volume and Brightness"
+        case .screenshots: "Screenshots"
+        case .water: "Water"
+        case .about: "About"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .general: "gearshape.fill"
+        case .nowPlaying: "music.note"
+        case .home: "house.fill"
+        case .calendar: "calendar"
+        case .shelf: "tray.full.fill"
+        case .clipboard: "doc.on.clipboard.fill"
+        case .system: "gauge.with.dots.needle.67percent"
+        case .posture: "figure.stand"
+        case .volume: "speaker.wave.2.fill"
+        case .screenshots: "camera.viewfinder"
+        case .water: "drop.fill"
+        case .about: "info.circle.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .general, .about: .gray
+        case .nowPlaying: .pink
+        case .home: .orange
+        case .calendar: .red
+        case .shelf: .indigo
+        case .clipboard: .blue
+        case .system: .green
+        case .posture: .teal
+        case .volume: .purple
+        case .screenshots: .mint
+        case .water: .cyan
+        }
+    }
+}
+
+/// Settings like System Settings: a sidebar of pages, each with grouped,
+/// rounded cards of rows on a soft gray background.
 struct SettingsView: View {
     @Environment(IslandModel.self) private var model
+    @State private var selection: SettingsPage = .general
     @State private var launchAtLogin = LoginItem.isEnabled
     @State private var hasAccessibility = MediaKeyInterceptor.hasPermission
     var onClose: () -> Void = {}
@@ -13,11 +81,19 @@ struct SettingsView: View {
     private let permissionTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        ScrollView(.vertical) { content }
-            .scrollIndicators(.automatic)
+        HStack(spacing: 0) {
+            sidebar
+            Divider()
+            VStack(spacing: 0) {
+                header
+                ScrollView(.vertical) { page(selection) }
+                    .scrollIndicators(.automatic)
+                    .id(selection)
+            }
             .background(Color(nsColor: .windowBackgroundColor))
-            .tint(.orange)
-            .frame(width: 520, height: 500)
+        }
+        .tint(.orange)
+        .frame(width: SettingsWindowController.size.width, height: SettingsWindowController.size.height)
             .onReceive(permissionTimer) { _ in
                 hasAccessibility = MediaKeyInterceptor.hasPermission
             }
@@ -28,13 +104,13 @@ struct SettingsView: View {
             }
     }
 
-    /// Everything inside the scroll view (also rendered on its own by `--snapshots`).
-    var content: some View {
+    /// One page of settings (also rendered on its own by `--snapshots`).
+    func page(_ page: SettingsPage) -> some View {
         @Bindable var settings = model.settings
         return VStack(alignment: .leading, spacing: 0) {
-                header
-
-                SettingsSection("General", footer: settings.hoverToOpen
+            switch page {
+            case .general:
+                SettingsSection(footer: settings.hoverToOpen
                     ? "You feel a tap when the pointer reaches the notch and when a slider hits its end – only with a finger on the trackpad."
                     : "Click the notch to open the island. You feel a tap when a slider hits its end.") {
                     SettingsToggle("Launch at login", isOn: $launchAtLogin)
@@ -42,28 +118,14 @@ struct SettingsView: View {
                     SettingsToggle("Open when the pointer rests on the notch", isOn: $settings.hoverToOpen)
                     SettingsToggle("Haptic feedback", isOn: $settings.hapticFeedback)
                 }
-
-                SettingsSection("Now Playing", footer: "While music plays, the artwork and an equalizer sit on either side of the notch.") {
+            case .nowPlaying:
+                SettingsSection(footer: "While music plays, the artwork and an equalizer sit on either side of the notch.") {
                     SettingsToggle("Show what’s playing", isOn: $settings.showLiveActivity)
                     SettingsToggle("Show track changes", isOn: $settings.showTrackChanges)
                     SettingsToggle("Show audio output changes", isOn: $settings.showDeviceChanges)
                 }
-
-                SettingsSection("Volume and Brightness", footer: "The volume and brightness keys then show only in the island. Hold ⌥⇧ for finer steps.") {
-                    SettingsToggle("Show volume changes in the island", isOn: $settings.showVolumeHUD)
-                    SettingsToggle("Replace the system volume and brightness HUD", isOn: $settings.replaceSystemHUD)
-                    if settings.replaceSystemHUD && !hasAccessibility {
-                        SettingsRow(action: openAccessibilitySettings) {
-                            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
-                            Text("Requires Accessibility permission")
-                            Spacer()
-                            Text("Open Settings").foregroundStyle(.secondary)
-                            Chevron()
-                        }
-                    }
-                }
-
-                SettingsSection("Home", footer: "Pick any shortcut with the + tile in the island’s Home tab. Shortcuts in this folder get a tile automatically. A leading emoji becomes the tile’s icon, and a shortcut that outputs “on” or “off” shows that state.") {
+            case .home:
+                SettingsSection(footer: "Pick any shortcut with the + tile in the island’s Home tab. Shortcuts in this folder get a tile automatically. A leading emoji becomes the tile’s icon, and a shortcut that outputs “on” or “off” shows that state.") {
                     SettingsToggle("Show Home tab", isOn: $settings.showHomeTab)
                     SettingsRow {
                         Text("Shortcuts folder")
@@ -91,8 +153,8 @@ struct SettingsView: View {
                         }
                     }
                 }
-
-                SettingsSection("Calendar", footer: "Events come from the Calendar app. To see your Google Calendar, add your Google account under System Settings › Internet Accounts and turn on Calendars.") {
+            case .calendar:
+                SettingsSection(footer: "Events come from the Calendar app. To see your Google Calendar, add your Google account under System Settings › Internet Accounts and turn on Calendars.") {
                     SettingsToggle("Show Calendar tab", isOn: $settings.showCalendarTab)
                     SettingsToggle("Remind me before events", isOn: $settings.showCalendarReminders)
                     SettingsRow {
@@ -124,12 +186,12 @@ struct SettingsView: View {
                         }
                     }
                 }
-
-                SettingsSection("Shelf", footer: "Drag files onto the notch to keep them on the shelf. They stay there until you drag them out, and the files themselves never move.") {
+            case .shelf:
+                SettingsSection(footer: "Drag files onto the notch to keep them on the shelf. They stay there until you drag them out, and the files themselves never move.") {
                     SettingsToggle("Show Shelf tab", isOn: $settings.showShelfTab)
                 }
-
-                SettingsSection("Clipboard", footer: "The last 20 things you copied, newest first. They stay in memory only, and passwords from password managers are skipped. Pasting needs Accessibility access; without it, an item is just copied.") {
+            case .clipboard:
+                SettingsSection(footer: "The last 20 things you copied, newest first. They stay in memory only, and passwords from password managers are skipped. Pasting needs Accessibility access; without it, an item is just copied.") {
                     SettingsToggle("Show Clipboard tab", isOn: $settings.showClipboardTab)
                     SettingsToggle("Paste the item you pick", isOn: $settings.pasteFromClipboardHistory)
                     if settings.pasteFromClipboardHistory && !hasAccessibility {
@@ -142,12 +204,12 @@ struct SettingsView: View {
                         }
                     }
                 }
-
-                SettingsSection("System", footer: "Memory, CPU, heat, battery and uptime. It only measures while the tab is open.") {
+            case .system:
+                SettingsSection(footer: "Memory, CPU, heat, battery and uptime. It only measures while the tab is open.") {
                     SettingsToggle("Show System tab", isOn: $settings.showSystemTab)
                 }
-
-                SettingsSection("Posture", footer: "Posture is a companion app that watches how you sit. While it runs, its reminders and status appear in the island.") {
+            case .posture:
+                SettingsSection(footer: "Posture is a companion app that watches how you sit. While it runs, its reminders and status appear in the island.") {
                     SettingsToggle("Show Posture tab", isOn: $settings.showPostureTab)
                     SettingsToggle("Show posture reminders", isOn: $settings.showPostureAlerts)
                     SettingsToggle("Show a live activity for poor posture", isOn: $settings.showPostureLiveActivity)
@@ -160,12 +222,26 @@ struct SettingsView: View {
                         Chevron()
                     }
                 }
-
-                SettingsSection("Screenshots", footer: "A new screenshot pops out of the notch for a few seconds. Drag it into any app, or click it to open it.") {
+            case .volume:
+                SettingsSection(footer: "The volume and brightness keys then show only in the island. Hold ⌥⇧ for finer steps.") {
+                    SettingsToggle("Show volume changes in the island", isOn: $settings.showVolumeHUD)
+                    SettingsToggle("Replace the system volume and brightness HUD", isOn: $settings.replaceSystemHUD)
+                    if settings.replaceSystemHUD && !hasAccessibility {
+                        SettingsRow(action: openAccessibilitySettings) {
+                            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                            Text("Requires Accessibility permission")
+                            Spacer()
+                            Text("Open Settings").foregroundStyle(.secondary)
+                            Chevron()
+                        }
+                    }
+                }
+            case .screenshots:
+                SettingsSection(footer: "A new screenshot pops out of the notch for a few seconds. Drag it into any app, or click it to open it.") {
                     SettingsToggle("Show new screenshots", isOn: $settings.showScreenshots)
                 }
-
-                SettingsSection("Water", footer: "Only time at the Mac counts: the timer pauses while you're away and while the Mac sleeps. Later asks again in 10 minutes.") {
+            case .water:
+                SettingsSection(footer: "Only time at the Mac counts: the timer pauses while you're away and while the Mac sleeps. Later asks again in 10 minutes.") {
                     SettingsToggle("Remind me to drink water", isOn: $settings.showWaterReminders)
                     SettingsRow {
                         Text("Remind me every")
@@ -186,8 +262,8 @@ struct SettingsView: View {
                     }
                     .disabled(!settings.showWaterReminders)
                 }
-
-                SettingsSection("About") {
+            case .about:
+                SettingsSection {
                     SettingsRow(action: { model.onOpenWelcome?() }) {
                         Text("Show welcome")
                         Spacer()
@@ -205,13 +281,40 @@ struct SettingsView: View {
                     }
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 24)
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 24)
+    }
+
+    private var sidebar: some View {
+        ScrollView(.vertical) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Dynamic Island")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.top, 38)
+                    .padding(.bottom, 6)
+                ForEach(Array(SettingsPage.groups.enumerated()), id: \.offset) { index, group in
+                    if index > 0 {
+                        Divider().padding(.vertical, 6).padding(.horizontal, 10)
+                    }
+                    ForEach(group) { page in
+                        SidebarRow(page: page, isSelected: page == selection) { selection = page }
+                    }
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.bottom, 12)
+        }
+        .scrollIndicators(.never)
+        .frame(width: 210)
+        .background(Color(nsColor: .underPageBackgroundColor))
     }
 
     private var header: some View {
         HStack(alignment: .center) {
-            Text("Dynamic Island")
+            Text(selection.title)
                 .font(.system(size: 22, weight: .bold))
             Spacer()
             Button(action: onClose) {
@@ -227,6 +330,7 @@ struct SettingsView: View {
             .keyboardShortcut(.cancelAction)
             .help("Close")
         }
+        .padding(.horizontal, 20)
         .padding(.top, 14)
         .padding(.bottom, 4)
     }
@@ -268,11 +372,11 @@ struct SettingsView: View {
 // MARK: - Grouped rows
 
 struct SettingsSection<Content: View>: View {
-    let title: String
+    let title: String?
     let footer: String?
     @ViewBuilder let content: Content
 
-    init(_ title: String, footer: String? = nil, @ViewBuilder content: () -> Content) {
+    init(_ title: String? = nil, footer: String? = nil, @ViewBuilder content: () -> Content) {
         self.title = title
         self.footer = footer
         self.content = content()
@@ -280,10 +384,12 @@ struct SettingsSection<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .padding(.leading, 20)
+            if let title {
+                Text(title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.leading, 20)
+            }
             VStack(spacing: 0) {
                 if #available(macOS 15, *) {
                     Group(subviews: content) { rows in
@@ -426,6 +532,36 @@ private struct CalendarSourceRow: View {
     }
 }
 
+/// A page in the sidebar: a colored icon and its title, highlighted when selected.
+private struct SidebarRow: View {
+    let page: SettingsPage
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: page.symbol)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 22, height: 22)
+                    .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(page.color.gradient))
+                Text(page.title)
+                    .font(.system(size: 13))
+                    .foregroundStyle(isSelected ? Color.white : Color.primary)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 6)
+            .frame(height: 30)
+            .background(RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(isSelected ? Color.accentColor : Color.clear))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 struct Chevron: View {
     var body: some View {
         Image(systemName: "chevron.right")
@@ -438,6 +574,7 @@ struct Chevron: View {
 
 @MainActor
 final class SettingsWindowController {
+    static let size = CGSize(width: 720, height: 520)
     private let model: IslandModel
     private var window: NSWindow?
 
@@ -448,7 +585,7 @@ final class SettingsWindowController {
     func show() {
         model.close()
         if window == nil {
-            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 520, height: 500),
+            let window = NSWindow(contentRect: NSRect(origin: .zero, size: Self.size),
                                   styleMask: [.titled, .closable, .fullSizeContentView],
                                   backing: .buffered, defer: false)
             window.contentView = NSHostingView(rootView: SettingsView(onClose: { [weak window] in window?.close() })

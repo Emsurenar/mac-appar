@@ -141,7 +141,7 @@ The System tab shows memory and CPU use with the apps using the most, the Mac's 
 
 The island reads events from the macOS **Calendar** app, so any account added there works, including Google. To add Google, open **System Settings › Internet Accounts**, add your Google account and turn on **Calendars**. Then open the calendar tab in the island and click **Allow Access**.
 
-The tab lists the rest of today's events, or tomorrow's once the day is done. A few minutes before an event starts, a reminder drops out of the notch. Choose how early, from 1 to 30 minutes, under **Calendar** in settings. Click the reminder to open the calendar tab, or **Join** to open a Meet, Zoom or Teams link.
+The tab lists the rest of today's events, or tomorrow's once the day is done. A few minutes before an event starts, a reminder drops out of the notch. Choose how early, from 1 to 30 minutes, under **Calendar** in settings. Click the reminder to open the calendar tab, or **Join** to open a Meet, Zoom or Teams link. Click an event to open its day in Google Calendar in your browser.
 
 ### Clipboard
 
@@ -151,7 +151,7 @@ The history lives in memory only and is gone when the app quits. Passwords copie
 
 ## Settings
 
-Right-click the island, or click the gear, and choose **Settings**. It has one section per feature, in the same order as the island: General, Now Playing, Volume and Brightness, Home, Calendar, Shelf, Clipboard, System and Posture, then the pop-ups for Screenshots and Water. Each tab and each pop-up has its own switch.
+Right-click the island, or click the gear, and choose **Settings**. A sidebar lists one page per feature, like System Settings: General, then the island's tabs (Now Playing, Home, Calendar, Shelf, Clipboard, System and Posture), then what pops out of the notch on its own (Volume and Brightness, Screenshots and Water), and About. Each tab and each pop-up has its own switch.
 
 ## Permissions and privacy
 

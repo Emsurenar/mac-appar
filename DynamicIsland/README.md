@@ -28,7 +28,7 @@
 - **HUDs in the notch.** Volume, brightness and output changes appear in the island. It can also replace the system's volume and brightness overlay.
 - **Apple Home and Shortcuts.** Pick any shortcut, like a Home scene, and run it with one click from a tile.
 - **Calendar.** Your next events, Google Calendar included, with a reminder in the notch 15 minutes before each one and a Join button for Meet, Zoom and Teams links.
-- **Water reminders.** A nudge from the notch every 45 minutes at the Mac (you pick the interval), with a daily glass count. Time away and sleep don't count.
+- **Water.** A Water tab with a ring that fills towards your daily goal, a one-click **+ Glass**, the last week as bars and a streak. Plus a nudge from the notch every 45 minutes at the Mac (you pick the interval). Time away and sleep don't count.
 - **Clipboard history.** The last 20 things you copied, text and images. Click one to paste it again.
 - **Screenshot shelf.** A new screenshot pops out of the notch. Drag it straight into Mail, Slack or a folder, or copy, reveal or trash it from there. The first time, macOS may ask to let the app read the folder your screenshots go to.
 - **File shelf.** Drag files onto the notch to park them at the top of the clipboard tab. They stay there, even after a restart, until you drag them out to wherever they're going.
@@ -131,7 +131,9 @@ Take a screenshot and it pops out of the notch for a few seconds. Drag it straig
 
 ### Water
 
-Every 45 minutes at the Mac, a glass of water drops out of the notch. Click **Done** to count it, or **Later** to be asked again in 10 minutes. Only active time counts: the timer pauses after 5 minutes without input and while the Mac sleeps. Pick the interval and a daily goal under **Water** in settings.
+Every 45 minutes at the Mac, a glass of water drops out of the notch. Click **Done** to count it, or **Later** to be asked again in 10 minutes. Only active time counts: the timer pauses after 5 minutes without input and while the Mac sleeps. Pick the interval under **Water** in settings.
+
+The **Water** tab in the open island logs a glass any time: click **+ Glass**, or the undo arrow for a tap too many. The ring fills towards your daily goal, the bars show the last seven days, and every day in a row that reaches the goal adds to your streak. Set the goal and the size of a glass under **Water** in settings.
 
 ### System
 
@@ -151,7 +153,7 @@ The history lives in memory only and is gone when the app quits. Passwords copie
 
 ## Settings
 
-Right-click the island, or click the gear, and choose **Settings**. A sidebar lists one page per feature, like System Settings: General, then the island's tabs (Now Playing, Home, Calendar, Clipboard and Files, System and Posture), then what pops out of the notch on its own (Volume and Brightness, Screenshots and Water), and About. Each tab and each pop-up has its own switch.
+Right-click the island, or click the gear, and choose **Settings**. A sidebar lists one page per feature, like System Settings: General, then the island's tabs (Now Playing, Home, Water, Calendar, Clipboard and Files, System and Posture), then what pops out of the notch on its own (Volume and Brightness and Screenshots), and About. Each tab and each pop-up has its own switch.
 
 ## Permissions and privacy
 

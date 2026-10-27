@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 enum IslandTab: Hashable {
-    case media, home, posture, calendar, clipboard, system
+    case media, home, posture, water, calendar, clipboard, system
 }
 
 enum HUDKind: Equatable {
@@ -45,6 +45,7 @@ enum IslandLayout {
     static let homeEmptyHeight: CGFloat = 112
     static let postureContentHeight: CGFloat = 150
     static let systemRowHeight: CGFloat = 34
+    static let waterContentHeight: CGFloat = 124
     static let calendarRowHeight: CGFloat = 40
     static let maxCalendarRows = 4
     static let calendarEmptyHeight: CGFloat = 112
@@ -178,6 +179,7 @@ final class IslandModel {
     /// Clipboard history and the file shelf share one tab.
     var showsClipboardTab: Bool { settings.showClipboardTab || showsShelf }
     var showsSystemTab: Bool { settings.showSystemTab }
+    var showsWaterTab: Bool { settings.showWaterTab }
 
     var animation: Animation {
         switch presentation {
@@ -209,6 +211,7 @@ final class IslandModel {
         case .calendar where !showsCalendarTab: .media
         case .clipboard where !showsClipboardTab: .media
         case .system where !showsSystemTab: .media
+        case .water where !showsWaterTab: .media
         default: tab
         }
     }
@@ -233,6 +236,8 @@ final class IslandModel {
             return 4 + rows * IslandLayout.homeTileHeight + (rows - 1) * IslandLayout.homeTileSpacing + 18
         case .posture:
             return IslandLayout.postureContentHeight
+        case .water:
+            return IslandLayout.waterContentHeight
         case .calendar:
             guard calendar.access == .granted, !calendar.events.isEmpty else { return IslandLayout.calendarEmptyHeight }
             let rows = CGFloat(min(calendar.events.count, IslandLayout.maxCalendarRows))

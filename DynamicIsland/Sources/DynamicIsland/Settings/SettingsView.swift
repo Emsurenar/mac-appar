@@ -13,8 +13,8 @@ enum SettingsPage: String, CaseIterable, Identifiable {
 
     static let groups: [[SettingsPage]] = [
         [.general],
-        [.nowPlaying, .home, .calendar, .clipboard, .system, .posture],
-        [.volume, .screenshots, .water],
+        [.nowPlaying, .home, .water, .calendar, .clipboard, .system, .posture],
+        [.volume, .screenshots],
         [.about],
     ]
 
@@ -237,7 +237,27 @@ struct SettingsView: View {
                     SettingsToggle("Show new screenshots", isOn: $settings.showScreenshots)
                 }
             case .water:
-                SettingsSection(footer: "Only time at the Mac counts: the timer pauses while you're away and while the Mac sleeps. Later asks again in 10 minutes.") {
+                SettingsSection("Goal", footer: "Log a glass from the island’s Water tab. Days that reach the goal build a streak.") {
+                    SettingsToggle("Show Water tab", isOn: $settings.showWaterTab)
+                    SettingsRow {
+                        Text("Daily goal")
+                        Spacer()
+                        Text("\(model.water.glassesToday) today").foregroundStyle(.secondary)
+                        Stepper("\(settings.waterDailyGoal) glasses", value: $settings.waterDailyGoal, in: 1...20)
+                            .fixedSize()
+                    }
+                    SettingsRow {
+                        Text("Glass size")
+                        Spacer()
+                        Text(formatLitres(settings.waterDailyGoal * settings.waterGlassSize) + " a day").foregroundStyle(.secondary)
+                        Picker("", selection: $settings.waterGlassSize) {
+                            ForEach([150, 200, 250, 330, 400, 500], id: \.self) { Text("\($0) ml").tag($0) }
+                        }
+                        .labelsHidden()
+                        .fixedSize()
+                    }
+                }
+                SettingsSection("Reminders", footer: "Only time at the Mac counts: the timer pauses while you're away and while the Mac sleeps. Later asks again in 10 minutes.") {
                     SettingsToggle("Remind me to drink water", isOn: $settings.showWaterReminders)
                     SettingsRow {
                         Text("Remind me every")
@@ -247,14 +267,6 @@ struct SettingsView: View {
                         }
                         .labelsHidden()
                         .fixedSize()
-                    }
-                    .disabled(!settings.showWaterReminders)
-                    SettingsRow {
-                        Text("Daily goal")
-                        Spacer()
-                        Text("\(model.water.glassesToday) today").foregroundStyle(.secondary)
-                        Stepper("\(settings.waterDailyGoal) glasses", value: $settings.waterDailyGoal, in: 1...20)
-                            .fixedSize()
                     }
                     .disabled(!settings.showWaterReminders)
                 }

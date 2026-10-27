@@ -5,7 +5,15 @@ import Foundation
 struct AudioOutputDevice: Identifiable, Equatable {
     let id: AudioDeviceID
     let name: String
+    let uid: String
     let transportType: UInt32
+
+    /// Core Audio names Bluetooth outputs after their address, like "AA-BB-CC-DD-EE-FF:output".
+    var bluetoothAddress: String? {
+        guard transportType == kAudioDeviceTransportTypeBluetooth || transportType == kAudioDeviceTransportTypeBluetoothLE,
+              let address = uid.split(separator: ":").first, address.count == 17 else { return nil }
+        return String(address)
+    }
 
     var isWireless: Bool {
         transportType == kAudioDeviceTransportTypeBluetooth || transportType == kAudioDeviceTransportTypeBluetoothLE
@@ -110,7 +118,8 @@ final class AudioService {
         devices = Self.outputDeviceIDs().compactMap { id in
             guard let name = Self.string(id, kAudioObjectPropertyName), !name.hasPrefix("CADefaultDeviceAggregate") else { return nil }
             let transport: UInt32 = Self.get(id, kAudioDevicePropertyTransportType) ?? 0
-            return AudioOutputDevice(id: id, name: name, transportType: transport)
+            let uid = Self.string(id, kAudioDevicePropertyDeviceUID) ?? ""
+            return AudioOutputDevice(id: id, name: name, uid: uid, transportType: transport)
         }
         .sorted { lhs, rhs in
             let lhsBuiltIn = lhs.transportType == kAudioDeviceTransportTypeBuiltIn

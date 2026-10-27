@@ -22,8 +22,10 @@ enum SnapshotRenderer {
             model.open()
             render("7-open-media", model, directory)
             renderHero("0-hero", model, directory)
-            model.select(.controls)
-            render("8-open-controls", model, directory)
+            model.setChoosingOutput(true)
+            model.airPods.showPreview()
+            render("8-open-output", model, directory)
+            model.setChoosingOutput(false)
             model.select(.home)
             try? await Task.sleep(for: .seconds(1.5))
             model.open()  // The hover tracker may have closed it while waiting.

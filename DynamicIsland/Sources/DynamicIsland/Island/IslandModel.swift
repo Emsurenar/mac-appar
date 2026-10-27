@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 enum IslandTab: Hashable {
-    case media, home, controls, posture, calendar, clipboard, system
+    case media, home, posture, calendar, clipboard, system
 }
 
 enum HUDKind: Equatable {
@@ -32,7 +32,8 @@ enum IslandPresentation: Equatable {
 /// Shared measurements so the shape and the content always agree.
 enum IslandLayout {
     static let mediaContentHeight: CGFloat = 162
-    static let sliderRowHeight: CGFloat = 30
+    /// A slider under the player, with the gap above it.
+    static let mediaRowHeight: CGFloat = 26
     static let deviceRowHeight: CGFloat = 34
     static let sectionHeaderHeight: CGFloat = 22
     static let maxVisibleDevices = 5
@@ -63,6 +64,7 @@ final class IslandModel {
     let media: NowPlayingService
     let audio: AudioService
     let brightness: BrightnessService
+    let airPods: AirPodsService
     let home: HomeService
     let posture: PostureService
     let system: SystemService
@@ -80,6 +82,8 @@ final class IslandModel {
     private(set) var isPeeking = false
     /// The Home tab is showing the list for picking shortcuts.
     private(set) var isChoosingShortcuts = false
+    /// The media tab has unfolded noise control and the list of outputs.
+    private(set) var isChoosingOutput = false
     private(set) var isShowingPostureAlert = false
     private(set) var isShowingCalendarReminder = false
     /// Files are being dragged over the island.
@@ -105,12 +109,13 @@ final class IslandModel {
     @ObservationIgnored private let keyInterceptor = MediaKeyInterceptor()
     @ObservationIgnored private var permissionPoll: Timer?
 
-    init(media: NowPlayingService, audio: AudioService, brightness: BrightnessService, home: HomeService,
-         posture: PostureService, system: SystemService, calendar: CalendarService, clipboard: ClipboardService,
+    init(media: NowPlayingService, audio: AudioService, brightness: BrightnessService, airPods: AirPodsService,
+         home: HomeService, posture: PostureService, system: SystemService, calendar: CalendarService, clipboard: ClipboardService,
          water: WaterService, screenshots: ScreenshotService, shelf: FileShelf? = nil, settings: AppSettings) {
         self.media = media
         self.audio = audio
         self.brightness = brightness
+        self.airPods = airPods
         self.home = home
         self.posture = posture
         self.system = system
@@ -211,7 +216,10 @@ final class IslandModel {
     var openContentHeight: CGFloat {
         switch currentTab {
         case .media:
-            return IslandLayout.mediaContentHeight
+            var height = IslandLayout.mediaContentHeight
+            if brightness.isAvailable { height += IslandLayout.mediaRowHeight }
+            if isChoosingOutput { height += outputPanelHeight }
+            return height
         case .home:
             if isChoosingShortcuts {
                 let rows = CGFloat(min(max(home.allShortcuts.count, 1), IslandLayout.maxVisibleDevices))
@@ -247,12 +255,12 @@ final class IslandModel {
             return height
         case .system:
             return 4 + CGFloat(system.rowCount) * IslandLayout.systemRowHeight + 16
-        case .controls:
-            let sliders: CGFloat = brightness.isAvailable ? 2 : 1
-            let rows = CGFloat(min(audio.devices.count, IslandLayout.maxVisibleDevices))
-            return 4 + sliders * IslandLayout.sliderRowHeight + 8 + IslandLayout.sectionHeaderHeight
-                + rows * IslandLayout.deviceRowHeight + 16
         }
+    }
+
+    private var outputPanelHeight: CGFloat {
+        let rows = CGFloat(min(audio.devices.count, IslandLayout.maxVisibleDevices))
+        return 6 + IslandLayout.sectionHeaderHeight + rows * IslandLayout.deviceRowHeight
     }
 
     // MARK: Interaction
@@ -344,12 +352,18 @@ final class IslandModel {
         guard isOpen else { return }
         isOpen = false
         isChoosingShortcuts = false
+        isChoosingOutput = false
         if hasPendingScreenshot { showScreenshot() }
     }
 
     func setChoosingShortcuts(_ choosing: Bool) {
         if choosing { home.refresh() }
         withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) { isChoosingShortcuts = choosing }
+    }
+
+    func setChoosingOutput(_ choosing: Bool) {
+        if choosing { airPods.refresh(for: audio.currentDevice) }
+        withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) { isChoosingOutput = choosing }
     }
 
     func toggle() { isOpen ? close() : open() }
@@ -366,7 +380,10 @@ final class IslandModel {
         if tab == .clipboard { shelf.prune() }
         isChoosingShortcuts = false
         guard tab != self.tab else { return }
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { self.tab = tab }
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) {
+            self.tab = tab
+            isChoosingOutput = false
+        }
     }
 
     // MARK: Live activities

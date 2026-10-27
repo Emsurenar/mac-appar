@@ -28,8 +28,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let clipboard = ClipboardService()
         let water = WaterService()
         let screenshots = ScreenshotService()
-        let model = IslandModel(media: media, audio: audio, brightness: BrightnessService(), home: home,
-                                posture: posture, system: SystemService(), calendar: calendar, clipboard: clipboard,
+        let model = IslandModel(media: media, audio: audio, brightness: BrightnessService(), airPods: AirPodsService(),
+                                home: home, posture: posture, system: SystemService(), calendar: calendar, clipboard: clipboard,
                                 water: water, screenshots: screenshots, settings: settings)
         let settingsWindow = SettingsWindowController(model: model)
         model.onOpenSettings = { [weak settingsWindow] in settingsWindow?.show() }

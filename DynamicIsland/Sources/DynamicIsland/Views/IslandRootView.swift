@@ -23,11 +23,6 @@ struct IslandRootView: View {
         .onTapGesture {
             if presentation != .open { model.open() }
         }
-        // Files dropped anywhere on the island go on the shelf.
-        .onDrop(of: [.fileURL], isTargeted: Binding(get: { model.isDropTargeted },
-                                                    set: { model.setDropTargeted($0) })) { providers in
-            model.dropFiles(providers)
-        }
         .contextMenu {
             Button("Settings…") { model.onOpenSettings?() }
             Divider()

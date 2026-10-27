@@ -1,10 +1,11 @@
 import AppKit
 import SwiftUI
 
-// MARK: - Tab
+// MARK: - Section
 
-/// Files dropped on the island, in a row. Drag one out to use it, and it leaves the shelf.
-struct ShelfTab: View {
+/// Files dropped on the island, in a row at the top of the clipboard tab.
+/// Drag one out to use it, and it leaves the shelf.
+struct ShelfSection: View {
     @Environment(IslandModel.self) private var model
 
     var body: some View {
@@ -15,14 +16,13 @@ struct ShelfTab: View {
                 fileRow
             }
         }
-        .padding(.top, 4)
     }
 
     private var fileRow: some View {
         let shelf = model.shelf
         return VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Text(shelf.files.count == 1 ? "1 file" : "\(shelf.files.count) files")
+                Text("Files")
                 Spacer()
                 Button("Clear") {
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { shelf.removeAll() }
@@ -51,23 +51,20 @@ struct ShelfTab: View {
 
     private var emptyState: some View {
         let isTargeted = model.isDropTargeted
-        return VStack(spacing: 6) {
+        return HStack(spacing: 8) {
             Image(systemName: "tray.and.arrow.down.fill")
-                .font(.system(size: 22, weight: .medium))
+                .font(.system(size: 14, weight: .medium))
                 .symbolEffect(.bounce, value: isTargeted)
-            Text(isTargeted ? "Drop to keep it here" : "Drag files onto the island")
-                .font(.system(size: 13, weight: .semibold))
-            Text("They stay on the shelf until you drag them out.")
-                .font(.system(size: 11))
-                .foregroundStyle(.white.opacity(0.45))
+            Text(isTargeted ? "Drop to keep it here" : "Drag files onto the notch to keep them here")
+                .font(.system(size: 12, weight: .medium))
         }
-        .foregroundStyle(.white.opacity(isTargeted ? 1 : 0.8))
+        .foregroundStyle(.white.opacity(isTargeted ? 1 : 0.55))
         .frame(maxWidth: .infinity)
-        .frame(height: IslandLayout.shelfContentHeight - 20)
+        .frame(height: IslandLayout.shelfDropStripHeight)
         .background {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(.white.opacity(isTargeted ? 0.5 : 0.18), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
-                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.white.opacity(isTargeted ? 0.08 : 0)))
+                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.white.opacity(isTargeted ? 0.08 : 0)))
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.75), value: isTargeted)
     }

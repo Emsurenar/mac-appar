@@ -1,16 +1,22 @@
 import AppKit
 import SwiftUI
 
-/// The last things you copied. Clicking one copies it again and pastes it.
+/// Files dropped on the notch on top, and below them the last things you copied.
+/// Clicking a clipboard item copies it again and pastes it.
 struct ClipboardTab: View {
     @Environment(IslandModel.self) private var model
 
     var body: some View {
-        Group {
-            if model.clipboard.items.isEmpty {
-                emptyState
-            } else {
-                itemList
+        VStack(alignment: .leading, spacing: IslandLayout.shelfSpacing) {
+            if model.showsShelf {
+                ShelfSection()
+            }
+            if model.settings.showClipboardTab {
+                if model.clipboard.items.isEmpty {
+                    emptyState
+                } else {
+                    itemList
+                }
             }
         }
         .padding(.top, 4)

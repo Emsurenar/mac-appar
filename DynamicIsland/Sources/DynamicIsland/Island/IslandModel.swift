@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 enum IslandTab: Hashable {
-    case media, home, controls, posture, shelf, calendar, clipboard, system
+    case media, home, controls, posture, calendar, clipboard, system
 }
 
 enum HUDKind: Equatable {
@@ -49,7 +49,9 @@ enum IslandLayout {
     static let calendarEmptyHeight: CGFloat = 112
     static let shelfTileWidth: CGFloat = 76
     static let shelfTileHeight: CGFloat = 78
-    static let shelfContentHeight: CGFloat = 4 + sectionHeaderHeight + shelfTileHeight + 8 + 16
+    /// The drop target above the clipboard while no files are shelved.
+    static let shelfDropStripHeight: CGFloat = 44
+    static let shelfSpacing: CGFloat = 8
     static let clipboardRowHeight: CGFloat = 36
     static let maxClipboardRows = 5
     static let clipboardEmptyHeight: CGFloat = 112
@@ -167,8 +169,9 @@ final class IslandModel {
 
     var showsPostureTab: Bool { settings.showPostureTab && posture.isConnected }
     var showsCalendarTab: Bool { settings.showCalendarTab }
-    var showsShelfTab: Bool { settings.showShelfTab }
-    var showsClipboardTab: Bool { settings.showClipboardTab }
+    var showsShelf: Bool { settings.showShelfTab }
+    /// Clipboard history and the file shelf share one tab.
+    var showsClipboardTab: Bool { settings.showClipboardTab || showsShelf }
     var showsSystemTab: Bool { settings.showSystemTab }
 
     var animation: Animation {
@@ -199,7 +202,6 @@ final class IslandModel {
         case .home where !settings.showHomeTab: .media
         case .posture where !showsPostureTab: .media
         case .calendar where !showsCalendarTab: .media
-        case .shelf where !showsShelfTab: .media
         case .clipboard where !showsClipboardTab: .media
         case .system where !showsSystemTab: .media
         default: tab
@@ -227,12 +229,22 @@ final class IslandModel {
             guard calendar.access == .granted, !calendar.events.isEmpty else { return IslandLayout.calendarEmptyHeight }
             let rows = CGFloat(min(calendar.events.count, IslandLayout.maxCalendarRows))
             return 4 + IslandLayout.sectionHeaderHeight + rows * IslandLayout.calendarRowHeight + 16
-        case .shelf:
-            return IslandLayout.shelfContentHeight
         case .clipboard:
-            guard !clipboard.items.isEmpty else { return IslandLayout.clipboardEmptyHeight }
-            let rows = CGFloat(min(clipboard.items.count, IslandLayout.maxClipboardRows))
-            return 4 + IslandLayout.sectionHeaderHeight + rows * IslandLayout.clipboardRowHeight + 16
+            var height: CGFloat = 4 + 16
+            if showsShelf {
+                height += shelf.isEmpty ? IslandLayout.shelfDropStripHeight
+                    : IslandLayout.sectionHeaderHeight + IslandLayout.shelfTileHeight + 8
+                height += IslandLayout.shelfSpacing
+            }
+            if settings.showClipboardTab {
+                if clipboard.items.isEmpty {
+                    height += IslandLayout.clipboardEmptyHeight - 34
+                } else {
+                    let rows = CGFloat(min(clipboard.items.count, IslandLayout.maxClipboardRows))
+                    height += IslandLayout.sectionHeaderHeight + rows * IslandLayout.clipboardRowHeight
+                }
+            }
+            return height
         case .system:
             return 4 + CGFloat(system.rowCount) * IslandLayout.systemRowHeight + 16
         case .controls:
@@ -287,7 +299,7 @@ final class IslandModel {
         isShowingScreenshot = false
         if currentTab == .home { home.refresh() }
         if currentTab == .calendar { calendar.reload() }
-        if currentTab == .shelf { shelf.prune() }
+        if currentTab == .clipboard { shelf.prune() }
         isOpen = true
     }
 
@@ -304,15 +316,15 @@ final class IslandModel {
         guard acceptsFileDrops else { return }
         closeTask?.cancel()
         if isOpen {
-            select(.shelf)
+            select(.clipboard)
         } else {
-            tab = .shelf
+            tab = .clipboard
             open()
         }
     }
 
     /// Whether files dragged over the island can go on the shelf; not the island's own screenshot or shelf files.
-    var acceptsFileDrops: Bool { showsShelfTab && !ShelfDragSource.isDragging && !isDraggingScreenshot }
+    var acceptsFileDrops: Bool { showsShelf && !ShelfDragSource.isDragging && !isDraggingScreenshot }
 
     /// Keeps the dropped files.
     func dropFiles(_ urls: [URL]) -> Bool {
@@ -351,7 +363,7 @@ final class IslandModel {
     func select(_ tab: IslandTab) {
         if tab == .home { home.refresh() }
         if tab == .calendar { calendar.reload() }
-        if tab == .shelf { shelf.prune() }
+        if tab == .clipboard { shelf.prune() }
         isChoosingShortcuts = false
         guard tab != self.tab else { return }
         withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { self.tab = tab }

@@ -31,7 +31,7 @@
 - **Water reminders.** A nudge from the notch every 45 minutes at the Mac (you pick the interval), with a daily glass count. Time away and sleep don't count.
 - **Clipboard history.** The last 20 things you copied, text and images. Click one to paste it again.
 - **Screenshot shelf.** A new screenshot pops out of the notch. Drag it straight into Mail, Slack or a folder, or copy, reveal or trash it from there. The first time, macOS may ask to let the app read the folder your screenshots go to.
-- **File shelf.** Drag files onto the notch to park them in the island. They stay there, even after a restart, until you drag them out to wherever they're going.
+- **File shelf.** Drag files onto the notch to park them at the top of the clipboard tab. They stay there, even after a restart, until you drag them out to wherever they're going.
 - **System at a glance.** Memory, CPU, heat, battery, charger and uptime, with the apps using the most.
 - **Posture companion.** With the [Posture](../Hallning) app running, the island shows your posture and nudges you when you slouch.
 - **Feels like a Mac.** Spring animations, blur-and-scale transitions, rubber-band sliders, SF Symbols and trackpad haptics. It never steals focus from the app you're using.
@@ -94,7 +94,7 @@ Click **Show me the island** and it opens once, so you see where it lives. You c
 ## Using it
 
 - **Hover** over the notch to open the island. Move the pointer away to close it. If you prefer clicking, turn off hover in settings.
-- **Tabs** switch between Now Playing, Home, Sound and display and Posture on the left of the notch, and Shelf, Calendar, Clipboard and System on the right. Every tab except Now Playing and Sound and display can be hidden in settings.
+- **Tabs** switch between Now Playing, Home, Sound and display and Posture on the left of the notch, and Calendar, Clipboard and files, and System on the right. Every tab except Now Playing and Sound and display can be hidden in settings.
 - **Click the artwork** to bring the playing app to the front. Click the output icon to jump to the output picker.
 - **Right-click** the island, or use the gear, for **Settings** and **Quit**. The app has no Dock icon.
 
@@ -121,9 +121,9 @@ Turn on **Replace the system volume and brightness HUD** in settings and grant *
 
 [Posture](../Hallning) is a companion menu bar app in this repository. While it runs, the island gets a Posture tab with today's score, the neck angle from AirPods, and buttons to pause or check now. When you've slouched for a while, a reminder appears in the notch instead of as a notification.
 
-### Shelf
+### Files
 
-Drag files from Finder, or any app, onto the notch. The island opens on the shelf, and the files you drop stay there until you drag them out again, to another folder, a mail or a chat. The shelf only keeps references, so the files never move. Double-click a file to open it, or right-click it to show it in Finder or remove it.
+Drag files from Finder, or any app, onto the notch. The island opens on the clipboard tab, where files sit above the clipboard history, and the files you drop stay there until you drag them out again, to another folder, a mail or a chat. The shelf only keeps references, so the files never move. Double-click a file to open it, or right-click it to show it in Finder or remove it.
 
 ### Screenshots
 
@@ -151,7 +151,7 @@ The history lives in memory only and is gone when the app quits. Passwords copie
 
 ## Settings
 
-Right-click the island, or click the gear, and choose **Settings**. A sidebar lists one page per feature, like System Settings: General, then the island's tabs (Now Playing, Home, Calendar, Shelf, Clipboard, System and Posture), then what pops out of the notch on its own (Volume and Brightness, Screenshots and Water), and About. Each tab and each pop-up has its own switch.
+Right-click the island, or click the gear, and choose **Settings**. A sidebar lists one page per feature, like System Settings: General, then the island's tabs (Now Playing, Home, Calendar, Clipboard and Files, System and Posture), then what pops out of the notch on its own (Volume and Brightness, Screenshots and Water), and About. Each tab and each pop-up has its own switch.
 
 ## Permissions and privacy
 

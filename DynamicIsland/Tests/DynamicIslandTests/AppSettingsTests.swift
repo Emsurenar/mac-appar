@@ -21,6 +21,8 @@ final class AppSettingsTests: XCTestCase {
             XCTAssertTrue(settings.showWaterReminders)
             XCTAssertEqual(settings.waterIntervalMinutes, 45)
             XCTAssertEqual(settings.waterDailyGoal, 8)
+            XCTAssertTrue(settings.showWaterTab)
+            XCTAssertEqual(settings.waterGlassSize, 250)
             XCTAssertTrue(settings.showClipboardTab)
             XCTAssertTrue(settings.pasteFromClipboardHistory)
             XCTAssertTrue(settings.showScreenshots)

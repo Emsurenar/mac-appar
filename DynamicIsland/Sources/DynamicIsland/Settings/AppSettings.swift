@@ -30,6 +30,9 @@ final class AppSettings {
     /// Minutes at the Mac between water reminders.
     var waterIntervalMinutes: Int { didSet { defaults.set(waterIntervalMinutes, forKey: Key.waterIntervalMinutes) } }
     var waterDailyGoal: Int { didSet { defaults.set(waterDailyGoal, forKey: Key.waterDailyGoal) } }
+    var showWaterTab: Bool { didSet { store(showWaterTab, Key.showWaterTab) } }
+    /// Millilitres in one glass, to show the day's total.
+    var waterGlassSize: Int { didSet { defaults.set(waterGlassSize, forKey: Key.waterGlassSize) } }
     /// The welcome window has been shown and closed once.
     var hasSeenWelcome: Bool { didSet { store(hasSeenWelcome, Key.hasSeenWelcome) } }
     var homeFolderName: String { didSet { defaults.set(homeFolderName, forKey: Key.homeFolderName) } }
@@ -65,6 +68,8 @@ final class AppSettings {
         static let showWaterReminders = "showWaterReminders"
         static let waterIntervalMinutes = "waterIntervalMinutes"
         static let waterDailyGoal = "waterDailyGoal"
+        static let showWaterTab = "showWaterTab"
+        static let waterGlassSize = "waterGlassSize"
         static let showClipboardTab = "showClipboardTab"
         static let showSystemTab = "showSystemTab"
         static let pasteFromClipboardHistory = "pasteFromClipboardHistory"
@@ -97,6 +102,8 @@ final class AppSettings {
             Key.showWaterReminders: true,
             Key.waterIntervalMinutes: 45,
             Key.waterDailyGoal: 8,
+            Key.showWaterTab: true,
+            Key.waterGlassSize: 250,
             Key.showClipboardTab: true,
             Key.showSystemTab: true,
             Key.pasteFromClipboardHistory: true,
@@ -125,6 +132,8 @@ final class AppSettings {
         showWaterReminders = defaults.bool(forKey: Key.showWaterReminders)
         waterIntervalMinutes = defaults.integer(forKey: Key.waterIntervalMinutes)
         waterDailyGoal = defaults.integer(forKey: Key.waterDailyGoal)
+        showWaterTab = defaults.bool(forKey: Key.showWaterTab)
+        waterGlassSize = defaults.integer(forKey: Key.waterGlassSize)
         homeFolderName = defaults.string(forKey: Key.homeFolderName) ?? "Home"
     }
 

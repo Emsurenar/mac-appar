@@ -19,6 +19,9 @@ struct OpenIslandView: View {
                 case .posture:
                     PostureTab()
                         .transition(.islandContent(scale: 0.97))
+                case .water:
+                    WaterTab()
+                        .transition(.islandContent(scale: 0.97))
                 case .calendar:
                     CalendarTab()
                         .transition(.islandContent(scale: 0.97))
@@ -45,6 +48,9 @@ struct OpenIslandView: View {
                 }
                 if model.showsPostureTab {
                     tabButton(.posture, symbol: "figure.stand", help: "Posture")
+                }
+                if model.showsWaterTab {
+                    tabButton(.water, symbol: "drop.fill", help: "Water")
                 }
             }
             Spacer(minLength: model.notch.width + 12)

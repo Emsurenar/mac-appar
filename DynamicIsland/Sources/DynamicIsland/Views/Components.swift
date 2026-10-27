@@ -87,14 +87,17 @@ extension EnvironmentValues {
 /// Circular icon button with the subtle hover plate and press squish used across macOS.
 struct IslandButtonStyle: ButtonStyle {
     var diameter: CGFloat = 30
+    /// Keeps the plate showing, for a button whose panel is unfolded.
+    var isSelected = false
 
     func makeBody(configuration: Configuration) -> some View {
-        StyledButton(configuration: configuration, diameter: diameter)
+        StyledButton(configuration: configuration, diameter: diameter, isSelected: isSelected)
     }
 
     private struct StyledButton: View {
         let configuration: Configuration
         let diameter: CGFloat
+        let isSelected: Bool
         @Environment(\.isEnabled) private var isEnabled
         @State private var isHovering = false
 
@@ -102,7 +105,7 @@ struct IslandButtonStyle: ButtonStyle {
             configuration.label
                 .foregroundStyle(.white.opacity(isEnabled ? 1 : 0.3))
                 .frame(width: diameter, height: diameter)
-                .background(Circle().fill(.white.opacity(isHovering && isEnabled ? 0.12 : 0)))
+                .background(Circle().fill(.white.opacity(isSelected ? 0.2 : isHovering && isEnabled ? 0.12 : 0)))
                 .contentShape(Circle())
                 .scaleEffect(configuration.isPressed ? 0.84 : 1)
                 .animation(.spring(response: 0.22, dampingFraction: 0.55), value: configuration.isPressed)

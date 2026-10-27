@@ -31,9 +31,6 @@ struct OpenIslandView: View {
                 case .system:
                     SystemTab()
                         .transition(.islandContent(scale: 0.97))
-                case .controls:
-                    ControlsTab()
-                        .transition(.islandContent(scale: 0.97))
                 }
             }
             .padding(.horizontal, IslandLayout.contentPadding)
@@ -49,7 +46,6 @@ struct OpenIslandView: View {
                 if model.settings.showHomeTab {
                     tabButton(.home, symbol: "house.fill", help: "Home")
                 }
-                tabButton(.controls, symbol: "switch.2", help: "Sound and display")
                 if model.showsPostureTab {
                     tabButton(.posture, symbol: "figure.stand", help: "Posture")
                 }
@@ -142,6 +138,16 @@ private struct MediaTab: View {
             volumeRow
                 .frame(height: 18)
                 .padding(.top, 8)
+            if model.brightness.isAvailable {
+                brightnessRow
+                    .frame(height: 18)
+                    .padding(.top, 8)
+            }
+            if model.isChoosingOutput {
+                OutputPanel()
+                    .padding(.top, 6)
+                    .transition(.islandContent(scale: 0.97))
+            }
         }
     }
 
@@ -189,12 +195,12 @@ private struct MediaTab: View {
     }
 
     private var outputButton: some View {
-        Button { model.select(.controls) } label: {
+        Button { model.setChoosingOutput(!model.isChoosingOutput) } label: {
             Image(systemName: model.audio.currentDevice?.symbolName ?? "airplayaudio")
                 .font(.system(size: 14, weight: .medium))
                 .contentTransition(.symbolEffect(.replace))
         }
-        .buttonStyle(IslandButtonStyle(diameter: 30))
+        .buttonStyle(IslandButtonStyle(diameter: 30, isSelected: model.isChoosingOutput))
         .help(model.audio.currentDevice?.name ?? "Audio output")
     }
 
@@ -244,40 +250,45 @@ private struct MediaTab: View {
         }
         .foregroundStyle(.white.opacity(0.5))
     }
+
+    private var brightnessRow: some View {
+        let brightness = model.brightness
+        return HStack(spacing: 10) {
+            Image(systemName: "sun.min.fill")
+                .font(.system(size: 9))
+                .frame(width: sideColumn, alignment: .trailing)
+            ElasticSlider(value: Binding(get: { brightness.brightness }, set: { brightness.setBrightness($0) }))
+            Image(systemName: "sun.max.fill")
+                .font(.system(size: 11))
+                .frame(width: sideColumn, alignment: .leading)
+        }
+        .foregroundStyle(.white.opacity(0.5))
+    }
 }
 
-// MARK: - Sound & display
+// MARK: - Outputs
 
-private struct ControlsTab: View {
+/// Unfolds under the player from the output button, like the AirPods module in Control Center.
+private struct OutputPanel: View {
     @Environment(IslandModel.self) private var model
 
     var body: some View {
         let audio = model.audio
-        let brightness = model.brightness
         VStack(alignment: .leading, spacing: 0) {
-            SliderRow(
-                symbol: audio.isMuted ? "speaker.slash.fill" : "speaker.wave.3.fill",
-                variableValue: audio.isMuted ? 0 : audio.volume,
-                value: Binding(get: { audio.isMuted ? 0 : audio.volume }, set: { audio.setVolume($0) }),
-                symbolAction: { audio.toggleMute() }
-            )
-            .disabled(!audio.canSetVolume)
-            .frame(height: IslandLayout.sliderRowHeight)
-
-            if brightness.isAvailable {
-                SliderRow(
-                    symbol: "sun.max.fill",
-                    variableValue: brightness.brightness,
-                    value: Binding(get: { brightness.brightness }, set: { brightness.setBrightness($0) })
-                )
-                .frame(height: IslandLayout.sliderRowHeight)
+            HStack {
+                sectionHeader("Audio output")
+                Spacer(minLength: 8)
+                if let battery = model.airPods.battery {
+                    HStack(spacing: 4) {
+                        Image(systemName: audio.currentDevice?.symbolName ?? "airpodspro")
+                        Text("\(battery)%").monospacedDigit()
+                    }
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(battery <= 20 ? Color.red : .white.opacity(0.45))
+                    .help("Battery")
+                }
             }
-
-            Text("Audio output")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.45))
-                .frame(height: IslandLayout.sectionHeaderHeight, alignment: .bottomLeading)
-                .padding(.top, 8)
+            .frame(height: IslandLayout.sectionHeaderHeight, alignment: .bottom)
 
             Group {
                 if audio.devices.count > IslandLayout.maxVisibleDevices {
@@ -291,7 +302,13 @@ private struct ControlsTab: View {
                    alignment: .top)
             .padding(.horizontal, -6)
         }
-        .padding(.top, 4)
+        .onChange(of: audio.currentDeviceID) { model.airPods.refresh(for: audio.currentDevice) }
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.white.opacity(0.45))
     }
 
     private var deviceList: some View {
@@ -302,35 +319,6 @@ private struct ControlsTab: View {
                     audio.selectDevice(device)
                 }
             }
-        }
-    }
-}
-
-private struct SliderRow: View {
-    var symbol: String
-    var variableValue: Double
-    @Binding var value: Double
-    var symbolAction: (() -> Void)?
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Button { symbolAction?() } label: {
-                Image(systemName: symbol, variableValue: variableValue)
-                    .font(.system(size: 13, weight: .medium))
-                    .contentTransition(.symbolEffect(.replace))
-                    .frame(width: 22)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .allowsHitTesting(symbolAction != nil)
-            .foregroundStyle(.white.opacity(0.85))
-
-            ElasticSlider(value: $value)
-
-            Text("\(Int((value * 100).rounded()))")
-                .font(.system(size: 11, weight: .medium).monospacedDigit())
-                .foregroundStyle(.white.opacity(0.45))
-                .frame(width: 26, alignment: .trailing)
         }
     }
 }

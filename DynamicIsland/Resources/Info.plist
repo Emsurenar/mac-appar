@@ -36,5 +36,7 @@
 	<string>Dynamic Island shows your new screenshots in the notch so you can drag them anywhere.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Dynamic Island shows your AirPods' battery.</string>
 </dict>
 </plist>

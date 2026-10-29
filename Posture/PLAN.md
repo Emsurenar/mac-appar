@@ -2,7 +2,7 @@
 
 A local macOS menu bar app that watches your posture through the camera (Apple Vision) and your AirPods (head angle), learns your good and bad postures during onboarding, and reminds you when you have sat badly for a while. It integrates with the Dynamic Island app in `../DynamicIsland`.
 
-The app was first built in Swedish under the name *Hållning*; all UI text is now English and the app is called **Posture**. The bundle identifier, folder, executable and notification names keep the original name (`Hallning`), so permissions and data carry over. The design follows Apple's conventions (macOS 26 Tahoe, Liquid Glass, SF Symbols, spring animations) and matches the Dynamic Island app.
+The app was first built in Swedish under the name *Hållning*; all UI text is now English and the app is called **Posture**. The bundle identifier, executable and notification names keep the original name (`Hallning`), so permissions and data carry over. The design follows Apple's conventions (macOS 26 Tahoe, Liquid Glass, SF Symbols, spring animations) and matches the Dynamic Island app.
 
 ## What the user asked for
 
@@ -31,7 +31,7 @@ The app was first built in Swedish under the name *Hållning*; all UI text is no
 ## Package layout
 
 ```
-Hallning/
+Posture/
   Package.swift            // swift-tools-version 6.2, platforms [.macOS(.v26)], swiftSettings [.swiftLanguageMode(.v5)], executable "Hallning"
   build.sh                 // like ../DynamicIsland/build.sh -> "build/Posture.app", signs, --run
   README.md                // Swedish, like the Dynamic Island README

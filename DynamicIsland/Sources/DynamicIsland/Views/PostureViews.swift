@@ -152,7 +152,7 @@ struct PostureTab: View {
                     CapsuleButton(title: "Check now") { posture.send(.check) }
                         .disabled(state.isPaused)
                     Spacer(minLength: 0)
-                    CapsuleButton(title: "Open Posture") { posture.openApp() }
+                    CapsuleButton(title: "Open Posture") { posture.openApp(companions: model.companions) }
                 }
             }
             .padding(.top, 6)

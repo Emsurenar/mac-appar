@@ -75,6 +75,7 @@ final class IslandModel {
     let water: WaterService
     let screenshots: ScreenshotService
     let settings: AppSettings
+    let companions: CompanionApps
 
     var metrics = NotchMetrics.fallback
     private(set) var isOpen = false
@@ -126,6 +127,7 @@ final class IslandModel {
         self.water = water
         self.screenshots = screenshots
         self.settings = settings
+        self.companions = CompanionApps(settings: settings)
 
         media.onTrackChange = { [weak self] in self?.showTrackPeek() }
         posture.onAlert = { [weak self] _ in self?.showPostureAlert() }

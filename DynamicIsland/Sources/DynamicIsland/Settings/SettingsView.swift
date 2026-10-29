@@ -5,7 +5,7 @@ import SwiftUI
 /// The pages in the settings sidebar, grouped like the island:
 /// the tabs, then what pops out of the notch on its own.
 enum SettingsPage: String, CaseIterable, Identifiable {
-    case general, nowPlaying, home, calendar, clipboard, system, posture
+    case general, nowPlaying, home, calendar, clipboard, system, posture, unknot
     case volume, screenshots, water
     case about
 
@@ -13,7 +13,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
 
     static let groups: [[SettingsPage]] = [
         [.general],
-        [.nowPlaying, .home, .water, .calendar, .clipboard, .system, .posture],
+        [.nowPlaying, .home, .water, .calendar, .clipboard, .system, .posture, .unknot],
         [.volume, .screenshots],
         [.about],
     ]
@@ -27,6 +27,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         case .clipboard: "Clipboard and Files"
         case .system: "System"
         case .posture: "Posture"
+        case .unknot: "Unknot"
         case .volume: "Volume and Brightness"
         case .screenshots: "Screenshots"
         case .water: "Water"
@@ -43,6 +44,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         case .clipboard: "doc.on.clipboard.fill"
         case .system: "gauge.with.dots.needle.67percent"
         case .posture: "figure.stand"
+        case .unknot: "figure.cooldown"
         case .volume: "speaker.wave.2.fill"
         case .screenshots: "camera.viewfinder"
         case .water: "drop.fill"
@@ -59,6 +61,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         case .clipboard: .blue
         case .system: .green
         case .posture: .teal
+        case .unknot: .indigo
         case .volume: .purple
         case .screenshots: .mint
         case .water: .cyan
@@ -205,11 +208,12 @@ struct SettingsView: View {
                     SettingsToggle("Show System tab", isOn: $settings.showSystemTab)
                 }
             case .posture:
-                SettingsSection(footer: "Posture is a companion app that watches how you sit. While it runs, its reminders and status appear in the island.") {
+                SettingsSection(footer: "Posture watches how you sit through the camera. It comes with the island; while it runs, its reminders and status appear in the notch.") {
+                    CompanionToggle(companion: .posture)
                     SettingsToggle("Show Posture tab", isOn: $settings.showPostureTab)
                     SettingsToggle("Show posture reminders", isOn: $settings.showPostureAlerts)
                     SettingsToggle("Show a live activity for poor posture", isOn: $settings.showPostureLiveActivity)
-                    SettingsRow(action: { model.posture.openApp() }) {
+                    SettingsRow(action: { model.posture.openApp(companions: model.companions) }) {
                         Image(systemName: model.posture.isConnected ? "checkmark.circle.fill" : "circle.dashed")
                             .foregroundStyle(model.posture.isConnected ? Color.green : Color.secondary)
                         Text("Open Posture")
@@ -217,6 +221,26 @@ struct SettingsView: View {
                         Text(model.posture.isConnected ? "Running" : "Not Running").foregroundStyle(.secondary)
                         Chevron()
                     }
+                    .disabled(!model.companions.isAvailable(.posture))
+                }
+            case .unknot:
+                SettingsSection(footer: "Unknot drops a stretch break out of the notch every 20 minutes. It comes with the island and has its own settings for the interval, the exercises and the sound.") {
+                    CompanionToggle(companion: .unknot)
+                    SettingsRow(action: { model.companions.stretchNow() }) {
+                        Text("Stretch now")
+                        Spacer()
+                        Chevron()
+                    }
+                    .disabled(!model.companions.running.contains(.unknot))
+                    SettingsRow(action: { model.companions.open(.unknot) }) {
+                        Image(systemName: model.companions.running.contains(.unknot) ? "checkmark.circle.fill" : "circle.dashed")
+                            .foregroundStyle(model.companions.running.contains(.unknot) ? Color.green : Color.secondary)
+                        Text("Open Unknot Settings")
+                        Spacer()
+                        Text(model.companions.running.contains(.unknot) ? "Running" : "Not Running").foregroundStyle(.secondary)
+                        Chevron()
+                    }
+                    .disabled(!model.companions.isAvailable(.unknot))
                 }
             case .volume:
                 SettingsSection(footer: "The volume and brightness keys then show only in the island. Hold ⌥⇧ for finer steps.") {
@@ -451,6 +475,34 @@ struct SettingsRow<Content: View>: View {
             .onHover { isHovering = $0 }
         } else {
             row
+        }
+    }
+}
+
+/// Turns one of the apps that come with the island on or off.
+private struct CompanionToggle: View {
+    @Environment(IslandModel.self) private var model
+    let companion: CompanionApps.Companion
+
+    var body: some View {
+        let companions = model.companions
+        if !companion.isSupported {
+            SettingsRow {
+                Text("Run \(companion.name)")
+                Spacer()
+                Text("Needs macOS \(companion.minimumMacOS)").foregroundStyle(.secondary)
+            }
+        } else if !companions.isAvailable(companion) {
+            SettingsRow {
+                Text("Run \(companion.name)")
+                Spacer()
+                Text("Not included in this build").foregroundStyle(.secondary)
+            }
+        } else {
+            SettingsToggle("Run \(companion.name)", isOn: Binding(
+                get: { companions.isEnabled(companion) },
+                set: { companions.setEnabled(companion, $0) }
+            ))
         }
     }
 }

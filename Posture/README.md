@@ -14,7 +14,7 @@ A Mac menu bar app that watches how you sit, using the camera, Apple's Vision an
 Requires macOS 26 and the Command Line Tools. Xcode is not needed.
 
 ```bash
-cd Hallning
+cd Posture
 ./build.sh --run
 ```
 

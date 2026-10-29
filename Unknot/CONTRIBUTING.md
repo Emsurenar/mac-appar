@@ -96,7 +96,7 @@ to `CFBundleLocalizations` in `Info.plist` and to `AppLanguage` in `Sources/Loca
    git tag unknot-v1.23.0 && git push origin main unknot-v1.23.0
    ```
 
-The `Unknot` workflow (`.github/workflows/unknot.yml` at the root of the repository) builds the universal app
+The `Release` workflow (`.github/workflows/release.yml` at the root of the repository) builds the universal app
 and attaches `Unknot.zip` to the release. Running copies offer the update from their menu, and `install.sh`
 always fetches the newest Unknot release. Changes to `docs/` are published to the website by the `Website`
 workflow.

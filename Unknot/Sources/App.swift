@@ -23,6 +23,8 @@ struct UnknotMain {
 
 /// Posted by a second copy of the app before it quits, so the running one can show its settings.
 private let showSettingsNotification = Notification.Name("io.github.emsurenar.unknot.showSettings")
+/// Posted by Dynamic Island's "Stretch now".
+private let stretchNowNotification = Notification.Name("io.github.emsurenar.unknot.stretchNow")
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
@@ -38,6 +40,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         MainMenu.install()
         DistributedNotificationCenter.default().addObserver(self, selector: #selector(anotherCopyWasOpened(_:)),
                                                             name: showSettingsNotification, object: nil)
+        DistributedNotificationCenter.default().addObserver(self, selector: #selector(stretchNow),
+                                                            name: stretchNowNotification, object: nil)
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.imagePosition = .imageLeading

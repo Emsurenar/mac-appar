@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-/// Follows the Posture companion app (Hallning/) over distributed notifications.
+/// Follows the Posture companion app (Posture/) over distributed notifications.
 @MainActor @Observable
 final class PostureService {
     struct State: Equatable {
@@ -84,12 +84,12 @@ final class PostureService {
                                     deliverImmediately: true)
     }
 
-    /// Opens Posture even if it is not running.
-    func openApp() {
+    /// Opens Posture even if it is not running, from the copy inside the island if there's no other.
+    func openApp(companions: CompanionApps) {
         if isConnected {
             send(.open)
-        } else if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.emresunar.Hallning") {
-            NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+        } else {
+            companions.open(.posture)
         }
     }
 

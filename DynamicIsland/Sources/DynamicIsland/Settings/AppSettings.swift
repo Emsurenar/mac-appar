@@ -12,6 +12,10 @@ final class AppSettings {
     var showPostureTab: Bool { didSet { store(showPostureTab, Key.showPostureTab) } }
     var showPostureAlerts: Bool { didSet { store(showPostureAlerts, Key.showPostureAlerts) } }
     var showPostureLiveActivity: Bool { didSet { store(showPostureLiveActivity, Key.showPostureLiveActivity) } }
+    /// Run the Posture app that comes with the island.
+    var runPosture: Bool { didSet { store(runPosture, Key.runPosture) } }
+    /// Run the Unknot app that comes with the island.
+    var runUnknot: Bool { didSet { store(runUnknot, Key.runUnknot) } }
     var showCalendarTab: Bool { didSet { store(showCalendarTab, Key.showCalendarTab) } }
     var showCalendarReminders: Bool { didSet { store(showCalendarReminders, Key.showCalendarReminders) } }
     var showShelfTab: Bool { didSet { store(showShelfTab, Key.showShelfTab) } }
@@ -59,6 +63,8 @@ final class AppSettings {
         static let showPostureTab = "showPostureTab"
         static let showPostureAlerts = "showPostureAlerts"
         static let showPostureLiveActivity = "showPostureLiveActivity"
+        static let runPosture = "runPosture"
+        static let runUnknot = "runUnknot"
         static let showCalendarTab = "showCalendarTab"
         static let showCalendarReminders = "showCalendarReminders"
         static let showScreenshots = "showScreenshots"
@@ -94,6 +100,8 @@ final class AppSettings {
             Key.showPostureTab: true,
             Key.showPostureAlerts: true,
             Key.showPostureLiveActivity: true,
+            Key.runPosture: true,
+            Key.runUnknot: true,
             Key.showCalendarTab: true,
             Key.showCalendarReminders: true,
             Key.showScreenshots: true,
@@ -120,6 +128,8 @@ final class AppSettings {
         showPostureTab = defaults.bool(forKey: Key.showPostureTab)
         showPostureAlerts = defaults.bool(forKey: Key.showPostureAlerts)
         showPostureLiveActivity = defaults.bool(forKey: Key.showPostureLiveActivity)
+        runPosture = defaults.bool(forKey: Key.runPosture)
+        runUnknot = defaults.bool(forKey: Key.runUnknot)
         showCalendarTab = defaults.bool(forKey: Key.showCalendarTab)
         showCalendarReminders = defaults.bool(forKey: Key.showCalendarReminders)
         showShelfTab = defaults.bool(forKey: Key.showShelfTab)

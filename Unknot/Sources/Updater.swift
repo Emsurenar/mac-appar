@@ -30,6 +30,11 @@ final class Updater: ObservableObject {
         return components.url ?? issuesURL
     }
 
+    /// A copy inside Dynamic Island.app is started and updated along with the island.
+    static var isInsideDynamicIsland: Bool {
+        Bundle.main.bundlePath.contains(".app/Contents/")
+    }
+
     static var currentVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
     }
@@ -56,13 +61,13 @@ final class Updater: ObservableObject {
 
     /// Checks at most once a day, if the user allows it.
     func checkIfDue() {
-        guard Preferences.shared.checkForUpdates else { return }
+        guard Preferences.shared.checkForUpdates, !Self.isInsideDynamicIsland else { return }
         let last = UserDefaults.standard.object(forKey: lastCheckKey) as? Date ?? .distantPast
         if Date().timeIntervalSince(last) > 24 * 60 * 60 { check() }
     }
 
     func check() {
-        guard status != .checking, availableVersion == nil else { return }
+        guard !Self.isInsideDynamicIsland, status != .checking, availableVersion == nil else { return }
         status = .checking
         Task {
             do {

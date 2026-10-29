@@ -3,10 +3,9 @@ name: Build
 on:
   push:
     branches: [main]
-    # Unknot has its own workflow
-    paths-ignore: ["Unknot/**", ".github/workflows/unknot.yml", ".github/workflows/website.yml"]
+    paths-ignore: ["**.md", "Unknot/docs/**"]
   pull_request:
-    paths-ignore: ["Unknot/**", ".github/workflows/unknot.yml", ".github/workflows/website.yml"]
+    paths-ignore: ["**.md", "Unknot/docs/**"]
   workflow_dispatch:
 
 jobs:
@@ -16,17 +15,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [DynamicIsland, Hallning]
+        app: [DynamicIsland, Posture, Unknot]
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Unknot's build number is the number of commits
+          fetch-depth: 0
       - name: Toolchain
         run: |
           xcode-select -p
           swift --version
+      - name: Check the install scripts
+        run: for f in */install.sh; do bash -n "$f"; done
       - name: Build
         working-directory: ${{ matrix.app }}
-        run: swift build -c release --arch arm64
+        run: |
+          if [ "${{ matrix.app }}" = Unknot ]; then ./build.sh --release; else swift build -c release --arch arm64; fi
       - name: Test
         if: matrix.app == 'DynamicIsland'
-        working-directory: ${{ matrix.app }}
+        working-directory: DynamicIsland
         run: swift test
+
+  bundle:
+    name: Dynamic Island with Posture and Unknot
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Build
+        run: DynamicIsland/build.sh --with-companions
+      - name: Check the bundle
+        run: |
+          APP="DynamicIsland/build/Dynamic Island.app"
+          test -d "$APP/Contents/Library/Helpers/Posture.app"
+          test -d "$APP/Contents/Library/Helpers/Unknot.app"
+          codesign --verify --deep --strict "$APP"

@@ -46,6 +46,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         clipboard.start()
         water.start()
         screenshots.start()
+        if !CommandLine.arguments.contains("--snapshots") { model.companions.start() }
 
         self.model = model
         self.islandWindow = islandWindow
@@ -75,5 +76,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model?.clipboard.stop()
         model?.water.stop()
         model?.screenshots.stop()
+        model?.companions.stop()
     }
 }

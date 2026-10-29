@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Emsurenar/mac-appar/releases?q=unknot-v&amp;expanded=true"><img src="https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fraw.githubusercontent.com%2FEmsurenar%2Fmac-appar%2Fmain%2FUnknot%2FInfo.plist&amp;query=%2F%2Fkey%5B.%3D%27CFBundleShortVersionString%27%5D%2Ffollowing-sibling%3A%3Astring%5B1%5D&amp;label=version&amp;color=de6447" alt="Latest version"></a>
-  <a href="https://github.com/Emsurenar/mac-appar/actions/workflows/unknot.yml"><img src="https://github.com/Emsurenar/mac-appar/actions/workflows/unknot.yml/badge.svg" alt="Build status"></a>
+  <a href="https://github.com/Emsurenar/mac-appar/actions/workflows/build.yml"><img src="https://github.com/Emsurenar/mac-appar/actions/workflows/build.yml/badge.svg" alt="Build status"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-555" alt="macOS 14 or later">
   <a href="../LICENSE"><img src="https://img.shields.io/badge/license-MIT-555" alt="MIT license"></a>
 </p>

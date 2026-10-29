@@ -1,0 +1,72 @@
+name: Release
+
+# One app per tag:
+#   island-v1.2.0   Dynamic Island, with Posture and Unknot inside (DynamicIsland.zip)
+#   posture-v1.2.0  Posture on its own (Posture.zip)
+#   unknot-v1.2.0   Unknot on its own (Unknot.zip)
+on:
+  push:
+    tags: ["island-v*", "posture-v*", "unknot-v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Pick the app from the tag
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          case "$TAG" in
+            island-v*)  echo "APP=DynamicIsland" >> "$GITHUB_ENV"; echo "TITLE=Dynamic Island" >> "$GITHUB_ENV"
+                        echo "PLIST=DynamicIsland/Resources/Info.plist" >> "$GITHUB_ENV" ;;
+            posture-v*) echo "APP=Posture" >> "$GITHUB_ENV"; echo "TITLE=Posture" >> "$GITHUB_ENV"
+                        echo "PLIST=Posture/Resources/Info.plist" >> "$GITHUB_ENV" ;;
+            unknot-v*)  echo "APP=Unknot" >> "$GITHUB_ENV"; echo "TITLE=Unknot" >> "$GITHUB_ENV"
+                        echo "PLIST=Unknot/Info.plist" >> "$GITHUB_ENV" ;;
+            *)          echo "APP=DynamicIsland" >> "$GITHUB_ENV"; echo "TITLE=Dynamic Island" >> "$GITHUB_ENV" ;;
+          esac
+          if [[ "$TAG" == *-v* ]]; then echo "VERSION=${TAG#*-v}" >> "$GITHUB_ENV"; fi
+
+      - name: Set the version from the tag
+        if: env.VERSION != ''
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" "$PLIST"
+
+      - name: Build and zip
+        run: |
+          mkdir -p dist
+          case "$APP" in
+            DynamicIsland)
+              DynamicIsland/build.sh --with-companions
+              ditto -c -k --keepParent "DynamicIsland/build/Dynamic Island.app" dist/DynamicIsland.zip ;;
+            Posture)
+              Posture/build.sh
+              ditto -c -k --keepParent Posture/build/Posture.app dist/Posture.zip ;;
+            Unknot)
+              Unknot/build.sh --release
+              cp Unknot/dist/Unknot.zip dist/Unknot.zip ;;
+          esac
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP }}
+          path: dist/*.zip
+
+      - name: Attach to GitHub release
+        if: env.VERSION != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/*.zip --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/*.zip --title "$TITLE $VERSION" --generate-notes
+          fi

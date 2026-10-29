@@ -33,7 +33,8 @@
 - **Screenshot shelf.** A new screenshot pops out of the notch. Drag it straight into Mail, Slack or a folder, or copy, reveal or trash it from there. The first time, macOS may ask to let the app read the folder your screenshots go to.
 - **File shelf.** Drag files onto the notch to park them at the top of the clipboard tab. They stay there, even after a restart, until you drag them out to wherever they're going.
 - **System at a glance.** Memory, CPU, heat, battery, charger and uptime, with the apps using the most.
-- **Posture companion.** With the [Posture](../Hallning) app running, the island shows your posture and nudges you when you slouch.
+- **Posture, built in.** The island comes with the [Posture](../Posture) app. It shows your posture and nudges you when you slouch (macOS 26).
+- **Unknot, built in.** The island also comes with [Unknot](../Unknot), whose stretch breaks drop out of the notch every 20 minutes. Start one with **Stretch now** in settings.
 - **Feels like a Mac.** Spring animations, blur-and-scale transitions, rubber-band sliders, SF Symbols and trackpad haptics. It never steals focus from the app you're using.
 
 ## Gallery
@@ -119,7 +120,11 @@ Turn on **Replace the system volume and brightness HUD** in settings and grant *
 
 ### Posture
 
-[Posture](../Hallning) is a companion menu bar app in this repository. While it runs, the island gets a Posture tab with today's score, the neck angle from AirPods, and buttons to pause or check now. When you've slouched for a while, a reminder appears in the notch instead of as a notification.
+[Posture](../Posture) comes inside the island and starts with it (turn it off under **Settings → Posture**). If you've installed Posture on its own, the island runs that copy instead. While it runs, the island gets a Posture tab with today's score, the neck angle from AirPods, and buttons to pause or check now. When you've slouched for a while, a reminder appears in the notch instead of as a notification.
+
+### Unknot
+
+[Unknot](../Unknot) comes inside the island too and starts with it. Its breaks drop out of the notch with the island's look and springs. Under **Settings → Unknot** you can turn it off, start a break now or open Unknot's own settings for the interval, the exercises and the sound.
 
 ### Files
 
@@ -244,7 +249,7 @@ swift Scripts/make-icon.swift .    # redraw the app icon
 
 The screenshots in this README come from `--snapshots`.
 
-To publish a release, push a tag like `island-v1.1.0`. The **Dynamic Island release** workflow builds the app and attaches `DynamicIsland.zip` to a GitHub release, which `install.sh` picks up.
+To publish a release, push a tag like `island-v1.1.0`. The **Release** workflow builds the app with Posture and Unknot inside and attaches `DynamicIsland.zip` to a GitHub release, which `install.sh` picks up.
 
 ## Troubleshooting
 

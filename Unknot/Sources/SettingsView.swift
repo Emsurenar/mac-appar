@@ -105,8 +105,13 @@ struct GeneralSettingsView: View {
             }
 
             Section(L("System")) {
-                LoginItemRows()
-                Toggle(L("Check for updates automatically"), isOn: $prefs.checkForUpdates)
+                if Updater.isInsideDynamicIsland {
+                    Text(L("Dynamic Island starts Unknot and keeps it up to date."))
+                        .foregroundStyle(.secondary)
+                } else {
+                    LoginItemRows()
+                    Toggle(L("Check for updates automatically"), isOn: $prefs.checkForUpdates)
+                }
             }
         }
         .formStyle(.grouped)
@@ -546,32 +551,37 @@ struct AboutSettingsView: View {
                 .padding(.top, 12)
 
             HStack(spacing: 10) {
-                switch updater.status {
-                case .available(let version):
-                    Text(L("Version %@ is available.", version))
-                    Button(L("Install and Restart")) { updater.install() }
-                        .buttonStyle(.borderedProminent)
-                case .installing(let version):
-                    ProgressView().controlSize(.small)
-                    Text(L("Installing version %@…", version))
+                if Updater.isInsideDynamicIsland {
+                    Text(L("Dynamic Island starts Unknot and keeps it up to date."))
                         .foregroundStyle(.secondary)
-                case .installFailed(let message):
-                    Text(message)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                    Button(L("Try Again")) { updater.install() }
-                    Button(L("Download")) { updater.openReleasePage() }
-                default:
-                    Button(L("Check for updates")) { updater.check() }
-                        .disabled(updater.status == .checking)
-                    if updater.status == .checking {
+                } else {
+                    switch updater.status {
+                    case .available(let version):
+                        Text(L("Version %@ is available.", version))
+                        Button(L("Install and Restart")) { updater.install() }
+                            .buttonStyle(.borderedProminent)
+                    case .installing(let version):
                         ProgressView().controlSize(.small)
-                    } else if updater.status == .upToDate {
-                        Label(L("You're up to date"), systemImage: "checkmark.circle.fill")
+                        Text(L("Installing version %@…", version))
                             .foregroundStyle(.secondary)
-                    } else if updater.status == .failed {
-                        Text(L("Couldn't reach GitHub."))
+                    case .installFailed(let message):
+                        Text(message)
                             .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                        Button(L("Try Again")) { updater.install() }
+                        Button(L("Download")) { updater.openReleasePage() }
+                    default:
+                        Button(L("Check for updates")) { updater.check() }
+                            .disabled(updater.status == .checking)
+                        if updater.status == .checking {
+                            ProgressView().controlSize(.small)
+                        } else if updater.status == .upToDate {
+                            Label(L("You're up to date"), systemImage: "checkmark.circle.fill")
+                                .foregroundStyle(.secondary)
+                        } else if updater.status == .failed {
+                            Text(L("Couldn't reach GitHub."))
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }

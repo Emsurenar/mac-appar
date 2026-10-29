@@ -42,6 +42,11 @@ final class FileShelf {
         save()
     }
 
+    #if DEBUG
+    /// Shows these files without saving them, for `--snapshots`.
+    func showPreview(_ urls: [URL]) { files = urls }
+    #endif
+
     /// Drops files that were deleted or moved since they were shelved.
     func prune() {
         let existing = files.filter(fileExists)

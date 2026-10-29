@@ -88,6 +88,22 @@ enum SnapshotRenderer {
             render("19-open-water", model, directory)
             model.select(.media)
             model.close()
+            model.clipboard.showPreview([
+                (.text("https://github.com/Emsurenar/mac-appar"), "com.apple.Safari", 1),
+                (.text("Meet you at the station at 18:30?"), "com.apple.MobileSMS", 6),
+                (.text("swift build -c release"), "com.apple.Terminal", 14),
+                (.text("Konferensrum 3, plan 4"), "com.apple.iCal", 32),
+            ])
+            model.shelf.showPreview(previewShelfFiles(in: directory))
+            model.open()
+            model.select(.clipboard)
+            render("20-open-clipboard", model, directory)
+            model.select(.system)
+            try? await Task.sleep(for: .seconds(2.5))  // CPU needs two samples.
+            model.open()
+            render("21-open-system", model, directory)
+            model.select(.media)
+            model.close()
             model.screenshots.showPreview(previewScreenshot())
             model.showScreenshot()
             try? await Task.sleep(for: .seconds(0.5))
@@ -105,6 +121,17 @@ enum SnapshotRenderer {
         }
         .frame(width: 480, height: 300)
         return ImageRenderer(content: view).nsImage ?? NSImage()
+    }
+
+    /// Empty files with telling names, so the shelf shows real file icons.
+    private static func previewShelfFiles(in directory: URL) -> [URL] {
+        let folder = directory.appendingPathComponent(".shelf", isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        return ["Quarterly report.pdf", "Holiday.jpg", "Slides.key"].map { name in
+            let url = folder.appendingPathComponent(name)
+            if !FileManager.default.fileExists(atPath: url.path) { FileManager.default.createFile(atPath: url.path, contents: Data()) }
+            return url
+        }
     }
 
     /// One state on a wallpaper-like background, sized to the island.

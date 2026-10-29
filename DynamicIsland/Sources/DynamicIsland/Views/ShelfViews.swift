@@ -7,6 +7,7 @@ import SwiftUI
 /// Drag one out to use it, and it leaves the shelf.
 struct ShelfSection: View {
     @Environment(IslandModel.self) private var model
+    @Environment(\.isSnapshot) private var isSnapshot
 
     var body: some View {
         Group {
@@ -33,20 +34,28 @@ struct ShelfSection: View {
             .foregroundStyle(.white.opacity(0.45))
             .frame(height: IslandLayout.sectionHeaderHeight, alignment: .bottom)
 
-            ScrollView(.horizontal) {
-                HStack(spacing: 6) {
-                    ForEach(shelf.files, id: \.self) { url in
-                        ShelfFileTile(url: url)
-                            .transition(.scale(scale: 0.6).combined(with: .opacity))
-                    }
+            Group {
+                if isSnapshot {
+                    tiles
+                } else {
+                    ScrollView(.horizontal) { tiles }
+                        .scrollIndicators(.never)
                 }
-                .padding(.vertical, 4)
             }
-            .scrollIndicators(.never)
             .frame(height: IslandLayout.shelfTileHeight + 8)
             .padding(.horizontal, -6)
             .animation(.spring(response: 0.4, dampingFraction: 0.78), value: shelf.files)
         }
+    }
+
+    private var tiles: some View {
+        HStack(spacing: 6) {
+            ForEach(model.shelf.files, id: \.self) { url in
+                ShelfFileTile(url: url)
+                    .transition(.scale(scale: 0.6).combined(with: .opacity))
+            }
+        }
+        .padding(.vertical, 4)
     }
 
     private var emptyState: some View {
@@ -75,6 +84,7 @@ struct ShelfSection: View {
 private struct ShelfFileTile: View {
     let url: URL
     @Environment(IslandModel.self) private var model
+    @Environment(\.isSnapshot) private var isSnapshot
     @State private var isHovering = false
 
     var body: some View {
@@ -93,10 +103,12 @@ private struct ShelfFileTile: View {
         .frame(width: IslandLayout.shelfTileWidth, height: IslandLayout.shelfTileHeight)
         .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.white.opacity(isHovering ? 0.1 : 0)))
         .overlay {
-            ShelfDragArea(url: url) {
-                model.close()
-            } onDraggedOut: {
-                model.shelf.remove(url)
+            if !isSnapshot {
+                ShelfDragArea(url: url) {
+                    model.close()
+                } onDraggedOut: {
+                    model.shelf.remove(url)
+                }
             }
         }
         .overlay(alignment: .topTrailing) {

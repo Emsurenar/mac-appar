@@ -180,6 +180,21 @@ final class NowPlayingService {
         if trackChanged && !isFirst && hasMedia { onTrackChange?() }
     }
 
+    #if DEBUG
+    /// A stand-in track for snapshots; the bridge only runs from the app bundle.
+    func showPreview(title: String, artist: String, duration: Double, elapsed: Double, artwork: NSImage?) {
+        self.title = title
+        self.artist = artist
+        album = ""
+        self.duration = duration
+        isPlaying = true
+        rate = 0  // Frozen, so every snapshot shows the same position.
+        elapsedAnchor = elapsed
+        anchorDate = Date()
+        setArtwork(artwork)
+    }
+    #endif
+
     private func setArtwork(_ image: NSImage?) {
         artwork = image
         artworkVersion += 1

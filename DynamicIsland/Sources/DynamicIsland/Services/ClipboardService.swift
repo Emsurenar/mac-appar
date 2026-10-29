@@ -108,6 +108,19 @@ final class ClipboardService {
     func remove(_ item: ClipboardItem) { history.remove(id: item.id) }
     func clear() { history.clear() }
 
+    #if DEBUG
+    /// Stand-in copies for `--snapshots`, newest first, so a screenshot never shows the real clipboard.
+    func showPreview(_ entries: [(content: ClipboardContent, app: String, minutesAgo: Double)]) {
+        stop()
+        var preview = ClipboardHistory()
+        for entry in entries.reversed() {
+            preview.add(ClipboardItem(content: entry.content, date: Date().addingTimeInterval(-entry.minutesAgo * 60),
+                                      sourceBundleID: entry.app))
+        }
+        history = preview
+    }
+    #endif
+
     static var canPaste: Bool { AXIsProcessTrusted() }
 
     private func poll() {

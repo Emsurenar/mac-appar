@@ -6,6 +6,7 @@ import SwiftUI
 /// The newest screenshot, popped out of the notch so it can be dragged straight into another app.
 struct ScreenshotShelfView: View {
     @Environment(IslandModel.self) private var model
+    @Environment(\.isSnapshot) private var isSnapshot
 
     var body: some View {
         let screenshots = model.screenshots
@@ -15,10 +16,12 @@ struct ScreenshotShelfView: View {
                 HStack(spacing: 12) {
                     thumbnail(screenshots.thumbnail)
                         .overlay {
-                            FileDragSource(url: shot.url, image: screenshots.thumbnail,
-                                           onBegin: { model.beginScreenshotDrag() },
-                                           onEnd: { model.endScreenshotDrag(dropped: $0) },
-                                           onClick: { screenshots.open(shot) })
+                            if !isSnapshot {
+                                FileDragSource(url: shot.url, image: screenshots.thumbnail,
+                                               onBegin: { model.beginScreenshotDrag() },
+                                               onEnd: { model.endScreenshotDrag(dropped: $0) },
+                                               onClick: { screenshots.open(shot) })
+                            }
                         }
                         .help("Drag to use it, click to open it")
                     VStack(alignment: .leading, spacing: 1) {

@@ -75,10 +75,20 @@ private struct HapticFeedbackEnabledKey: EnvironmentKey {
     static let defaultValue = false
 }
 
+/// Set by `--snapshots`: `ImageRenderer` draws AppKit views as a placeholder and scroll views as nothing.
+private struct IsSnapshotKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
 extension EnvironmentValues {
     var hapticFeedbackEnabled: Bool {
         get { self[HapticFeedbackEnabledKey.self] }
         set { self[HapticFeedbackEnabledKey.self] = newValue }
+    }
+
+    var isSnapshot: Bool {
+        get { self[IsSnapshotKey.self] }
+        set { self[IsSnapshotKey.self] = newValue }
     }
 }
 

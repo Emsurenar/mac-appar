@@ -9,6 +9,8 @@ enum SnapshotRenderer {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         Task {
             try? await Task.sleep(for: .seconds(3))
+            model.media.showPreview(title: "Golden Hour Over the Harbor", artist: "Lumen Avenue",
+                                    duration: 213, elapsed: 173, artwork: previewArtwork())
             render("1-closed", model, directory)
             render("2-compact", model, directory)
             model.showTrackPeek()
@@ -74,6 +76,7 @@ enum SnapshotRenderer {
             render("15-calendar-reminder", model, directory)
             model.open()
             model.select(.calendar)
+            model.calendar.showPreview(events)  // Opening the tab reloads the real calendar.
             render("16-open-calendar", model, directory)
             model.select(.media)
             model.close()
@@ -113,6 +116,31 @@ enum SnapshotRenderer {
         }
     }
 
+    /// A stand-in album cover: a sunset over water.
+    private static func previewArtwork() -> NSImage {
+        let view = ZStack {
+            VStack(spacing: 0) {
+                LinearGradient(colors: [Color(red: 1, green: 0.7, blue: 0.4), Color(red: 0.98, green: 0.42, blue: 0.3)],
+                               startPoint: .top, endPoint: .bottom)
+                LinearGradient(colors: [Color(red: 0.32, green: 0.28, blue: 0.62), Color(red: 0.16, green: 0.18, blue: 0.42)],
+                               startPoint: .top, endPoint: .bottom)
+            }
+            Circle().fill(Color(red: 1, green: 0.93, blue: 0.75)).frame(width: 150, height: 150)
+                .offset(y: -10).frame(width: 300, height: 300, alignment: .center)
+                .mask(VStack(spacing: 0) { Rectangle(); Color.clear })
+            VStack(spacing: 12) {
+                ForEach(0..<5) { index in
+                    Capsule().fill(.white.opacity(0.5)).frame(width: 90 - CGFloat(index) * 12, height: 3)
+                }
+            }
+            .offset(y: 60)
+        }
+        .frame(width: 300, height: 300)
+        let renderer = ImageRenderer(content: view)
+        renderer.scale = 2
+        return renderer.nsImage ?? NSImage()
+    }
+
     /// A stand-in screenshot: the wallpaper with a window on it.
     private static func previewScreenshot() -> NSImage {
         let view = ZStack {
@@ -139,7 +167,7 @@ enum SnapshotRenderer {
         let height = max(model.size.height + 64, 110)
         let view = ZStack(alignment: .top) {
             Wallpaper()
-            IslandRootView().environment(model)
+            IslandRootView().environment(model).environment(\.isSnapshot, true)
         }
         .frame(width: 640, height: height)
         write(view, scale: 2, to: directory.appendingPathComponent("\(name).png"))
@@ -150,7 +178,7 @@ enum SnapshotRenderer {
         let view = ZStack(alignment: .top) {
             Wallpaper()
             MenuBar(height: model.notch.height)
-            IslandRootView().environment(model)
+            IslandRootView().environment(model).environment(\.isSnapshot, true)
         }
         .frame(width: 1000, height: 240)
         write(view, scale: 2, to: directory.appendingPathComponent("\(name).png"))

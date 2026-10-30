@@ -187,8 +187,11 @@ struct SettingsView: View {
                     }
                 }
             case .clipboard:
-                SettingsSection("Files", footer: "Drag files onto the notch to keep them at the top of this tab. They stay there until you drag them out, and the files themselves never move.") {
+                SettingsSection("Files", footer: "Drag files onto the notch to keep them at the top of this tab. They stay there until you drag them out, and the files themselves never move. New screenshots and downloads show up there by themselves for 5 minutes.") {
                     SettingsToggle("Keep files you drop on the notch", isOn: $settings.showShelfTab)
+                    if settings.showShelfTab {
+                        SettingsToggle("Add new screenshots and downloads", isOn: $settings.shelveNewFiles)
+                    }
                 }
                 SettingsSection("Clipboard", footer: "The last 20 things you copied, newest first. They stay in memory only, and passwords from password managers are skipped. Pasting needs Accessibility access; without it, an item is just copied.") {
                     SettingsToggle("Show clipboard history", isOn: $settings.showClipboardTab)

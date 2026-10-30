@@ -34,6 +34,8 @@
 	<string>Dynamic Island shows your upcoming events and reminds you before they start.</string>
 	<key>NSDesktopFolderUsageDescription</key>
 	<string>Dynamic Island shows your new screenshots in the notch so you can drag them anywhere.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>Dynamic Island puts files you just downloaded on its shelf so you can drag them anywhere.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>

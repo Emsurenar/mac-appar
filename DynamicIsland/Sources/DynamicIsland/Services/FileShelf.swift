@@ -1,12 +1,12 @@
 import AppKit
 
-/// Files on the island's shelf. Files dropped on the island stay, also across launches, until they're
-/// dragged out. New screenshots and downloads are added for a few minutes only, unless they're dropped
-/// on the island again. The shelf only keeps references: the files themselves never move.
+/// Files on the island's shelf: ones dropped on the island, and new screenshots and downloads. Each file
+/// stays for a few minutes, also when it's dragged out or the app restarts, unless it's removed by hand.
+/// The shelf only keeps references: the files themselves never move.
 @MainActor @Observable
 final class FileShelf {
     private(set) var files: [URL] = []
-    /// When each temporary file leaves the shelf. Files without an entry stay.
+    /// When each file leaves the shelf.
     private(set) var expiries: [URL: Date] = [:]
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -23,44 +23,26 @@ final class FileShelf {
         self.defaults = defaults
         self.fileExists = fileExists
         self.now = now
-        files = (defaults.stringArray(forKey: Self.key) ?? []).map { URL(fileURLWithPath: $0) }
         let stored = defaults.dictionary(forKey: Self.expiriesKey) as? [String: Double] ?? [:]
         expiries = Dictionary(uniqueKeysWithValues: stored.map {
             (URL(fileURLWithPath: $0.key), Date(timeIntervalSinceReferenceDate: $0.value))
         })
+        // Files from before the shelf had a time limit have no expiry, and leave now.
+        files = (defaults.stringArray(forKey: Self.key) ?? []).map { URL(fileURLWithPath: $0) }
+            .filter { expiries[$0] != nil }
         prune()
     }
 
     var isEmpty: Bool { files.isEmpty }
 
-    /// Adds file URLs at the end; ones already on the shelf keep their place. Files added by hand stay,
-    /// even ones that were only on the shelf for a while.
-    func add(_ urls: [URL]) {
-        let new = urls.filter(\.isFileURL).map(\.standardizedFileURL)
-        var changed = false
-        for url in new {
-            if !files.contains(url) {
-                files.append(url)
-                changed = true
-            } else if expiries.removeValue(forKey: url) != nil {
-                changed = true
-            }
-        }
-        if changed { save() }
-    }
-
-    /// Adds files that leave the shelf by themselves after `duration`. Files already kept for good stay kept.
-    func addTemporarily(_ urls: [URL], for duration: TimeInterval) {
+    /// Adds file URLs at the end for `duration`. Ones already on the shelf keep their place, and their time starts over.
+    func add(_ urls: [URL], for duration: TimeInterval) {
         let new = urls.filter(\.isFileURL).map(\.standardizedFileURL)
         guard !new.isEmpty else { return }
         let expiry = now().addingTimeInterval(duration)
         for url in new {
-            if !files.contains(url) {
-                files.append(url)
-                expiries[url] = expiry
-            } else if expiries[url] != nil {
-                expiries[url] = expiry
-            }
+            if !files.contains(url) { files.append(url) }
+            expiries[url] = expiry
         }
         save()
         scheduleExpiry()
@@ -70,18 +52,20 @@ final class FileShelf {
         files.removeAll { $0 == url }
         expiries[url] = nil
         save()
+        scheduleExpiry()
     }
 
     func removeAll() {
         files.removeAll()
         expiries.removeAll()
         save()
+        scheduleExpiry()
     }
 
-    /// Drops files that were deleted or moved since they were shelved, and temporary ones whose time is up.
+    /// Drops files that were deleted or moved since they were shelved, and ones whose time is up.
     func prune() {
         let date = now()
-        let kept = files.filter { url in fileExists(url) && expiries[url].map { $0 > date } ?? true }
+        let kept = files.filter { url in fileExists(url) && expiries[url].map { $0 > date } ?? false }
         let keptExpiries = expiries.filter { kept.contains($0.key) }
         guard kept != files || keptExpiries != expiries else { return scheduleExpiry() }
         files = kept
@@ -90,7 +74,7 @@ final class FileShelf {
         scheduleExpiry()
     }
 
-    /// Wakes up when the next temporary file is due.
+    /// Wakes up when the next file is due.
     private func scheduleExpiry() {
         expiryTask?.cancel()
         guard let next = expiries.values.min() else { return }

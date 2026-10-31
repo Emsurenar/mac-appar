@@ -373,6 +373,7 @@ final class IslandModel {
     func close() {
         guard isOpen else { return }
         isOpen = false
+        tab = .media  // Always reopen on the first tab.
         isChoosingShortcuts = false
         isChoosingOutput = false
         if hasPendingScreenshot { showScreenshot() }

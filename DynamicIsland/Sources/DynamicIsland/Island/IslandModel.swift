@@ -347,22 +347,22 @@ final class IslandModel {
     /// Whether files dragged over the island can go on the shelf; not the island's own screenshot or shelf files.
     var acceptsFileDrops: Bool { showsShelf && !ShelfDragSource.isDragging && !isDraggingScreenshot }
 
-    /// Keeps the dropped files.
+    /// Keeps the dropped files for a few minutes.
     func dropFiles(_ urls: [URL]) -> Bool {
         isDropTargeted = false
         guard acceptsFileDrops, !urls.isEmpty else { return false }
-        shelf.add(urls)
+        shelf.add(urls, for: Self.shelfDuration)
         if !isOpen { showShelfForDrop() }
         return true
     }
 
-    /// How long new screenshots and downloads stay on the shelf.
-    static let newFileShelfDuration: TimeInterval = 5 * 60
+    /// How long files stay on the shelf.
+    static let shelfDuration: TimeInterval = 5 * 60
 
     /// Puts a new screenshot or download on the shelf for a few minutes.
     func shelveNewFiles(_ urls: [URL]) {
         guard showsShelf, settings.shelveNewFiles else { return }
-        shelf.addTemporarily(urls, for: Self.newFileShelfDuration)
+        shelf.add(urls, for: Self.shelfDuration)
     }
 
     func performHaptic(_ pattern: NSHapticFeedbackManager.FeedbackPattern) {

@@ -22,8 +22,8 @@ final class FileShelfTests: XCTestCase {
     @MainActor func testAddsFilesInOrderWithoutDuplicates() {
         withDefaults { defaults in
             let shelf = FileShelf(defaults: defaults, fileExists: { _ in true })
-            shelf.add([report])
-            shelf.add([photo, report])
+            shelf.add([report], for: 300)
+            shelf.add([photo, report], for: 300)
             XCTAssertEqual(shelf.files, [report, photo])
         }
     }
@@ -31,7 +31,7 @@ final class FileShelfTests: XCTestCase {
     @MainActor func testIgnoresWebLinks() {
         withDefaults { defaults in
             let shelf = FileShelf(defaults: defaults, fileExists: { _ in true })
-            shelf.add([URL(string: "https://example.com")!])
+            shelf.add([URL(string: "https://example.com")!], for: 300)
             XCTAssertTrue(shelf.isEmpty)
         }
     }
@@ -39,7 +39,7 @@ final class FileShelfTests: XCTestCase {
     @MainActor func testFilesStayAcrossLaunchesUntilRemoved() {
         withDefaults { defaults in
             let shelf = FileShelf(defaults: defaults, fileExists: { _ in true })
-            shelf.add([report, photo])
+            shelf.add([report, photo], for: 300)
             shelf.remove(report)
             XCTAssertEqual(FileShelf(defaults: defaults, fileExists: { _ in true }).files, [photo])
 
@@ -50,61 +50,61 @@ final class FileShelfTests: XCTestCase {
 
     @MainActor func testDeletedFilesLeaveTheShelf() {
         withDefaults { defaults in
-            FileShelf(defaults: defaults, fileExists: { _ in true }).add([report, photo])
+            FileShelf(defaults: defaults, fileExists: { _ in true }).add([report, photo], for: 300)
             let reloaded = FileShelf(defaults: defaults, fileExists: { $0 != self.report })
             XCTAssertEqual(reloaded.files, [photo])
         }
     }
 
-    @MainActor func testTemporaryFilesLeaveAfterTheirTime() {
+    @MainActor func testFilesLeaveAfterTheirTime() {
         withDefaults { defaults in
             var date = Date(timeIntervalSince1970: 1_000)
             let shelf = FileShelf(defaults: defaults, fileExists: { _ in true }, now: { date })
-            shelf.add([report])
-            shelf.addTemporarily([photo], for: 300)
-            XCTAssertEqual(shelf.files, [report, photo])
+            shelf.add([report], for: 300)
+            date += 100
+            shelf.add([photo], for: 300)
 
-            date += 299
+            date += 199
             shelf.prune()
             XCTAssertEqual(shelf.files, [report, photo])
 
             date += 2
             shelf.prune()
-            XCTAssertEqual(shelf.files, [report])
+            XCTAssertEqual(shelf.files, [photo])
+
+            date += 100
+            shelf.prune()
+            XCTAssertTrue(shelf.isEmpty)
         }
     }
 
-    @MainActor func testTemporaryFilesExpireAcrossLaunches() {
+    @MainActor func testFilesExpireAcrossLaunches() {
         withDefaults { defaults in
             var date = Date(timeIntervalSince1970: 1_000)
-            FileShelf(defaults: defaults, fileExists: { _ in true }, now: { date }).addTemporarily([photo], for: 300)
+            FileShelf(defaults: defaults, fileExists: { _ in true }, now: { date }).add([photo], for: 300)
             XCTAssertEqual(FileShelf(defaults: defaults, fileExists: { _ in true }, now: { date }).files, [photo])
             date += 301
             XCTAssertTrue(FileShelf(defaults: defaults, fileExists: { _ in true }, now: { date }).isEmpty)
         }
     }
 
-    @MainActor func testDroppingATemporaryFileKeepsIt() {
+    @MainActor func testAddingAgainStartsTheTimeOver() {
         withDefaults { defaults in
             var date = Date(timeIntervalSince1970: 1_000)
             let shelf = FileShelf(defaults: defaults, fileExists: { _ in true }, now: { date })
-            shelf.addTemporarily([photo], for: 300)
-            shelf.add([photo])
-            date += 301
+            shelf.add([photo], for: 300)
+            date += 200
+            shelf.add([photo], for: 300)
+            date += 200
             shelf.prune()
             XCTAssertEqual(shelf.files, [photo])
         }
     }
 
-    @MainActor func testKeptFilesStayKeptWhenAddedTemporarily() {
+    @MainActor func testFilesWithoutATimeLimitLeave() {
         withDefaults { defaults in
-            var date = Date(timeIntervalSince1970: 1_000)
-            let shelf = FileShelf(defaults: defaults, fileExists: { _ in true }, now: { date })
-            shelf.add([report])
-            shelf.addTemporarily([report], for: 300)
-            date += 301
-            shelf.prune()
-            XCTAssertEqual(shelf.files, [report])
+            defaults.set([report.path], forKey: "shelfFiles")
+            XCTAssertTrue(FileShelf(defaults: defaults, fileExists: { _ in true }).isEmpty)
         }
     }
 

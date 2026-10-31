@@ -187,7 +187,7 @@ struct SettingsView: View {
                     }
                 }
             case .clipboard:
-                SettingsSection("Files", footer: "Drag files onto the notch to keep them at the top of this tab. They stay there until you drag them out, and the files themselves never move. New screenshots and downloads show up there by themselves for 5 minutes.") {
+                SettingsSection("Files", footer: "Drag files onto the notch to keep them at the top of this tab. New screenshots and downloads show up there by themselves. Every file stays for 5 minutes, also after you drag it out, unless you remove it. The files themselves never move.") {
                     SettingsToggle("Keep files you drop on the notch", isOn: $settings.showShelfTab)
                     if settings.showShelfTab {
                         SettingsToggle("Add new screenshots and downloads", isOn: $settings.shelveNewFiles)

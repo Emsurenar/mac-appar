@@ -28,9 +28,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let clipboard = ClipboardService()
         let water = WaterService()
         let screenshots = ScreenshotService()
+        let downloads = DownloadsService()
         let model = IslandModel(media: media, audio: audio, brightness: BrightnessService(), airPods: AirPodsService(),
                                 home: home, posture: posture, system: SystemService(), calendar: calendar, clipboard: clipboard,
-                                water: water, screenshots: screenshots, settings: settings)
+                                water: water, screenshots: screenshots, downloads: downloads, settings: settings)
         let settingsWindow = SettingsWindowController(model: model)
         model.onOpenSettings = { [weak settingsWindow] in settingsWindow?.show() }
         let welcomeWindow = WelcomeWindowController(model: model)
@@ -46,6 +47,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         clipboard.start()
         water.start()
         screenshots.start()
+        downloads.start()
         if !CommandLine.arguments.contains("--snapshots") { model.companions.start() }
 
         self.model = model
@@ -76,6 +78,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model?.clipboard.stop()
         model?.water.stop()
         model?.screenshots.stop()
+        model?.downloads.stop()
         model?.companions.stop()
     }
 }

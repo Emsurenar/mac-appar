@@ -56,6 +56,73 @@ final class FileShelfTests: XCTestCase {
         }
     }
 
+    @MainActor func testTemporaryFilesLeaveAfterTheirTime() {
+        withDefaults { defaults in
+            var date = Date(timeIntervalSince1970: 1_000)
+            let shelf = FileShelf(defaults: defaults, fileExists: { _ in true }, now: { date })
+            shelf.add([report])
+            shelf.addTemporarily([photo], for: 300)
+            XCTAssertEqual(shelf.files, [report, photo])
+
+            date += 299
+            shelf.prune()
+            XCTAssertEqual(shelf.files, [report, photo])
+
+            date += 2
+            shelf.prune()
+            XCTAssertEqual(shelf.files, [report])
+        }
+    }
+
+    @MainActor func testTemporaryFilesExpireAcrossLaunches() {
+        withDefaults { defaults in
+            var date = Date(timeIntervalSince1970: 1_000)
+            FileShelf(defaults: defaults, fileExists: { _ in true }, now: { date }).addTemporarily([photo], for: 300)
+            XCTAssertEqual(FileShelf(defaults: defaults, fileExists: { _ in true }, now: { date }).files, [photo])
+            date += 301
+            XCTAssertTrue(FileShelf(defaults: defaults, fileExists: { _ in true }, now: { date }).isEmpty)
+        }
+    }
+
+    @MainActor func testDroppingATemporaryFileKeepsIt() {
+        withDefaults { defaults in
+            var date = Date(timeIntervalSince1970: 1_000)
+            let shelf = FileShelf(defaults: defaults, fileExists: { _ in true }, now: { date })
+            shelf.addTemporarily([photo], for: 300)
+            shelf.add([photo])
+            date += 301
+            shelf.prune()
+            XCTAssertEqual(shelf.files, [photo])
+        }
+    }
+
+    @MainActor func testKeptFilesStayKeptWhenAddedTemporarily() {
+        withDefaults { defaults in
+            var date = Date(timeIntervalSince1970: 1_000)
+            let shelf = FileShelf(defaults: defaults, fileExists: { _ in true }, now: { date })
+            shelf.add([report])
+            shelf.addTemporarily([report], for: 300)
+            date += 301
+            shelf.prune()
+            XCTAssertEqual(shelf.files, [report])
+        }
+    }
+
+    func testOnlyFinishedDownloadsCount() {
+        let folder = URL(fileURLWithPath: "/Users/me/Downloads")
+        XCTAssertTrue(DownloadsService.isFinished(folder.appendingPathComponent("report.pdf")))
+        XCTAssertFalse(DownloadsService.isFinished(folder.appendingPathComponent("report.pdf.crdownload")))
+        XCTAssertFalse(DownloadsService.isFinished(folder.appendingPathComponent("report.pdf.download")))
+        XCTAssertFalse(DownloadsService.isFinished(folder.appendingPathComponent("report.pdf.part")))
+        XCTAssertFalse(DownloadsService.isFinished(folder.appendingPathComponent(".DS_Store")))
+    }
+
+    @MainActor func testAddingNewFilesIsOnByDefault() {
+        withDefaults { defaults in
+            XCTAssertTrue(AppSettings(defaults: defaults).shelveNewFiles)
+        }
+    }
+
     @MainActor func testShelfTabIsOnByDefault() {
         withDefaults { defaults in
             XCTAssertTrue(AppSettings(defaults: defaults).showShelfTab)

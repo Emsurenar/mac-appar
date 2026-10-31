@@ -74,6 +74,7 @@ final class IslandModel {
     let clipboard: ClipboardService
     let water: WaterService
     let screenshots: ScreenshotService
+    let downloads: DownloadsService
     let settings: AppSettings
     let companions: CompanionApps
 
@@ -113,7 +114,7 @@ final class IslandModel {
 
     init(media: NowPlayingService, audio: AudioService, brightness: BrightnessService, airPods: AirPodsService,
          home: HomeService, posture: PostureService, system: SystemService, calendar: CalendarService, clipboard: ClipboardService,
-         water: WaterService, screenshots: ScreenshotService, shelf: FileShelf? = nil, settings: AppSettings) {
+         water: WaterService, screenshots: ScreenshotService, downloads: DownloadsService, shelf: FileShelf? = nil, settings: AppSettings) {
         self.media = media
         self.audio = audio
         self.brightness = brightness
@@ -126,13 +127,18 @@ final class IslandModel {
         self.clipboard = clipboard
         self.water = water
         self.screenshots = screenshots
+        self.downloads = downloads
         self.settings = settings
         self.companions = CompanionApps(settings: settings)
 
         media.onTrackChange = { [weak self] in self?.showTrackPeek() }
         posture.onAlert = { [weak self] _ in self?.showPostureAlert() }
         calendar.onReminder = { [weak self] _ in self?.showCalendarReminder() }
-        self.screenshots.onNewScreenshot = { [weak self] _ in self?.showScreenshot() }
+        self.screenshots.onNewScreenshot = { [weak self] shot in
+            self?.shelveNewFiles([shot.url])
+            self?.showScreenshot()
+        }
+        downloads.onNewFiles = { [weak self] urls in self?.shelveNewFiles(urls) }
         calendar.leadMinutes = { [weak settings] in settings?.calendarLeadMinutes ?? 15 }
         calendar.hiddenCalendars = { [weak settings] in settings?.hiddenCalendarIDs ?? [] }
         water.onDue = { [weak self] in self?.showWaterReminder() }
@@ -348,6 +354,15 @@ final class IslandModel {
         shelf.add(urls)
         if !isOpen { showShelfForDrop() }
         return true
+    }
+
+    /// How long new screenshots and downloads stay on the shelf.
+    static let newFileShelfDuration: TimeInterval = 5 * 60
+
+    /// Puts a new screenshot or download on the shelf for a few minutes.
+    func shelveNewFiles(_ urls: [URL]) {
+        guard showsShelf, settings.shelveNewFiles else { return }
+        shelf.addTemporarily(urls, for: Self.newFileShelfDuration)
     }
 
     func performHaptic(_ pattern: NSHapticFeedbackManager.FeedbackPattern) {

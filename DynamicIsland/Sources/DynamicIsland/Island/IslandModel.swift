@@ -247,7 +247,7 @@ final class IslandModel {
         case .water:
             return IslandLayout.waterContentHeight
         case .calendar:
-            guard calendar.access == .granted, !calendar.events.isEmpty else { return IslandLayout.calendarEmptyHeight }
+            guard calendar.access == .signedIn, !calendar.events.isEmpty else { return IslandLayout.calendarEmptyHeight }
             let rows = CGFloat(min(calendar.events.count, IslandLayout.maxCalendarRows))
             return 4 + IslandLayout.sectionHeaderHeight + rows * IslandLayout.calendarRowHeight + 16
         case .clipboard:

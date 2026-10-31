@@ -45,7 +45,8 @@ struct WelcomeView: View {
                             Image(systemName: "calendar").foregroundStyle(.red)
                             Text("Show upcoming events")
                             Spacer()
-                            status(calendarAccess == .granted, pending: calendarAccess == .denied ? "Open Settings" : "Allow")
+                            status(model.calendar.access == .signedIn,
+                                   pending: model.calendar.hasClientID ? "Sign in with Google" : "Set Up in Settings")
                         }
                         SettingsToggle("Show volume and brightness in the notch", isOn: settings.replaceSystemHUD)
                         if model.settings.replaceSystemHUD {
@@ -89,11 +90,10 @@ struct WelcomeView: View {
         }
     }
 
-    private var calendarAccess: CalendarService.Access { model.calendar.access }
-
     private var askForCalendar: (() -> Void)? {
-        guard calendarAccess != .granted else { return nil }
-        return { model.calendar.requestAccess() }
+        let calendar = model.calendar
+        guard calendar.access == .signedOut else { return nil }
+        return calendar.hasClientID ? { calendar.signIn() } : { model.onOpenSettings?() }
     }
 
     private var askForAccessibility: (() -> Void)? {

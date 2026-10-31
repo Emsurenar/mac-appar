@@ -27,7 +27,7 @@
 - **Sound and display.** Volume, mute, brightness and a one-click audio output switcher for speakers, AirPods and AirPlay, like Control Center.
 - **HUDs in the notch.** Volume, brightness and output changes appear in the island. It can also replace the system's volume and brightness overlay.
 - **Apple Home and Shortcuts.** Pick any shortcut, like a Home scene, and run it with one click from a tile.
-- **Calendar.** Your next events, Google Calendar included, with a reminder in the notch 15 minutes before each one and a Join button for Meet, Zoom and Teams links.
+- **Calendar.** Your next events from Google Calendar, after signing in with your Google account, with a reminder in the notch 15 minutes before each one and a Join button for Meet, Zoom and Teams links.
 - **Water.** A Water tab with a ring that fills towards your daily goal, a one-click **+ Glass**, the last week as bars and a streak. Plus a nudge from the notch every 45 minutes at the Mac (you pick the interval). Time away and sleep don't count.
 - **Clipboard history.** The last 20 things you copied, text and images. Click one to paste it again.
 - **Screenshot shelf.** A new screenshot pops out of the notch. Drag it straight into Mail, Slack or a folder, or copy, reveal or trash it from there. The first time, macOS may ask to let the app read the folder your screenshots go to.
@@ -87,7 +87,7 @@ A welcome window explains where the island is and sets up the basics in one plac
 
 - **Move to Applications**, if the app runs from somewhere else, like Downloads.
 - **Launch at login** and whether the island opens on hover.
-- **Optional permissions**, each asked for only when you turn its feature on: Calendars for upcoming events, Accessibility for showing volume and brightness in the notch.
+- **Optional permissions**, each asked for only when you turn its feature on: signing in to Google for upcoming events, Accessibility for showing volume and brightness in the notch.
 - **Home scenes**, which jumps straight to picking shortcuts.
 
 Click **Show me the island** and it opens once, so you see where it lives. You can show the welcome again under **Settings › About**.
@@ -146,9 +146,16 @@ The System tab shows memory and CPU use with the apps using the most, the Mac's 
 
 ### Calendar
 
-The island reads events from the macOS **Calendar** app, so any account added there works, including Google. To add Google, open **System Settings › Internet Accounts**, add your Google account and turn on **Calendars**. Then open the calendar tab in the island and click **Allow Access**.
+The island signs in to your Google account and reads your calendars with the Google Calendar API (read-only). It needs an OAuth client ID of your own, made once in Google Cloud:
 
-The tab lists the rest of today's events, or tomorrow's once the day is done. A few minutes before an event starts, a reminder drops out of the notch. Choose how early, from 1 to 30 minutes, under **Calendar** in settings. Click the reminder to open the calendar tab, or **Join** to open a Meet, Zoom or Teams link. Click an event to open its day in Google Calendar in your browser.
+1. Open [console.cloud.google.com](https://console.cloud.google.com), create a project and turn on the **Google Calendar API** under **APIs & Services › Library**.
+2. Under **Google Auth Platform** (or **OAuth consent screen**), set it up as **External**, add your own address as a test user, then **Publish app** so the sign-in doesn't expire after 7 days. Google warns that the app isn't verified; click **Advanced › Go to …** to continue.
+3. Under **Clients** (or **Credentials › Create credentials › OAuth client ID**), create a client of type **Desktop app**.
+4. Paste its **Client ID** and **Client secret** under **Calendar** in the island's settings and click **Sign in with Google**.
+
+The account stays signed in with a refresh token in `~/Library/Application Support/Dynamic Island/google-account.json`, readable only by you. **Sign Out** in settings deletes it and revokes access.
+
+The tab lists the rest of today's events, or tomorrow's once the day is done. A few minutes before an event starts, a reminder drops out of the notch. Choose how early, from 1 to 30 minutes, under **Calendar** in settings. Click the reminder to open the calendar tab, or **Join** to open a Meet, Zoom or Teams link. Click an event to open it in Google Calendar in your browser. Under **Calendars** in settings you pick which of your calendars the island shows.
 
 ### Clipboard
 
@@ -165,7 +172,7 @@ Right-click the island, or click the gear, and choose **Settings**. A sidebar li
 | Permission | Used for | Required |
 |---|---|:---:|
 | Accessibility | Replacing the system volume and brightness HUD, pasting from the clipboard history | Optional |
-| Calendars | The Calendar tab and event reminders | Optional |
+| Google account (sign-in, not a macOS permission) | The Calendar tab and event reminders | Optional |
 | Files and folders | Showing new screenshots from the folder macOS saves them to | Optional |
 
 Everything else, like Now Playing, volume, outputs and brightness, works without any prompts. Shortcuts may ask for access to Home the first time a Home shortcut runs.

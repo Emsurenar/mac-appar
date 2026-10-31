@@ -9,7 +9,7 @@ struct CalendarTab: View {
     var body: some View {
         let calendar = model.calendar
         Group {
-            if calendar.access != .granted {
+            if calendar.access != .signedIn {
                 accessPrompt
             } else if calendar.events.isEmpty {
                 emptyState
@@ -53,7 +53,7 @@ struct CalendarTab: View {
             VStack(spacing: 0) {
                 ForEach(model.calendar.events) { event in
                     EventRow(event: event, now: context.date,
-                             onSelect: { model.calendar.openCalendar(at: event.start) },
+                             onSelect: { model.calendar.open(event) },
                              onJoin: { model.calendar.join(event) })
                 }
             }
@@ -61,13 +61,19 @@ struct CalendarTab: View {
     }
 
     private var accessPrompt: some View {
-        let isDenied = model.calendar.access == .denied
-        return CalendarMessage(
-            title: "Show your calendar here",
-            detail: isDenied ? "Allow Dynamic Island under Privacy › Calendars."
-                : "Add Google under System Settings › Internet Accounts.",
-            action: .init(title: isDenied ? "Open Settings" : "Allow Access") { model.calendar.requestAccess() }
-        )
+        let calendar = model.calendar
+        let message: CalendarMessage = if calendar.access == .signingIn {
+            CalendarMessage(title: "Signing in to Google…", detail: "Finish in your browser.",
+                            action: .init(title: "Cancel") { calendar.cancelSignIn() })
+        } else if !calendar.hasClientID {
+            CalendarMessage(title: "Show your Google Calendar", detail: "Add a Google client ID under Settings › Calendar.",
+                            action: .init(title: "Settings") { model.onOpenSettings?() })
+        } else {
+            CalendarMessage(title: "Show your Google Calendar",
+                            detail: calendar.errorMessage ?? "Sign in with your Google account.",
+                            action: .init(title: "Sign In") { calendar.signIn() })
+        }
+        return message
     }
 
     private var emptyState: some View {
@@ -157,7 +163,7 @@ private struct EventRow: View {
         }
         .buttonStyle(.plain)
         .onHover { isHovering = $0 }
-        .help("Show in Google Calendar")
+        .help("Open in Google Calendar")
     }
 
     private var startsSoon: Bool { event.start.timeIntervalSince(now) <= 5 * 60 }

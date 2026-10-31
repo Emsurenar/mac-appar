@@ -107,6 +107,7 @@ struct SettingsView: View {
     /// One page of settings (also rendered on its own by `--snapshots`).
     func page(_ page: SettingsPage) -> some View {
         @Bindable var settings = model.settings
+        @Bindable var calendar = model.calendar
         return VStack(alignment: .leading, spacing: 0) {
             switch page {
             case .general:
@@ -154,7 +155,52 @@ struct SettingsView: View {
                     }
                 }
             case .calendar:
-                SettingsSection(footer: "Events come from the Calendar app. To see your Google Calendar, add your Google account under System Settings › Internet Accounts and turn on Calendars.") {
+                SettingsSection("Google Account", footer: googleFooter) {
+                    switch calendar.access {
+                    case .signedIn:
+                        SettingsRow {
+                            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                            Text(calendar.account ?? "Signed in")
+                            Spacer()
+                            Button("Sign Out") { calendar.signOut() }
+                        }
+                    case .signingIn:
+                        SettingsRow {
+                            ProgressView().controlSize(.small)
+                            Text("Finish signing in in your browser")
+                            Spacer()
+                            Button("Cancel") { calendar.cancelSignIn() }
+                        }
+                    case .signedOut:
+                        SettingsRow {
+                            Text("Client ID")
+                            Spacer()
+                            TextField("….apps.googleusercontent.com", text: $calendar.clientID)
+                                .textFieldStyle(.plain)
+                                .multilineTextAlignment(.trailing)
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: 320)
+                        }
+                        SettingsRow {
+                            Text("Client secret")
+                            Spacer()
+                            SecureField("GOCSPX-…", text: $calendar.clientSecret)
+                                .textFieldStyle(.plain)
+                                .multilineTextAlignment(.trailing)
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: 320)
+                        }
+                        SettingsRow(action: calendar.hasClientID ? { calendar.signIn() } : nil) {
+                            Image(systemName: "person.crop.circle.badge.plus").foregroundStyle(.blue)
+                            Text("Sign in with Google")
+                            Spacer()
+                            Chevron()
+                        }
+                        .disabled(!calendar.hasClientID)
+                    }
+                }
+
+                SettingsSection {
                     SettingsToggle("Show Calendar tab", isOn: $settings.showCalendarTab)
                     SettingsToggle("Remind me before events", isOn: $settings.showCalendarReminders)
                     SettingsRow {
@@ -167,21 +213,11 @@ struct SettingsView: View {
                         .fixedSize()
                     }
                     .disabled(!settings.showCalendarReminders)
-                    SettingsRow(action: { model.calendar.requestAccess() }) {
-                        Image(systemName: calendarAccessSymbol)
-                            .foregroundStyle(model.calendar.access == .granted ? Color.green
-                                : model.calendar.access == .denied ? Color.orange : Color.secondary)
-                        Text("Calendar access")
-                        Spacer()
-                        Text(calendarAccessStatus).foregroundStyle(.secondary)
-                        if model.calendar.access != .granted { Chevron() }
-                    }
-                    .disabled(model.calendar.access == .granted)
                 }
 
-                if model.calendar.access == .granted {
-                    SettingsSection("Calendars", footer: "Missing your Google calendar? In System Settings › Internet Accounts, open your Google account and turn on Calendars, then open the Calendar app once so it syncs.") {
-                        ForEach(model.calendar.sources) { source in
+                if calendar.access == .signedIn && !calendar.sources.isEmpty {
+                    SettingsSection("Calendars") {
+                        ForEach(calendar.sources) { source in
                             CalendarSourceRow(source: source)
                         }
                     }
@@ -370,19 +406,16 @@ struct SettingsView: View {
         .padding(.bottom, 4)
     }
 
-    private var calendarAccessSymbol: String {
-        switch model.calendar.access {
-        case .granted: "checkmark.circle.fill"
-        case .denied: "exclamationmark.triangle.fill"
-        case .unknown: "circle.dashed"
-        }
-    }
-
-    private var calendarAccessStatus: String {
-        switch model.calendar.access {
-        case .granted: "\(model.calendar.events.count) upcoming"
-        case .denied: "Open Settings"
-        case .unknown: "Allow"
+    private var googleFooter: String {
+        let calendar = model.calendar
+        if let error = calendar.errorMessage { return error }
+        switch calendar.access {
+        case .signedIn:
+            return "\(calendar.events.count) upcoming. The island only reads your calendars and checks for changes every few minutes."
+        case .signingIn:
+            return "Pick your account in the browser and allow access to your calendar."
+        case .signedOut:
+            return "In Google Cloud Console, turn on the Google Calendar API and create an OAuth client of type Desktop app. Paste its ID and secret here, then sign in. The README has the steps."
         }
     }
 

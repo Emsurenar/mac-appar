@@ -45,6 +45,11 @@ final class SystemService {
     private(set) var topCPU: Usage?
     /// How long the busiest app has stayed above `busyThreshold`.
     private(set) var busySeconds: TimeInterval = 0
+    /// Apps using the most CPU, which is what drains the battery. Shown when the battery row is open.
+    private(set) var energyHogs: [Usage] = []
+    /// Whether the battery row is open to list `energyHogs`.
+    var showsEnergy = false
+    static let maxEnergyRows = 5
     private(set) var thermalState: ProcessInfo.ThermalState = .nominal
     private(set) var power: Power?
     let bootDate: Date?
@@ -78,6 +83,8 @@ final class SystemService {
         lastSampleTime = 0
         lastCPUTimes = [:]
         busySeconds = 0
+        energyHogs = []
+        showsEnergy = false
     }
 
     func refresh() {
@@ -143,6 +150,12 @@ final class SystemService {
             busySeconds = 0
         }
         topCPU = busiest
+        if elapsed > 0 {
+            energyHogs = cpu.filter { $0.key.hasSuffix(".app") && $0.value >= 0.5 }
+                .sorted { $0.value > $1.value }
+                .prefix(Self.maxEnergyRows)
+                .map { Self.usage(key: $0.key, value: $0.value) }
+        }
     }
 
     /// The enclosing app bundle for a process, so helpers count towards their app. Processes

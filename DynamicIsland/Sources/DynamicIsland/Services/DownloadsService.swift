@@ -57,13 +57,17 @@ final class DownloadsService {
     }
 
     private func scan(_ folder: URL) {
-        let keys: [URLResourceKey] = [.addedToDirectoryDateKey, .creationDateKey]
+        let keys: [URLResourceKey] = [.addedToDirectoryDateKey, .creationDateKey, .isDirectoryKey, .fileSizeKey]
         let files = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: keys,
                                                                   options: .skipsHiddenFiles)) ?? []
+        // A file that was deleted and downloaded again under the same name counts as new.
+        seen.formIntersection(files)
         let new = files.filter { url in
             guard Self.isFinished(url), !seen.contains(url),
                   let values = try? url.resourceValues(forKeys: Set(keys)),
                   let date = values.addedToDirectoryDate ?? values.creationDate else { return false }
+            // Firefox puts an empty file with the final name in place while it downloads.
+            if values.isDirectory != true, (values.fileSize ?? 0) == 0 { return false }
             return date >= startDate
         }
         guard !new.isEmpty else { return }

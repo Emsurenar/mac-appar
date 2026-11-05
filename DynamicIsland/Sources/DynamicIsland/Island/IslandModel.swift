@@ -140,6 +140,7 @@ final class IslandModel {
     @ObservationIgnored private var calendarReminderTask: Task<Void, Never>?
     @ObservationIgnored private var waterReminderTask: Task<Void, Never>?
     @ObservationIgnored private var screenshotTask: Task<Void, Never>?
+    @ObservationIgnored private var tabResetTask: Task<Void, Never>?
     @ObservationIgnored private let keyInterceptor = MediaKeyInterceptor()
     @ObservationIgnored private var permissionPoll: Timer?
 
@@ -329,6 +330,9 @@ final class IslandModel {
     // MARK: Interaction
 
     func setHovering(_ hovering: Bool) {
+        #if DEBUG
+        if SnapshotRenderer.isActive { return }
+        #endif
         guard hovering != isHovering else { return }
         withAnimation(.spring(response: 0.32, dampingFraction: 0.66)) { isHovering = hovering }
 
@@ -358,6 +362,7 @@ final class IslandModel {
 
     func open() {
         guard !isOpen else { return }
+        tabResetTask?.cancel()
         brightness.refresh()
         hudTask?.cancel()
         peekTask?.cancel()
@@ -436,6 +441,10 @@ final class IslandModel {
         isChoosingShortcuts = false
         isChoosingOutput = false
         if hasPendingScreenshot { showScreenshot() }
+        // The island opens on music again next time; the switch waits until the close animation is done.
+        tabResetTask = schedule(after: 0.5) { model in
+            if !model.isOpen { model.tab = .media }
+        }
     }
 
     func setTyping(_ typing: Bool) {

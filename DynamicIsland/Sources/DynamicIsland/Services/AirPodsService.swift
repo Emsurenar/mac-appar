@@ -28,6 +28,10 @@ final class AirPodsService {
     }
 
     private func read(_ output: AudioOutputDevice?) {
+        #if DEBUG
+        // The snapshot binary has no Info.plist, so touching IOBluetooth would abort it.
+        if SnapshotRenderer.isActive { return }
+        #endif
         // Asking IOBluetooth before Bluetooth access is settled shows the prompt, so only
         // do it for a Bluetooth output, which is when the user is looking at the outputs.
         guard let address = output?.bluetoothAddress,

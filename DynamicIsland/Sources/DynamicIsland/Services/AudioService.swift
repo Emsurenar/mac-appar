@@ -107,6 +107,22 @@ final class AudioService {
 
     func toggleMute() { setMuted(!isMuted) }
 
+    #if DEBUG
+    /// Stand-in outputs for `--snapshots`.
+    func showPreview() {
+        devices = [
+            AudioOutputDevice(id: 1, name: "MacBook Air Speakers", uid: "BuiltInSpeakerDevice",
+                              transportType: kAudioDeviceTransportTypeBuiltIn),
+            AudioOutputDevice(id: 2, name: "AirPods Pro", uid: "AA-BB-CC-DD-EE-FF:output",
+                              transportType: kAudioDeviceTransportTypeBluetooth),
+        ]
+        currentDeviceID = 2
+        volume = 0.45
+        isMuted = false
+        canSetVolume = true
+    }
+    #endif
+
     // MARK: Devices
 
     func selectDevice(_ device: AudioOutputDevice) {

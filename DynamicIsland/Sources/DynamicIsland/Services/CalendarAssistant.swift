@@ -51,6 +51,14 @@ final class CalendarAssistant {
 
     static let claudeModel = "claude-opus-5-5"
 
+    #if DEBUG
+    /// A stand-in exchange for `--snapshots`.
+    func showPreview(question: String, reply: String) {
+        self.question = question
+        self.reply = reply
+    }
+    #endif
+
     init(calendar: CalendarService) {
         self.calendar = calendar
         geminiKey = Self.loadKey(file: "gemini-api-key")

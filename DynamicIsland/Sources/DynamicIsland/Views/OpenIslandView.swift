@@ -100,6 +100,9 @@ struct OpenIslandView: View {
         .onHover { hovering in
             hoverSelect?.cancel()
             guard hovering else { return }
+            #if DEBUG
+            if SnapshotRenderer.isActive { return }
+            #endif
             hoverSelect = Task { @MainActor in
                 try? await Task.sleep(for: .milliseconds(140))
                 if !Task.isCancelled { model.select(tab) }

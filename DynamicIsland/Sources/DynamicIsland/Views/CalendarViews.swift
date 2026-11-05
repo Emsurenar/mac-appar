@@ -191,6 +191,7 @@ private struct EventRow: View {
 /// One line to ask the calendar something or change it, with the assistant's answer below.
 private struct AssistantField: View {
     @Environment(IslandModel.self) private var model
+    @Environment(\.isSnapshot) private var isSnapshot
     @State private var text = ""
     @FocusState private var isFocused: Bool
 
@@ -201,19 +202,26 @@ private struct AssistantField: View {
                 Image(systemName: "sparkles")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.6))
-                TextField("", text: $text, prompt: Text(assistant.hasAPIKey ? "Ask or tell your calendar…"
-                                                             : "Add a \(assistant.provider.name) API key in Settings to ask your calendar")
-                    .foregroundColor(.white.opacity(0.4)))
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 13))
-                    .foregroundStyle(.white)
-                    .focused($isFocused)
-                    .disabled(!assistant.hasAPIKey)
-                    .onSubmit(submit)
-                    .onExitCommand { isFocused = false }
+                if isSnapshot {
+                    Text("Ask or tell your calendar…")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.white.opacity(0.4))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    TextField("", text: $text, prompt: Text(assistant.hasAPIKey ? "Ask or tell your calendar…"
+                                                                 : "Add a \(assistant.provider.name) API key in Settings to ask your calendar")
+                        .foregroundColor(.white.opacity(0.4)))
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.white)
+                        .focused($isFocused)
+                        .disabled(!assistant.hasAPIKey)
+                        .onSubmit(submit)
+                        .onExitCommand { isFocused = false }
+                }
                 if assistant.isWorking {
                     ProgressView().controlSize(.small).tint(.white)
-                } else if !assistant.hasAPIKey {
+                } else if !assistant.hasAPIKey && !isSnapshot {
                     Button("Settings") { model.openSettings(.calendar) }
                         .buttonStyle(CapsuleButtonStyle())
                 } else if !text.isEmpty {

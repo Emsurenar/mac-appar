@@ -1,4 +1,5 @@
 import AppKit
+import QuickLookThumbnailing
 import SwiftUI
 
 // MARK: - Section
@@ -76,11 +77,14 @@ private struct ShelfFileTile: View {
     let url: URL
     @Environment(IslandModel.self) private var model
     @State private var isHovering = false
+    @State private var thumbnail: NSImage?
 
     var body: some View {
         VStack(spacing: 4) {
-            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+            Image(nsImage: thumbnail ?? NSWorkspace.shared.icon(forFile: url.path))
                 .resizable()
+                .aspectRatio(contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: thumbnail == nil ? 0 : 4, style: .continuous))
                 .frame(width: 40, height: 40)
             Text(url.lastPathComponent)
                 .font(.system(size: 10, weight: .medium))
@@ -117,6 +121,15 @@ private struct ShelfFileTile: View {
             withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) { isHovering = hovering }
         }
         .help(url.path)
+        .task(id: url) { thumbnail = await Self.thumbnail(for: url) }
+    }
+
+    /// A preview of the file's contents, so screenshots and photos show what's in them.
+    private static func thumbnail(for url: URL) async -> NSImage? {
+        let scale = NSScreen.main?.backingScaleFactor ?? 2
+        let request = QLThumbnailGenerator.Request(fileAt: url, size: CGSize(width: 40, height: 40),
+                                                   scale: scale, representationTypes: .thumbnail)
+        return try? await QLThumbnailGenerator.shared.generateBestRepresentation(for: request).nsImage
     }
 }
 

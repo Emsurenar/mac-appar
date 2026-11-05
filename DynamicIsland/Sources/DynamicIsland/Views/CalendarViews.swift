@@ -11,10 +11,15 @@ struct CalendarTab: View {
         Group {
             if calendar.access != .signedIn {
                 accessPrompt
-            } else if calendar.events.isEmpty {
-                emptyState
             } else {
-                eventList
+                VStack(alignment: .leading, spacing: 0) {
+                    AssistantField()
+                    if calendar.events.isEmpty {
+                        emptyState
+                    } else {
+                        eventList
+                    }
+                }
             }
         }
         .padding(.top, 4)
@@ -178,6 +183,104 @@ private struct EventRow: View {
         if isNow { return "Now" }
         let minutes = Int((event.start.timeIntervalSince(now) / 60).rounded(.up))
         return minutes < 60 ? "in \(minutes) min" : nil
+    }
+}
+
+// MARK: - Assistant
+
+/// One line to ask the calendar something or change it, with Claude's answer below.
+private struct AssistantField: View {
+    @Environment(IslandModel.self) private var model
+    @State private var text = ""
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        let assistant = model.assistant
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 8) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.6))
+                TextField("", text: $text, prompt: Text(assistant.hasAPIKey ? "Ask or tell your calendar…"
+                                                             : "Add a Claude API key in Settings to ask your calendar")
+                    .foregroundColor(.white.opacity(0.4)))
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+                    .foregroundStyle(.white)
+                    .focused($isFocused)
+                    .disabled(!assistant.hasAPIKey)
+                    .onSubmit(submit)
+                    .onExitCommand { isFocused = false }
+                if assistant.isWorking {
+                    ProgressView().controlSize(.small).tint(.white)
+                } else if !assistant.hasAPIKey {
+                    Button("Settings") { model.onOpenSettings?() }
+                        .buttonStyle(CapsuleButtonStyle())
+                } else if !text.isEmpty {
+                    Button(action: submit) {
+                        Image(systemName: "arrow.up")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    .buttonStyle(CapsuleButtonStyle(isProminent: true))
+                }
+            }
+            .padding(.horizontal, 10)
+            .frame(height: 30)
+            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.white.opacity(isFocused ? 0.14 : 0.09)))
+            .contentShape(Rectangle())
+            .onTapGesture { isFocused = true }
+            .padding(.bottom, IslandLayout.assistantFieldHeight - 30)
+
+            if model.assistantAnswerHeight > 0 {
+                answer
+                    .frame(height: model.assistantAnswerHeight, alignment: .topLeading)
+            }
+        }
+        .onChange(of: isFocused) { _, focused in model.setTyping(focused) }
+        .onDisappear { model.setTyping(false) }
+    }
+
+    @ViewBuilder
+    private var answer: some View {
+        let assistant = model.assistant
+        HStack(alignment: .top, spacing: 8) {
+            Group {
+                if assistant.isWorking {
+                    Text(assistant.question ?? "")
+                        .foregroundStyle(.white.opacity(0.45))
+                        .lineLimit(1)
+                } else if let error = assistant.errorMessage {
+                    Text(error).foregroundStyle(.orange)
+                } else if let reply = assistant.reply {
+                    Text(reply).foregroundStyle(.white)
+                        .textSelection(.enabled)
+                }
+            }
+            .font(.system(size: 12.5))
+            .lineSpacing(2)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            if !assistant.isWorking {
+                Button { assistant.clear() } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.5))
+                        .frame(width: 18, height: 18)
+                        .background(Circle().fill(.white.opacity(0.1)))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 4)
+        .padding(.bottom, 10)
+        .clipped()
+    }
+
+    private func submit() {
+        let line = text
+        guard !line.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        text = ""
+        model.assistant.ask(line)
     }
 }
 

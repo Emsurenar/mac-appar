@@ -49,6 +49,8 @@ enum IslandLayout {
     static let calendarRowHeight: CGFloat = 40
     static let maxCalendarRows = 4
     static let calendarEmptyHeight: CGFloat = 112
+    static let assistantFieldHeight: CGFloat = 38
+    static let assistantLineHeight: CGFloat = 16
     static let shelfTileWidth: CGFloat = 76
     static let shelfTileHeight: CGFloat = 78
     /// The drop target above the clipboard while no files are shelved.
@@ -70,6 +72,8 @@ final class IslandModel {
     let posture: PostureService
     let system: SystemService
     let calendar: CalendarService
+    /// Typed questions and changes in the calendar tab.
+    let assistant: CalendarAssistant
     let shelf: FileShelf
     let clipboard: ClipboardService
     let water: WaterService
@@ -95,6 +99,8 @@ final class IslandModel {
     private(set) var isShowingScreenshot = false
     /// The screenshot is being dragged; the island keeps it until the drag ends.
     private(set) var isDraggingScreenshot = false
+    /// The calendar assistant's field has the keyboard, so the island stays open when the pointer leaves.
+    private(set) var isTyping = false
     /// A screenshot came in while the island was open; it pops out once the island closes.
     @ObservationIgnored private var hasPendingScreenshot = false
     var tab: IslandTab = .media
@@ -123,6 +129,7 @@ final class IslandModel {
         self.posture = posture
         self.system = system
         self.calendar = calendar
+        self.assistant = CalendarAssistant(calendar: calendar)
         self.shelf = shelf ?? FileShelf()
         self.clipboard = clipboard
         self.water = water
@@ -249,9 +256,15 @@ final class IslandModel {
         case .water:
             return IslandLayout.waterContentHeight
         case .calendar:
-            guard calendar.access == .signedIn, !calendar.events.isEmpty else { return IslandLayout.calendarEmptyHeight }
-            let rows = CGFloat(min(calendar.events.count, IslandLayout.maxCalendarRows))
-            return 4 + IslandLayout.sectionHeaderHeight + rows * IslandLayout.calendarRowHeight + 16
+            guard calendar.access == .signedIn else { return IslandLayout.calendarEmptyHeight }
+            var height = IslandLayout.assistantFieldHeight + assistantAnswerHeight
+            if calendar.events.isEmpty {
+                height += IslandLayout.calendarEmptyHeight
+            } else {
+                let rows = CGFloat(min(calendar.events.count, IslandLayout.maxCalendarRows))
+                height += 4 + IslandLayout.sectionHeaderHeight + rows * IslandLayout.calendarRowHeight + 16
+            }
+            return height
         case .clipboard:
             var height: CGFloat = 4 + 16
             if showsShelf {
@@ -271,6 +284,14 @@ final class IslandModel {
         case .system:
             return 4 + CGFloat(system.rowCount) * IslandLayout.systemRowHeight + 16
         }
+    }
+
+    /// Room for the assistant's answer: about 62 characters a line, at most five lines.
+    var assistantAnswerHeight: CGFloat {
+        let text = assistant.isWorking ? (assistant.question ?? "") : (assistant.errorMessage ?? assistant.reply ?? "")
+        guard assistant.isWorking || !text.isEmpty else { return 0 }
+        let lines = assistant.isWorking ? 1 : min(max(Int((Double(text.count) / 62).rounded(.up)), 1), 5)
+        return 14 + CGFloat(lines) * IslandLayout.assistantLineHeight
     }
 
     private var outputPanelHeight: CGFloat {
@@ -300,7 +321,7 @@ final class IslandModel {
             }
         } else {
             openTask?.cancel()
-            if isOpen {
+            if isOpen && !isTyping && !assistant.isWorking {
                 closeTask = schedule(after: 0.22) { $0.close() }
             }
             if isShowingScreenshot && !isDraggingScreenshot { scheduleScreenshotDismissal(after: 3) }
@@ -382,11 +403,24 @@ final class IslandModel {
     func close() {
         guard isOpen else { return }
         isOpen = false
+        isTyping = false
         tab = .media  // Always reopen on the first tab.
         isChoosingShortcuts = false
         isChoosingOutput = false
         if hasPendingScreenshot { showScreenshot() }
     }
+
+    func setTyping(_ typing: Bool) {
+        guard typing != isTyping else { return }
+        isTyping = typing
+        // Leaving the field with the pointer already outside closes the island, as hover-out would have.
+        if !typing && isOpen && !isHovering && !assistant.isWorking {
+            closeTask = schedule(after: 0.22) { $0.close() }
+        }
+    }
+
+    /// The island takes the keyboard only while the calendar tab, with its assistant field, is open.
+    var acceptsKeyboard: Bool { isOpen && currentTab == .calendar && calendar.access == .signedIn }
 
     func setChoosingShortcuts(_ choosing: Bool) {
         if choosing { home.refresh() }

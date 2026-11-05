@@ -40,17 +40,21 @@ final class GoogleAuth: NSObject, ASWebAuthenticationPresentationContextProvidin
         }
     }
 
-    static let scope = "https://www.googleapis.com/auth/calendar.readonly"
+    /// Reads the calendar list and reads and writes events, for the assistant.
+    static let scope = "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events"
 
     private struct Stored: Codable {
         var refreshToken: String
         var account: String?
+        /// The scopes Google granted, to ask again when the app needs more.
+        var scope: String?
     }
 
     private struct TokenResponse: Decodable {
         let accessToken: String?
         let expiresIn: Double?
         let refreshToken: String?
+        let scope: String?
         let error: String?
         let errorDescription: String?
     }
@@ -59,7 +63,8 @@ final class GoogleAuth: NSObject, ASWebAuthenticationPresentationContextProvidin
     private var accessToken: String?
     private var expiry = Date.distantPast
 
-    var isSignedIn: Bool { stored != nil }
+    /// Signed in with every scope the app asks for. An older sign-in without event access needs a new one.
+    var isSignedIn: Bool { stored?.scope?.contains("auth/calendar.events") == true }
     var account: String? { stored?.account }
 
     override init() {
@@ -111,7 +116,7 @@ final class GoogleAuth: NSObject, ASWebAuthenticationPresentationContextProvidin
             "redirect_uri": redirect,
         ], credentials)
         guard let refreshToken = token.refreshToken, let accessToken = token.accessToken else { throw AuthError.badResponse }
-        stored = Stored(refreshToken: refreshToken, account: nil)
+        stored = Stored(refreshToken: refreshToken, account: nil, scope: token.scope ?? Self.scope)
         save()
         self.accessToken = accessToken
         expiry = Date().addingTimeInterval(token.expiresIn ?? 3600)

@@ -233,12 +233,22 @@ final class CalendarService {
     }
 
     private func get<T: Decodable>(_ path: String, _ query: [URLQueryItem], token: String) async throws -> T {
+        let data = try await send("GET", path, query, body: nil, token: token)
+        return try JSONDecoder().decode(T.self, from: data)
+    }
+
+    private func send(_ method: String, _ path: String, _ query: [URLQueryItem], body: Data?, token: String) async throws -> Data {
         var components = URLComponents(string: "https://www.googleapis.com/calendar/v3/")!
         components.percentEncodedPath += path
-        components.queryItems = query
+        if !query.isEmpty { components.queryItems = query }
         guard let url = components.url else { throw GoogleAuth.AuthError.badResponse }
         var request = URLRequest(url: url)
+        request.httpMethod = method
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        if let body {
+            request.httpBody = body
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
         let (data, response) = try await URLSession.shared.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else {
@@ -246,8 +256,31 @@ final class CalendarService {
             let message = (try? JSONDecoder().decode(GoogleErrorResponse.self, from: data))?.error.message
             throw GoogleAuth.AuthError.google("HTTP \(status)", message)
         }
-        return try JSONDecoder().decode(T.self, from: data)
+        return data
     }
+
+    // MARK: For the assistant
+
+    /// Calls the Calendar API as the signed-in user and returns the parsed JSON (or nil for an empty body).
+    /// `path` is relative to calendar/v3, with ids already encoded via `encodedID(_:)`.
+    func call(_ method: String, _ path: String, query: [URLQueryItem] = [], json: [String: Any]? = nil) async throws -> Any? {
+        guard access == .signedIn else { throw GoogleAuth.AuthError.signedOut }
+        let token = try await auth.validAccessToken(credentials)
+        let body = try json.map { try JSONSerialization.data(withJSONObject: $0) }
+        let data = try await send(method, path, query, body: body, token: token)
+        guard !data.isEmpty else { return nil }
+        return try JSONSerialization.jsonObject(with: data)
+    }
+
+    /// After the assistant changed something.
+    func refreshNow() {
+        lastFetch = .distantPast
+        reload(maxAge: 0)
+    }
+
+    static func encodedID(_ id: String) -> String { pathEncoded(id) }
+
+    static func apiDate(_ date: Date) -> String { queryDate(date) }
 
     /// Picks today's remaining events, or tomorrow's, from what was fetched.
     private func update() {

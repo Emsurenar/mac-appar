@@ -109,7 +109,8 @@ struct SettingsView: View {
     /// One page of settings (also rendered on its own by `--snapshots`).
     func page(_ page: SettingsPage) -> some View {
         @Bindable var settings = model.settings
-        @Bindable var calendar = model.calendar
+        let calendar = model.calendar
+        @Bindable var assistant = model.assistant
         return VStack(alignment: .leading, spacing: 0) {
             switch page {
             case .general:
@@ -176,24 +177,6 @@ struct SettingsView: View {
                             Button("Cancel") { calendar.cancelSignIn() }
                         }
                     case .signedOut:
-                        SettingsRow {
-                            Text("Client ID")
-                            Spacer()
-                            TextField("….apps.googleusercontent.com", text: $calendar.clientID)
-                                .textFieldStyle(.plain)
-                                .multilineTextAlignment(.trailing)
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: 320)
-                        }
-                        SettingsRow {
-                            Text("Client secret")
-                            Spacer()
-                            SecureField("GOCSPX-…", text: $calendar.clientSecret)
-                                .textFieldStyle(.plain)
-                                .multilineTextAlignment(.trailing)
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: 320)
-                        }
                         SettingsRow(action: calendar.hasClientID ? { calendar.signIn() } : nil) {
                             Image(systemName: "person.crop.circle.badge.plus").foregroundStyle(.blue)
                             Text("Sign in with Google")
@@ -217,6 +200,23 @@ struct SettingsView: View {
                         .fixedSize()
                     }
                     .disabled(!settings.showCalendarReminders)
+                }
+
+                SettingsSection("Assistant", footer: "Type in the calendar tab to ask about your calendar or change it, like “Lägg till möte med Ruben imorgon kl 17”, “ta bort lunchen på fredag” or “när träffade jag senast Sara?”. Claude does the understanding, with your own API key from console.anthropic.com. The key is kept on this Mac only.") {
+                    SettingsRow {
+                        Text("Claude API key")
+                        Spacer()
+                        SecureField("sk-ant-…", text: $assistant.apiKey)
+                            .textFieldStyle(.plain)
+                            .multilineTextAlignment(.trailing)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: 320)
+                    }
+                    SettingsRow(action: { NSWorkspace.shared.open(URL(string: "https://console.anthropic.com/settings/keys")!) }) {
+                        Text("Get a key")
+                        Spacer()
+                        Chevron()
+                    }
                 }
 
                 if calendar.access == .signedIn && !calendar.sources.isEmpty {
@@ -419,7 +419,9 @@ struct SettingsView: View {
         case .signingIn:
             return "Pick your account in the browser and allow access to your calendar."
         case .signedOut:
-            return "In Google Cloud Console, turn on the Google Calendar API and create an OAuth client of type Desktop app. Paste its ID and secret here, then sign in. The README has the steps."
+            return calendar.hasClientID
+                ? "Sign in with your Google account to see your Google Calendar in the island. It only reads your calendars."
+                : "This build has no Google client ID."
         }
     }
 

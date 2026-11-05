@@ -146,16 +146,15 @@ The System tab shows memory and CPU use with the apps using the most, the Mac's 
 
 ### Calendar
 
-The island signs in to your Google account and reads your calendars with the Google Calendar API (read-only). It needs an OAuth client ID of your own, made once in Google Cloud:
-
-1. Open [console.cloud.google.com](https://console.cloud.google.com), create a project and turn on the **Google Calendar API** under **APIs & Services › Library**.
-2. Under **Google Auth Platform** (or **OAuth consent screen**), set it up as **External**, add your own address as a test user, then **Publish app** so the sign-in doesn't expire after 7 days. Google warns that the app isn't verified; click **Advanced › Go to …** to continue.
-3. Under **Clients** (or **Credentials › Create credentials › OAuth client ID**), create a client of type **Desktop app**.
-4. Paste its **Client ID** and **Client secret** under **Calendar** in the island's settings and click **Sign in with Google**.
+Open the calendar tab, or **Calendar** in settings, and click **Sign in with Google**. Google's sign-in opens in a browser sheet; pick your account and allow access to your calendars (read, and add and change events for the assistant). That's all.
 
 The account stays signed in with a refresh token in `~/Library/Application Support/Dynamic Island/google-account.json`, readable only by you. **Sign Out** in settings deletes it and revokes access.
 
+The app's own Google client ID is `GoogleClientID` in `Resources/Info.plist`: an OAuth client of type **iOS** with bundle ID `com.emresunar.DynamicIsland` in a Google Cloud project with the Google Calendar API turned on. It has no secret, and the redirect is the reversed client ID as a URL scheme.
+
 The tab lists the rest of today's events, or tomorrow's once the day is done. A few minutes before an event starts, a reminder drops out of the notch. Choose how early, from 1 to 30 minutes, under **Calendar** in settings. Click the reminder to open the calendar tab, or **Join** to open a Meet, Zoom or Teams link. Click an event to open it in Google Calendar in your browser. Under **Calendars** in settings you pick which of your calendars the island shows.
+
+**Ask your calendar.** At the top of the tab is a field where you type what you want, in Swedish or English: "Lägg till möte med Ruben imorgon kl 17", "flytta det till 18", "ta bort lunchen på fredag", "när träffade jag senast Sara?". Claude (Opus 5.5) understands it, looks things up and makes the change through the Google Calendar API, and answers under the field. Follow-ups within ten minutes keep the context. It needs your own Claude API key from [console.anthropic.com](https://console.anthropic.com/settings/keys), pasted under **Calendar › Assistant** in settings; it's kept in `~/Library/Application Support/Dynamic Island/claude-api-key`, readable only by you. Each question costs a few cents at most. While the field has the keyboard, the island stays open when the pointer leaves; press Esc or click elsewhere to close it.
 
 ### Clipboard
 

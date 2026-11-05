@@ -45,13 +45,7 @@ final class CalendarService {
     /// The event the reminder in the island is about.
     private(set) var reminder: Event?
 
-    /// From a "Desktop app" OAuth client in Google Cloud Console.
-    var clientID: String {
-        didSet { UserDefaults.standard.set(clientID.trimmingCharacters(in: .whitespacesAndNewlines), forKey: Key.clientID) }
-    }
-    var clientSecret: String {
-        didSet { UserDefaults.standard.set(clientSecret.trimmingCharacters(in: .whitespacesAndNewlines), forKey: Key.clientSecret) }
-    }
+    /// The app's own Google client ID; a "googleClientID" default overrides it, for development.
     var hasClientID: Bool { !credentials.clientID.isEmpty }
 
     var onReminder: ((Event) -> Void)?
@@ -70,19 +64,10 @@ final class CalendarService {
     /// Event and start, so a moved meeting gets a new reminder.
     @ObservationIgnored private var reminded: Set<String> = []
 
-    private enum Key {
-        static let clientID = "googleClientID"
-        static let clientSecret = "googleClientSecret"
-    }
-
-    init() {
-        clientID = UserDefaults.standard.string(forKey: Key.clientID) ?? ""
-        clientSecret = UserDefaults.standard.string(forKey: Key.clientSecret) ?? ""
-    }
-
     private var credentials: GoogleAuth.Credentials {
-        .init(clientID: clientID.trimmingCharacters(in: .whitespacesAndNewlines),
-              clientSecret: clientSecret.trimmingCharacters(in: .whitespacesAndNewlines))
+        let override = UserDefaults.standard.string(forKey: "googleClientID")?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return .init(clientID: override.isEmpty ? GoogleAuth.builtInClientID : override)
     }
 
     func start() {
@@ -104,7 +89,7 @@ final class CalendarService {
     /// Opens Google's sign-in page in the browser.
     func signIn() {
         guard hasClientID else {
-            errorMessage = "Add your Google client ID under Settings › Calendar first."
+            errorMessage = "This build has no Google client ID."
             return
         }
         guard access != .signingIn else { return }
@@ -248,12 +233,22 @@ final class CalendarService {
     }
 
     private func get<T: Decodable>(_ path: String, _ query: [URLQueryItem], token: String) async throws -> T {
+        let data = try await send("GET", path, query, body: nil, token: token)
+        return try JSONDecoder().decode(T.self, from: data)
+    }
+
+    private func send(_ method: String, _ path: String, _ query: [URLQueryItem], body: Data?, token: String) async throws -> Data {
         var components = URLComponents(string: "https://www.googleapis.com/calendar/v3/")!
         components.percentEncodedPath += path
-        components.queryItems = query
+        if !query.isEmpty { components.queryItems = query }
         guard let url = components.url else { throw GoogleAuth.AuthError.badResponse }
         var request = URLRequest(url: url)
+        request.httpMethod = method
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        if let body {
+            request.httpBody = body
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
         let (data, response) = try await URLSession.shared.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else {
@@ -261,8 +256,31 @@ final class CalendarService {
             let message = (try? JSONDecoder().decode(GoogleErrorResponse.self, from: data))?.error.message
             throw GoogleAuth.AuthError.google("HTTP \(status)", message)
         }
-        return try JSONDecoder().decode(T.self, from: data)
+        return data
     }
+
+    // MARK: For the assistant
+
+    /// Calls the Calendar API as the signed-in user and returns the parsed JSON (or nil for an empty body).
+    /// `path` is relative to calendar/v3, with ids already encoded via `encodedID(_:)`.
+    func call(_ method: String, _ path: String, query: [URLQueryItem] = [], json: [String: Any]? = nil) async throws -> Any? {
+        guard access == .signedIn else { throw GoogleAuth.AuthError.signedOut }
+        let token = try await auth.validAccessToken(credentials)
+        let body = try json.map { try JSONSerialization.data(withJSONObject: $0) }
+        let data = try await send(method, path, query, body: body, token: token)
+        guard !data.isEmpty else { return nil }
+        return try JSONSerialization.jsonObject(with: data)
+    }
+
+    /// After the assistant changed something.
+    func refreshNow() {
+        lastFetch = .distantPast
+        reload(maxAge: 0)
+    }
+
+    static func encodedID(_ id: String) -> String { pathEncoded(id) }
+
+    static func apiDate(_ date: Date) -> String { queryDate(date) }
 
     /// Picks today's remaining events, or tomorrow's, from what was fetched.
     private func update() {

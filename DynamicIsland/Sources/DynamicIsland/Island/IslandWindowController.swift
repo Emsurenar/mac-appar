@@ -21,7 +21,10 @@ final class IslandPanel: NSPanel {
         ignoresMouseEvents = true
     }
 
-    override var canBecomeKey: Bool { false }
+    /// Only while a text field in the island needs typing (the calendar assistant). As a nonactivating
+    /// panel it takes the keyboard without activating the app or taking focus from the app in front.
+    var acceptsKeyboard = false
+    override var canBecomeKey: Bool { acceptsKeyboard }
     override var canBecomeMain: Bool { false }
 
     // Borderless windows are otherwise pushed below the menu bar.
@@ -122,6 +125,7 @@ final class IslandWindowController {
         }
         installMouseMonitors()
         observeHoverZone()
+        observeKeyboard()
         #if DEBUG
         if CommandLine.arguments.contains("--trace") { trace() }
         #endif
@@ -202,6 +206,25 @@ final class IslandWindowController {
               ShelfDrop.hasFiles(pasteboard) else { return }
         handledDragCount = count
         model.showShelfForDrop()
+    }
+
+    /// Lets the panel become key while the calendar tab is open, and gives the keyboard back when it closes.
+    private func observeKeyboard() {
+        withObservationTracking {
+            let accepts = model.acceptsKeyboard
+            if accepts != panel.acceptsKeyboard {
+                panel.acceptsKeyboard = accepts
+                if !accepts && panel.isKeyWindow {
+                    // Ordering out drops key status, so typing goes back to the app in front.
+                    panel.orderOut(nil)
+                    panel.orderFrontRegardless()
+                }
+            }
+        } onChange: { [weak self] in
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { self?.observeKeyboard() }
+            }
+        }
     }
 
     /// Re-evaluates the pointer whenever the island changes shape under it.

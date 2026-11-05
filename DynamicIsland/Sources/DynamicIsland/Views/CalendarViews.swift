@@ -67,7 +67,7 @@ struct CalendarTab: View {
                             action: .init(title: "Cancel") { calendar.cancelSignIn() })
         } else if !calendar.hasClientID {
             CalendarMessage(title: "Show your Google Calendar", detail: "Add a Google client ID under Settings › Calendar.",
-                            action: .init(title: "Settings") { model.onOpenSettings?() })
+                            action: .init(title: "Settings") { model.openSettings(.calendar) })
         } else {
             CalendarMessage(title: "Show your Google Calendar",
                             detail: calendar.errorMessage ?? "Sign in with your Google account.",

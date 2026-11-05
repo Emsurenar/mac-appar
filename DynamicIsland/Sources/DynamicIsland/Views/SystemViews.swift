@@ -119,7 +119,7 @@ struct SystemTab: View {
         let watts = abs(power.watts)
         let isDraining = power.watts < -0.5
         var detail = "\(power.percent) %"
-        if let minutes = power.minutesRemaining {
+        if let minutes = power.minutesRemaining, isDraining || power.isCharging {
             detail += " · " + formatDuration(TimeInterval(minutes * 60)) + (isDraining ? " left" : " to full")
         }
         let isHeavy = isDraining && watts >= 20

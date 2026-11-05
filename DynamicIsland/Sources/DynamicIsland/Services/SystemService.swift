@@ -19,10 +19,11 @@ final class SystemService {
         /// The bundle when the usage belongs to an app, so it can be quit.
         let appURL: URL?
 
-        /// Running apps other than this one can be asked to quit.
+        /// Running apps other than this one can be asked to quit. macOS's own agents just come back.
         var isQuittable: Bool {
             guard let path = appURL?.standardizedFileURL.path,
-                  path != Bundle.main.bundleURL.standardizedFileURL.path else { return false }
+                  path != Bundle.main.bundleURL.standardizedFileURL.path,
+                  !path.hasPrefix("/System/Library/") else { return false }
             return NSWorkspace.shared.runningApplications.contains { $0.bundleURL?.standardizedFileURL.path == path }
         }
     }

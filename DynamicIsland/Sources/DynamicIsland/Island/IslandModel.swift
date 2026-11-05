@@ -3,6 +3,19 @@ import SwiftUI
 
 enum IslandTab: Hashable {
     case media, home, posture, water, calendar, clipboard, system
+
+    /// The settings page for this tab, so the island and Settings always line up.
+    var settingsPage: SettingsPage {
+        switch self {
+        case .media: .nowPlaying
+        case .home: .home
+        case .posture: .posture
+        case .water: .water
+        case .calendar: .calendar
+        case .clipboard: .clipboard
+        case .system: .system
+        }
+    }
 }
 
 enum HUDKind: Equatable {

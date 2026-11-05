@@ -44,39 +44,43 @@ struct OpenIslandView: View {
     private var header: some View {
         HStack(spacing: 0) {
             HStack(spacing: 2) {
-                tabButton(.media, symbol: "music.note", help: "Now Playing")
+                tabButton(.media)
                 if model.settings.showHomeTab {
-                    tabButton(.home, symbol: "house.fill", help: "Home")
+                    tabButton(.home)
                 }
                 if model.showsPostureTab {
-                    tabButton(.posture, symbol: "figure.stand", help: "Posture")
+                    tabButton(.posture)
                 }
                 if model.showsWaterTab {
-                    tabButton(.water, symbol: "drop.fill", help: "Water")
+                    tabButton(.water)
                 }
             }
             Spacer(minLength: model.notch.width + 12)
             if model.showsCalendarTab {
-                tabButton(.calendar, symbol: "calendar", help: "Calendar")
+                tabButton(.calendar)
             }
             if model.showsClipboardTab {
-                tabButton(.clipboard, symbol: "doc.on.clipboard", help: "Clipboard and files")
+                tabButton(.clipboard)
             }
             if model.showsSystemTab {
-                tabButton(.system, symbol: "gauge.with.dots.needle.67percent", help: "System")
+                tabButton(.system)
             }
-            Button { model.openSettings() } label: {
+            // Settings opens on the page for the tab that's showing.
+            Button { model.openSettings(model.currentTab.settingsPage) } label: {
                 Image(systemName: "gearshape.fill").font(.system(size: 12, weight: .semibold))
             }
             .buttonStyle(IslandButtonStyle(diameter: 26))
-            .help("Settings")
+            .help("\(model.currentTab.settingsPage.title) Settings")
         }
         .padding(.horizontal, IslandLayout.contentPadding - 6)
         .frame(height: model.notch.height)
     }
 
-    private func tabButton(_ tab: IslandTab, symbol: String, help: String) -> some View {
+    /// Icon and name come from the tab's settings page, so both always match.
+    private func tabButton(_ tab: IslandTab) -> some View {
         let isSelected = model.currentTab == tab
+        let symbol = tab.settingsPage.symbol
+        let help = tab.settingsPage.title
         return Button { model.select(tab) } label: {
             Image(systemName: symbol)
                 .font(.system(size: 12, weight: .semibold))

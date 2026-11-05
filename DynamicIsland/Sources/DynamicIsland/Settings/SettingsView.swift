@@ -13,7 +13,8 @@ enum SettingsPage: String, CaseIterable, Identifiable {
 
     static let groups: [[SettingsPage]] = [
         [.general],
-        [.nowPlaying, .home, .water, .calendar, .clipboard, .system, .posture, .unknot],
+        // The island's tabs, in the order they sit in the island, then Unknot.
+        [.nowPlaying, .home, .posture, .water, .calendar, .clipboard, .system, .unknot],
         [.volume, .screenshots],
         [.about],
     ]
@@ -41,7 +42,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         case .nowPlaying: "music.note"
         case .home: "house.fill"
         case .calendar: "calendar"
-        case .clipboard: "doc.on.clipboard.fill"
+        case .clipboard: "doc.on.clipboard"
         case .system: "gauge.with.dots.needle.67percent"
         case .posture: "figure.stand"
         case .unknot: "figure.cooldown"

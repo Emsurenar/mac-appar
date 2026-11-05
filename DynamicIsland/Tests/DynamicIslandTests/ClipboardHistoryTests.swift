@@ -60,4 +60,31 @@ final class ClipboardHistoryTests: XCTestCase {
         history.clear()
         XCTAssertTrue(history.items.isEmpty)
     }
+
+    func testFilesAreKeptAndDeduplicated() {
+        var history = ClipboardHistory()
+        let file = URL(fileURLWithPath: "/tmp/report.pdf")
+        history.add(ClipboardItem(content: .files([file])))
+        history.add(text("one"))
+        history.add(ClipboardItem(content: .files([file])))
+        XCTAssertEqual(history.items.count, 2)
+        XCTAssertEqual(history.items.first?.content, .files([file]))
+    }
+
+    func testEmptyContentIsNotKept() {
+        var history = ClipboardHistory()
+        XCTAssertFalse(history.add(ClipboardItem(content: .files([]))))
+        XCTAssertFalse(history.add(ClipboardItem(content: .image(Data()))))
+        XCTAssertTrue(history.items.isEmpty)
+    }
+
+    func testPickingKeepsTheFormatting() {
+        var history = ClipboardHistory()
+        let snapshot = PasteboardSnapshot(items: [["public.rtf": Data([1]), "public.utf8-plain-text": Data([2])]])
+        let item = ClipboardItem(content: .text("bold"), snapshot: snapshot)
+        history.add(item)
+        history.add(text("other"))
+        history.add(ClipboardItem(id: item.id, content: item.content, snapshot: item.snapshot))
+        XCTAssertEqual(history.items.first?.snapshot, snapshot)
+    }
 }

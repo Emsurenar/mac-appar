@@ -33,6 +33,9 @@ struct OpenIslandView: View {
                 case .system:
                     SystemTab()
                         .transition(.islandContent(scale: 0.97))
+                case .settings:
+                    SettingsTab()
+                        .transition(.islandContent(scale: 0.97))
                 }
             }
             .padding(.horizontal, IslandLayout.contentPadding)
@@ -65,12 +68,8 @@ struct OpenIslandView: View {
             if model.showsSystemTab {
                 tabButton(.system)
             }
-            // Settings opens on the page for the tab that's showing.
-            Button { model.openSettings(model.currentTab.settingsPage) } label: {
-                Image(systemName: "gearshape.fill").font(.system(size: 12, weight: .semibold))
-            }
-            .buttonStyle(IslandButtonStyle(diameter: 26))
-            .help("\(model.currentTab.settingsPage.title) Settings")
+            // Settings is a page like the others; it opens on the part you came from.
+            tabButton(.settings)
         }
         .padding(.horizontal, IslandLayout.contentPadding - 6)
         .frame(height: model.notch.height)
@@ -79,8 +78,8 @@ struct OpenIslandView: View {
     /// Icon and name come from the tab's settings page, so both always match.
     private func tabButton(_ tab: IslandTab) -> some View {
         let isSelected = model.currentTab == tab
-        let symbol = tab.settingsPage.symbol
-        let help = tab.settingsPage.title
+        let symbol = tab.symbol
+        let help = tab.title
         return Button { model.select(tab) } label: {
             Image(systemName: symbol)
                 .font(.system(size: 12, weight: .semibold))

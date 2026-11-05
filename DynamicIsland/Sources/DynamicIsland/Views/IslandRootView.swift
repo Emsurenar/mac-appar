@@ -24,10 +24,9 @@ struct IslandRootView: View {
             if presentation != .open { model.open() }
         }
         .contextMenu {
-            if presentation == .open {
-                Button("\(model.currentTab.settingsPage.title) Settings…") { model.openSettings(model.currentTab.settingsPage) }
+            Button("Settings…") {
+                model.openSettings(model.currentTab == .settings ? model.islandSettingsSection : model.currentTab.settingsPage)
             }
-            Button("Settings…") { model.openSettings(.general) }
             Divider()
             Button("Quit Dynamic Island") { NSApp.terminate(nil) }
         }

@@ -3,10 +3,13 @@ import SwiftUI
 
 enum IslandTab: Hashable {
     case media, home, posture, water, calendar, clipboard, system
+    /// The island's own settings page, last in the row like the gear always was.
+    case settings
 
     /// The settings page for this tab, so the island and Settings always line up.
     var settingsPage: SettingsPage {
         switch self {
+        case .settings: .general
         case .media: .nowPlaying
         case .home: .home
         case .posture: .posture
@@ -16,6 +19,9 @@ enum IslandTab: Hashable {
         case .system: .system
         }
     }
+
+    var symbol: String { self == .settings ? "gearshape.fill" : settingsPage.symbol }
+    var title: String { self == .settings ? "Settings" : settingsPage.title }
 }
 
 enum HUDKind: Equatable {
@@ -72,6 +78,8 @@ enum IslandLayout {
     static let clipboardRowHeight: CGFloat = 36
     static let maxClipboardRows = 5
     static let clipboardEmptyHeight: CGFloat = 112
+    /// Four rows show at once in the island's settings; more scroll.
+    static let settingsListHeight: CGFloat = 4 * systemRowHeight
     static let screenshotThumbnailSize = CGSize(width: 96, height: 60)
 }
 
@@ -121,6 +129,8 @@ final class IslandModel {
     @ObservationIgnored var onOpenSettings: (() -> Void)?
     /// The page the settings window shows.
     var settingsPage: SettingsPage = .general
+    /// The part whose switches the island's own settings page shows.
+    var islandSettingsSection: SettingsPage = .general
     @ObservationIgnored var onOpenWelcome: (() -> Void)?
     @ObservationIgnored private var openTask: Task<Void, Never>?
     @ObservationIgnored private var closeTask: Task<Void, Never>?
@@ -298,6 +308,8 @@ final class IslandModel {
             return height
         case .system:
             return 4 + CGFloat(system.rowCount) * IslandLayout.systemRowHeight + 16
+        case .settings:
+            return 2 + 26 + IslandLayout.sectionHeaderHeight + IslandLayout.settingsListHeight + 14
         }
     }
 
@@ -450,6 +462,11 @@ final class IslandModel {
 
     func toggle() { isOpen ? close() : open() }
 
+    func selectSettingsSection(_ page: SettingsPage) {
+        guard page != islandSettingsSection else { return }
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { islandSettingsSection = page }
+    }
+
     /// Opens the settings window, on the given page if there is one.
     func openSettings(_ page: SettingsPage? = nil) {
         if let page { settingsPage = page }
@@ -468,6 +485,11 @@ final class IslandModel {
         if tab == .clipboard { shelf.prune() }
         isChoosingShortcuts = false
         guard tab != self.tab else { return }
+        // Settings opens on the part you came from.
+        if tab == .settings {
+            let page = currentTab.settingsPage
+            islandSettingsSection = SettingsPage.islandSections.contains(page) ? page : .general
+        }
         withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) {
             self.tab = tab
             isChoosingOutput = false

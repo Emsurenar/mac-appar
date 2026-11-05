@@ -66,9 +66,14 @@ final class PostureService {
                 self.onAlert?(alert)
             }
         })
-        // Re-evaluates the connection when Posture goes quiet (e.g. it crashed).
+        // Re-evaluates the connection when Posture goes quiet (e.g. it crashed), and keeps asking: Posture only
+        // sends a state on a check, so an idle or uncalibrated Posture, or one started later, answers the hello.
         timer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.refreshConnection() }
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                if Date().timeIntervalSince(self.lastHello) >= 30 { self.sayHello() }
+                self.refreshConnection()
+            }
         }
         sayHello()
     }

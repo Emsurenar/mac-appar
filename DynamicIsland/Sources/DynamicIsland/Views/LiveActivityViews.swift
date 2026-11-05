@@ -126,14 +126,41 @@ private struct OutputDeviceHUD: View {
                         .foregroundStyle(.white.opacity(0.55))
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 17))
-                    .foregroundStyle(.white, .green)
+                if let battery = model.airPods.battery {
+                    BatteryRing(percent: battery)
+                } else {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 17))
+                        .foregroundStyle(.white, .green)
+                }
             }
             .padding(.horizontal, 16)
             .padding(.top, 2)
         }
         .padding(.horizontal, model.earRadius)
         .onAppear { bounce.toggle() }
+    }
+}
+
+/// The AirPods battery as a ring with the percentage beside it, like iOS shows on connect.
+private struct BatteryRing: View {
+    let percent: Int
+
+    var body: some View {
+        let color: Color = percent <= 20 ? .red : .green
+        HStack(spacing: 6) {
+            Text("\(percent)%")
+                .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                .foregroundStyle(color)
+            ZStack {
+                Circle().stroke(color.opacity(0.25), lineWidth: 3)
+                Circle()
+                    .trim(from: 0, to: CGFloat(percent) / 100)
+                    .stroke(color, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
+            .frame(width: 17, height: 17)
+        }
+        .transition(.scale.combined(with: .opacity))
     }
 }

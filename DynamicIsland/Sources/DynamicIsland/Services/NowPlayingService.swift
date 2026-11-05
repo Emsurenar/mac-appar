@@ -30,6 +30,7 @@ final class NowPlayingService {
     @ObservationIgnored private var isStopping = false
     @ObservationIgnored private var restartDelay: Double = 1
     @ObservationIgnored private var hasReceivedSnapshot = false
+    @ObservationIgnored private var resyncTask: Task<Void, Never>?
 
     var hasMedia: Bool { !title.isEmpty }
     var subtitle: String { artist.isEmpty ? album : artist }
@@ -49,6 +50,14 @@ final class NowPlayingService {
         anchorDate = Date()
         isPlaying.toggle()
         send("toggle")
+        // If the player ignored the command, the bridge sees no change and stays quiet,
+        // so ask for the real state again or the button would stay wrong.
+        resyncTask?.cancel()
+        resyncTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(1.2))
+            guard !Task.isCancelled else { return }
+            self?.send("refresh")
+        }
     }
 
     func nextTrack() { send("next") }

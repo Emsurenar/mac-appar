@@ -302,7 +302,6 @@ private struct OutputPanel: View {
                    alignment: .top)
             .padding(.horizontal, -6)
         }
-        .onChange(of: audio.currentDeviceID) { model.airPods.refresh(for: audio.currentDevice) }
     }
 
     private func sectionHeader(_ title: String) -> some View {

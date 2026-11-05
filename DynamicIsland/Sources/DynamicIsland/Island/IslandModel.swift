@@ -149,7 +149,9 @@ final class IslandModel {
             self.showHUD(.volume)
         }
         audio.onOutputDeviceChange = { [weak self] _ in
-            guard let self, self.settings.showDeviceChanges else { return }
+            guard let self else { return }
+            self.airPods.refresh(for: self.audio.currentDevice)
+            guard self.settings.showDeviceChanges else { return }
             self.showHUD(.outputDevice)
         }
         keyInterceptor.handler = { [weak self] key, fine in

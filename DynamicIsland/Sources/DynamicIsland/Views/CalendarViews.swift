@@ -188,7 +188,7 @@ private struct EventRow: View {
 
 // MARK: - Assistant
 
-/// One line to ask the calendar something or change it, with Claude's answer below.
+/// One line to ask the calendar something or change it, with the assistant's answer below.
 private struct AssistantField: View {
     @Environment(IslandModel.self) private var model
     @State private var text = ""
@@ -202,7 +202,7 @@ private struct AssistantField: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.6))
                 TextField("", text: $text, prompt: Text(assistant.hasAPIKey ? "Ask or tell your calendar…"
-                                                             : "Add a Claude API key in Settings to ask your calendar")
+                                                             : "Add a \(assistant.provider.name) API key in Settings to ask your calendar")
                     .foregroundColor(.white.opacity(0.4)))
                     .textFieldStyle(.plain)
                     .font(.system(size: 13))

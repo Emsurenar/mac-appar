@@ -2,53 +2,91 @@ import Foundation
 
 /// Answers questions about the calendar and adds, moves and removes events, from a line typed in
 /// the calendar tab ("Lägg till möte med Ruben imorgon kl 17", "When did I last see Sara?").
-/// Claude does the understanding through the Messages API and tool use; the tools run here against
-/// the Google Calendar API as the signed-in user.
+/// Gemini or Claude does the understanding with tool use; the tools run here against the
+/// Google Calendar API as the signed-in user.
 @MainActor @Observable
 final class CalendarAssistant {
+    enum Provider: String, CaseIterable, Identifiable {
+        case gemini, claude
+        var id: Self { self }
+        var name: String { self == .gemini ? "Gemini" : "Claude" }
+    }
+
     private(set) var isWorking = false
-    /// Claude's last answer, shown under the field.
+    /// The last answer, shown under the field.
     private(set) var reply: String?
     private(set) var errorMessage: String?
     /// What the user asked, shown above the answer.
     private(set) var question: String?
 
-    var hasAPIKey: Bool { !apiKey.isEmpty }
-
+    var provider: Provider {
+        didSet {
+            UserDefaults.standard.set(provider.rawValue, forKey: "assistantProvider")
+            clear()
+        }
+    }
+    /// From Google AI Studio, kept in a file only this user can read.
+    var geminiKey: String {
+        didSet { Self.saveKey(geminiKey.trimmingCharacters(in: .whitespacesAndNewlines), file: "gemini-api-key") }
+    }
     /// From console.anthropic.com, kept in a file only this user can read.
-    var apiKey: String {
-        didSet { Self.saveKey(apiKey.trimmingCharacters(in: .whitespacesAndNewlines)) }
+    var claudeKey: String {
+        didSet { Self.saveKey(claudeKey.trimmingCharacters(in: .whitespacesAndNewlines), file: "claude-api-key") }
     }
 
+    private var key: String {
+        (provider == .gemini ? geminiKey : claudeKey).trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    var hasAPIKey: Bool { !key.isEmpty }
+
     @ObservationIgnored private let calendar: CalendarService
-    /// The conversation, sent back as is so follow-ups ("make it 18 instead") work.
+    /// The conversation, sent back as is (thinking and thought signatures included), so follow-ups
+    /// ("make it 18 instead") work. One shape per provider.
     @ObservationIgnored private var messages: [[String: Any]] = []
+    @ObservationIgnored private var contents: [[String: Any]] = []
     @ObservationIgnored private var lastActivity = Date.distantPast
     @ObservationIgnored private var task: Task<Void, Never>?
+    /// The first Gemini model that answers, from newest alias to a fixed version.
+    @ObservationIgnored private var geminiModels = ["gemini-pro-latest", "gemini-flash-latest", "gemini-2.5-pro"]
 
-    static let model = "claude-opus-5-5"
+    static let claudeModel = "claude-opus-5-5"
 
     init(calendar: CalendarService) {
         self.calendar = calendar
-        apiKey = Self.loadKey()
+        geminiKey = Self.loadKey(file: "gemini-api-key")
+        claudeKey = Self.loadKey(file: "claude-api-key")
+        let saved = UserDefaults.standard.string(forKey: "assistantProvider").flatMap(Provider.init(rawValue:))
+        // Without a choice, whichever has a key, Gemini first.
+        provider = saved ?? (Self.loadKey(file: "claude-api-key").isEmpty || !Self.loadKey(file: "gemini-api-key").isEmpty
+                             ? .gemini : .claude)
     }
 
     func ask(_ text: String) {
         let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, !isWorking else { return }
         guard hasAPIKey else {
-            errorMessage = "Add a Claude API key under Settings › Calendar."
+            errorMessage = "Add a \(provider.name) API key under Settings › Calendar."
             return
         }
         // A new topic after a pause starts a new conversation.
-        if Date().timeIntervalSince(lastActivity) > 10 * 60 { messages = [] }
+        if Date().timeIntervalSince(lastActivity) > 10 * 60 {
+            messages = []
+            contents = []
+        }
         question = text
         reply = nil
         errorMessage = nil
         isWorking = true
-        messages.append(["role": "user", "content": text])
+        switch provider {
+        case .claude: messages.append(["role": "user", "content": text])
+        case .gemini: contents.append(["role": "user", "parts": [["text": text]]])
+        }
+        let provider = provider
         task = Task { [weak self] in
-            await self?.run()
+            switch provider {
+            case .claude: await self?.runClaude()
+            case .gemini: await self?.runGemini()
+            }
             self?.isWorking = false
             self?.lastActivity = Date()
         }
@@ -62,14 +100,15 @@ final class CalendarAssistant {
     func clear() {
         task?.cancel()
         messages = []
+        contents = []
         reply = nil
         errorMessage = nil
         question = nil
     }
 
-    // MARK: Loop
+    // MARK: Claude
 
-    private func run() async {
+    private func runClaude() async {
         do {
             for _ in 0..<10 {
                 try Task.checkCancellation()
@@ -124,7 +163,7 @@ final class CalendarAssistant {
 
     private func send() async throws -> [String: Any] {
         let body: [String: Any] = [
-            "model": Self.model,
+            "model": Self.claudeModel,
             "max_tokens": 16000,
             "thinking": ["type": "adaptive"],
             "output_config": ["effort": "medium"],
@@ -137,7 +176,7 @@ final class CalendarAssistant {
         request.httpMethod = "POST"
         request.timeoutInterval = 120
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(apiKey.trimmingCharacters(in: .whitespacesAndNewlines), forHTTPHeaderField: "x-api-key")
+        request.setValue(key, forHTTPHeaderField: "x-api-key")
         request.setValue("2026-10-21", forHTTPHeaderField: "anthropic-version")
         request.setValue("server-side-fallback-2026-07-01", forHTTPHeaderField: "anthropic-beta")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -154,6 +193,106 @@ final class CalendarAssistant {
             }
         }
         return json
+    }
+
+    // MARK: Gemini
+
+    private func runGemini() async {
+        do {
+            for _ in 0..<10 {
+                try Task.checkCancellation()
+                let response = try await sendGemini()
+                guard let candidate = (response["candidates"] as? [[String: Any]])?.first,
+                      let content = candidate["content"] as? [String: Any],
+                      let parts = content["parts"] as? [[String: Any]], !parts.isEmpty else {
+                    contents = []
+                    let candidate = (response["candidates"] as? [[String: Any]])?.first
+                    let reason = candidate?["finishReason"] as? String
+                        ?? (response["promptFeedback"] as? [String: Any])?["blockReason"] as? String
+                    errorMessage = "Gemini gave no answer\(reason.map { " (\($0))" } ?? ""). Try saying it another way."
+                    return
+                }
+                // Sent back unchanged, thought signatures included.
+                contents.append(["role": "model", "parts": parts])
+                let calls = parts.compactMap { $0["functionCall"] as? [String: Any] }
+                if !calls.isEmpty {
+                    var responses: [[String: Any]] = []
+                    for call in calls {
+                        let name = call["name"] as? String ?? ""
+                        var result: [String: Any] = ["name": name]
+                        if let id = call["id"] { result["id"] = id }
+                        do {
+                            let output = try await runTool(name, call["args"] as? [String: Any] ?? [:])
+                            let parsed = try? JSONSerialization.jsonObject(with: Data(output.utf8))
+                            result["response"] = ["result": parsed ?? output]
+                        } catch {
+                            result["response"] = ["error": error.localizedDescription]
+                        }
+                        responses.append(["functionResponse": result])
+                    }
+                    contents.append(["role": "user", "parts": responses])
+                    continue
+                }
+                let text = parts.filter { $0["thought"] as? Bool != true }
+                    .compactMap { $0["text"] as? String }
+                    .joined().trimmingCharacters(in: .whitespacesAndNewlines)
+                reply = text.isEmpty ? "Done." : text
+                return
+            }
+            errorMessage = "That took too many steps. Try asking more simply."
+        } catch is CancellationError {
+            contents = []
+        } catch {
+            errorMessage = error.localizedDescription
+            contents = []
+        }
+    }
+
+    private func sendGemini() async throws -> [String: Any] {
+        let declarations = Self.tools.map { tool -> [String: Any] in
+            var declaration: [String: Any] = ["name": tool["name"] ?? "", "description": tool["description"] ?? ""]
+            if let schema = tool["input_schema"] as? [String: Any],
+               let properties = schema["properties"] as? [String: Any], !properties.isEmpty {
+                declaration["parameters"] = schema
+            }
+            return declaration
+        }
+        let body: [String: Any] = [
+            "systemInstruction": ["parts": [["text": systemPrompt()]]],
+            "contents": contents,
+            "tools": [["functionDeclarations": declarations]],
+        ]
+        let data = try JSONSerialization.data(withJSONObject: body)
+        while let model = geminiModels.first {
+            var request = URLRequest(url: URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent")!)
+            request.httpMethod = "POST"
+            request.timeoutInterval = 120
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue(key, forHTTPHeaderField: "x-goog-api-key")
+            request.httpBody = data
+            let (responseData, response) = try await URLSession.shared.data(for: request)
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            let json = (try? JSONSerialization.jsonObject(with: responseData)) as? [String: Any] ?? [:]
+            if (200..<300).contains(status) { return json }
+            let error = json["error"] as? [String: Any]
+            let message = error?["message"] as? String
+            // This alias isn't served (any more): try the next model.
+            if status == 404 && geminiModels.count > 1 {
+                geminiModels.removeFirst()
+                continue
+            }
+            switch status {
+            case 400 where (message ?? "").localizedCaseInsensitiveContains("API key"):
+                throw APIError(message: "The Gemini API key doesn't work. Check it under Settings › Calendar.")
+            case 429:
+                throw APIError(message: "Gemini's quota is used up for now. Turn on billing for the key's project, or try again in a minute.")
+            case 500...599:
+                throw APIError(message: "Gemini is busy right now. Try again in a moment.")
+            default:
+                throw APIError(message: message ?? "Gemini answered with HTTP \(status).")
+            }
+        }
+        throw APIError(message: "No Gemini model answered.")
     }
 
     private func systemPrompt() -> String {
@@ -416,20 +555,20 @@ final class CalendarAssistant {
         return String(decoding: data, as: UTF8.self)
     }
 
-    // MARK: Key file
+    // MARK: Key files
 
-    private static var keyURL: URL {
+    private static func keyURL(_ file: String) -> URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Dynamic Island", isDirectory: true)
-            .appendingPathComponent("claude-api-key")
+            .appendingPathComponent(file)
     }
 
-    private static func loadKey() -> String {
-        ((try? String(contentsOf: keyURL, encoding: .utf8)) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+    private static func loadKey(file: String) -> String {
+        ((try? String(contentsOf: keyURL(file), encoding: .utf8)) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private static func saveKey(_ key: String) {
-        let url = keyURL
+    private static func saveKey(_ key: String, file: String) {
+        let url = keyURL(file)
         let manager = FileManager.default
         guard !key.isEmpty else {
             try? manager.removeItem(at: url)

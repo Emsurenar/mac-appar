@@ -203,17 +203,32 @@ struct SettingsView: View {
                     .disabled(!settings.showCalendarReminders)
                 }
 
-                SettingsSection("Assistant", footer: "Type in the calendar tab to ask about your calendar or change it, like “Lägg till möte med Ruben imorgon kl 17”, “ta bort lunchen på fredag” or “när träffade jag senast Sara?”. Claude does the understanding, with your own API key from console.anthropic.com. The key is kept on this Mac only.") {
+                SettingsSection("Assistant", footer: assistant.provider == .gemini
+                    ? "Type in the calendar tab to ask about your calendar or change it, like “Lägg till möte med Ruben imorgon kl 17”, “ta bort lunchen på fredag” or “när träffade jag senast Sara?”. Gemini does the understanding. Create the key in Google AI Studio in the same Google Cloud project as the sign-in, with billing turned on, so it is paid from that project's credit. The key is kept on this Mac only."
+                    : "Type in the calendar tab to ask about your calendar or change it, like “Lägg till möte med Ruben imorgon kl 17”, “ta bort lunchen på fredag” or “när träffade jag senast Sara?”. Claude does the understanding, with your own API key from console.anthropic.com. The key is kept on this Mac only.") {
                     SettingsRow {
-                        Text("Claude API key")
+                        Text("Model")
                         Spacer()
-                        SecureField("sk-ant-…", text: $assistant.apiKey)
+                        Picker("", selection: $assistant.provider) {
+                            ForEach(CalendarAssistant.Provider.allCases) { Text($0.name).tag($0) }
+                        }
+                        .labelsHidden()
+                        .fixedSize()
+                    }
+                    SettingsRow {
+                        Text("\(assistant.provider.name) API key")
+                        Spacer()
+                        SecureField(assistant.provider == .gemini ? "AIza…" : "sk-ant-…",
+                                    text: assistant.provider == .gemini ? $assistant.geminiKey : $assistant.claudeKey)
                             .textFieldStyle(.plain)
                             .multilineTextAlignment(.trailing)
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: 320)
                     }
-                    SettingsRow(action: { NSWorkspace.shared.open(URL(string: "https://console.anthropic.com/settings/keys")!) }) {
+                    SettingsRow(action: {
+                        let link = assistant.provider == .gemini ? "https://aistudio.google.com/apikey" : "https://console.anthropic.com/settings/keys"
+                        NSWorkspace.shared.open(URL(string: link)!)
+                    }) {
                         Text("Get a key")
                         Spacer()
                         Chevron()

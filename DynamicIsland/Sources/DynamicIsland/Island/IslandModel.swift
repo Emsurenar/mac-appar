@@ -106,6 +106,8 @@ final class IslandModel {
     var tab: IslandTab = .media
 
     @ObservationIgnored var onOpenSettings: (() -> Void)?
+    /// The page the settings window shows.
+    var settingsPage: SettingsPage = .general
     @ObservationIgnored var onOpenWelcome: (() -> Void)?
     @ObservationIgnored private var openTask: Task<Void, Never>?
     @ObservationIgnored private var closeTask: Task<Void, Never>?
@@ -378,9 +380,10 @@ final class IslandModel {
     var acceptsFileDrops: Bool { showsShelf && !ShelfDragSource.isDragging && !isDraggingScreenshot }
 
     /// Keeps the dropped files for a few minutes.
-    func dropFiles(_ urls: [URL]) -> Bool {
+    /// `force` is for promised files that arrive after the drop, when another drag may be under way.
+    func dropFiles(_ urls: [URL], force: Bool = false) -> Bool {
         isDropTargeted = false
-        guard acceptsFileDrops, !urls.isEmpty else { return false }
+        guard force ? showsShelf : acceptsFileDrops, !urls.isEmpty else { return false }
         shelf.add(urls, for: Self.shelfDuration)
         if !isOpen { showShelfForDrop() }
         return true
@@ -433,6 +436,12 @@ final class IslandModel {
     }
 
     func toggle() { isOpen ? close() : open() }
+
+    /// Opens the settings window, on the given page if there is one.
+    func openSettings(_ page: SettingsPage? = nil) {
+        if let page { settingsPage = page }
+        onOpenSettings?()
+    }
 
     /// Copies an older clipboard item again and, if allowed, pastes it into the app in front.
     func useClipboardItem(_ item: ClipboardItem) {

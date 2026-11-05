@@ -8,6 +8,7 @@ struct WelcomeView: View {
     @State private var launchAtLogin = LoginItem.isEnabled
     @State private var hasAccessibility = MediaKeyInterceptor.hasPermission
     @State private var moveError: String?
+    @State private var loginMessage: String?
     private let inApplications = AppMover.isInApplicationsFolder
     private let permissionTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     /// Closes the welcome; true opens the island for a moment to show where it is.
@@ -31,12 +32,11 @@ struct WelcomeView: View {
                         }
                     }
 
-                    SettingsSection("Basics") {
-                        SettingsToggle("Launch at login", isOn: $launchAtLogin)
-                            .onChange(of: launchAtLogin) { _, enabled in
-                                let isEnabled = LoginItem.set(enabled)
-                                if isEnabled != launchAtLogin { launchAtLogin = isEnabled }
-                            }
+                    SettingsSection("Basics", footer: loginMessage) {
+                        SettingsToggle("Launch at login", isOn: Binding(
+                            get: { launchAtLogin },
+                            set: { loginMessage = LoginItem.set($0); launchAtLogin = LoginItem.isEnabled }
+                        ))
                         SettingsToggle("Open when the pointer rests on the notch", isOn: settings.hoverToOpen)
                     }
 
@@ -87,6 +87,8 @@ struct WelcomeView: View {
         .frame(width: 520, height: 600)
         .onReceive(permissionTimer) { _ in
             hasAccessibility = MediaKeyInterceptor.hasPermission
+            launchAtLogin = LoginItem.isEnabled
+            if launchAtLogin { loginMessage = nil }
         }
     }
 
@@ -140,6 +142,7 @@ struct WelcomeView: View {
 
     private func chooseShortcuts() {
         onDone(false)
+        model.settings.showHomeTab = true
         model.select(.home)
         model.open()
         model.setChoosingShortcuts(true)

@@ -72,7 +72,7 @@ struct CalendarTab: View {
                             action: .init(title: "Cancel") { calendar.cancelSignIn() })
         } else if !calendar.hasClientID {
             CalendarMessage(title: "Google Calendar isn't set up", detail: "This build has no Google client ID.",
-                            action: .init(title: "Settings") { model.onOpenSettings?() })
+                            action: .init(title: "Settings") { model.openSettings(.calendar) })
         } else {
             CalendarMessage(title: "Show your Google Calendar",
                             detail: calendar.errorMessage ?? "Sign in with your Google account.",
@@ -214,7 +214,7 @@ private struct AssistantField: View {
                 if assistant.isWorking {
                     ProgressView().controlSize(.small).tint(.white)
                 } else if !assistant.hasAPIKey {
-                    Button("Settings") { model.onOpenSettings?() }
+                    Button("Settings") { model.openSettings(.calendar) }
                         .buttonStyle(CapsuleButtonStyle())
                 } else if !text.isEmpty {
                     Button(action: submit) {

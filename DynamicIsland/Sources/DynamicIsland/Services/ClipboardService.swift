@@ -1,10 +1,18 @@
 import AppKit
 import ApplicationServices
 
-/// What was copied: text, or an image such as a screenshot.
+/// What was copied: text, an image such as a screenshot (kept as PNG), or files from Finder.
 enum ClipboardContent: Equatable {
     case text(String)
     case image(Data)
+    case files([URL])
+}
+
+/// Everything an app put on the pasteboard, type by type, so a pick from the
+/// history pastes with its formatting (rich text, HTML, files) and not just as plain text.
+struct PasteboardSnapshot: Equatable {
+    /// One dictionary per pasteboard item, keyed by type identifier.
+    let items: [[String: Data]]
 }
 
 struct ClipboardItem: Identifiable, Equatable {
@@ -13,12 +21,16 @@ struct ClipboardItem: Identifiable, Equatable {
     let date: Date
     /// The app the item was copied from.
     let sourceBundleID: String?
+    /// The original pasteboard contents, when they were small enough to keep.
+    let snapshot: PasteboardSnapshot?
 
-    init(id: UUID = UUID(), content: ClipboardContent, date: Date = .now, sourceBundleID: String? = nil) {
+    init(id: UUID = UUID(), content: ClipboardContent, date: Date = .now, sourceBundleID: String? = nil,
+         snapshot: PasteboardSnapshot? = nil) {
         self.id = id
         self.content = content
         self.date = date
         self.sourceBundleID = sourceBundleID
+        self.snapshot = snapshot
     }
 }
 
@@ -37,8 +49,11 @@ struct ClipboardHistory: Equatable {
     /// Returns false when there is nothing worth keeping, e.g. only whitespace.
     @discardableResult
     mutating func add(_ item: ClipboardItem) -> Bool {
-        if case .text(let text) = item.content, text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return false
+        switch item.content {
+        case .text(let text) where text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty: return false
+        case .image(let data) where data.isEmpty: return false
+        case .files(let urls) where urls.isEmpty: return false
+        default: break
         }
         items.removeAll { $0.content == item.content }
         items.insert(item, at: 0)
@@ -74,7 +89,9 @@ final class ClipboardService {
         .init("com.agilebits.onepassword"),
     ]
     /// Larger images are skipped to keep memory in check.
-    private static let maxImageBytes = 8_000_000
+    private static let maxImageBytes = 25_000_000
+    /// Formatting is kept only up to this size; bigger copies fall back to the plain content.
+    private static let maxSnapshotBytes = 4_000_000
 
     func start() {
         guard timer == nil else { return }
@@ -95,14 +112,28 @@ final class ClipboardService {
     /// also pasted into the app in front.
     func use(_ item: ClipboardItem, paste: Bool) {
         pasteboard.clearContents()
-        switch item.content {
-        case .text(let text): pasteboard.setString(text, forType: .string)
-        case .image(let data): pasteboard.setData(data, forType: .tiff)
+        if let snapshot = item.snapshot, restore(snapshot) {
+            // Written as it was copied, with all its formats.
+        } else {
+            pasteboard.clearContents()
+            switch item.content {
+            case .text(let text):
+                pasteboard.setString(text, forType: .string)
+            case .image(let data):
+                pasteboard.setData(data, forType: .png)
+                if let tiff = NSImage(data: data)?.tiffRepresentation { pasteboard.setData(tiff, forType: .tiff) }
+            case .files(let urls):
+                pasteboard.writeObjects(urls as [NSURL])
+            }
         }
         // Our own write is not a new copy, but the item does move to the top.
         changeCount = pasteboard.changeCount
-        history.add(ClipboardItem(id: item.id, content: item.content, sourceBundleID: item.sourceBundleID))
-        if paste { Self.sendPaste() }
+        history.add(ClipboardItem(id: item.id, content: item.content, sourceBundleID: item.sourceBundleID,
+                                  snapshot: item.snapshot))
+        // Give the island a moment to close before the keystroke goes to the app in front.
+        if paste {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { Self.sendPaste() }
+        }
     }
 
     func remove(_ item: ClipboardItem) { history.remove(id: item.id) }
@@ -118,15 +149,58 @@ final class ClipboardService {
 
     private func capture() {
         let types = Set(pasteboard.types ?? [])
-        guard types.isDisjoint(with: Self.ignoredTypes) else { return }
+        guard !types.isEmpty, types.isDisjoint(with: Self.ignoredTypes) else { return }
         let source = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
-        if let text = pasteboard.string(forType: .string) {
-            history.add(ClipboardItem(content: .text(text), sourceBundleID: source))
-        } else if let data = pasteboard.data(forType: .tiff) ?? pasteboard.data(forType: .png),
-                  data.count <= Self.maxImageBytes,
-                  let image = NSImage(data: data), let tiff = image.tiffRepresentation {
-            history.add(ClipboardItem(content: .image(tiff), sourceBundleID: source))
+        guard let content = readContent(types: types) else { return }
+        history.add(ClipboardItem(content: content, sourceBundleID: source, snapshot: takeSnapshot()))
+    }
+
+    private func readContent(types: Set<NSPasteboard.PasteboardType>) -> ClipboardContent? {
+        // Files first: Finder also puts the file name on the pasteboard as text.
+        if types.contains(.fileURL),
+           let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL],
+           !urls.isEmpty {
+            return .files(urls)
         }
+        if let text = pasteboard.string(forType: .string) {
+            return .text(text)
+        }
+        // Screenshots come as PNG and TIFF. PNG is much smaller, so it is tried first and kept.
+        if let png = pasteboard.data(forType: .png), png.count <= Self.maxImageBytes, NSImage(data: png) != nil {
+            return .image(png)
+        }
+        if let data = pasteboard.data(forType: .tiff),
+           let rep = NSBitmapImageRep(data: data),
+           let png = rep.representation(using: .png, properties: [:]),
+           png.count <= Self.maxImageBytes {
+            return .image(png)
+        }
+        return nil
+    }
+
+    private func takeSnapshot() -> PasteboardSnapshot? {
+        var total = 0
+        var items: [[String: Data]] = []
+        for item in pasteboard.pasteboardItems ?? [] {
+            var entry: [String: Data] = [:]
+            for type in item.types {
+                guard let data = item.data(forType: type) else { continue }
+                total += data.count
+                if total > Self.maxSnapshotBytes { return nil }
+                entry[type.rawValue] = data
+            }
+            if !entry.isEmpty { items.append(entry) }
+        }
+        return items.isEmpty ? nil : PasteboardSnapshot(items: items)
+    }
+
+    private func restore(_ snapshot: PasteboardSnapshot) -> Bool {
+        let items = snapshot.items.map { entry -> NSPasteboardItem in
+            let item = NSPasteboardItem()
+            for (type, data) in entry { item.setData(data, forType: .init(type)) }
+            return item
+        }
+        return pasteboard.writeObjects(items)
     }
 
     /// Sends ⌘V. The island never takes focus, so it lands in the app the user was in.

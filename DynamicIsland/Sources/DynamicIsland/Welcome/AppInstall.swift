@@ -34,12 +34,22 @@ enum AppMover {
 enum LoginItem {
     static var isEnabled: Bool { SMAppService.mainApp.status == .enabled }
 
-    /// Turns launching at login on or off and returns whether it's on afterwards.
-    @discardableResult
-    static func set(_ enabled: Bool) -> Bool {
+    /// Turns launching at login on or off. Returns nil when it worked, otherwise what to tell the user.
+    static func set(_ enabled: Bool) -> String? {
+        let service = SMAppService.mainApp
+        var failure: Error?
         do {
-            if enabled { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
-        } catch {}
-        return isEnabled
+            if enabled { try service.register() } else { try service.unregister() }
+        } catch {
+            failure = error
+        }
+        // macOS can ask the user to allow the login item first.
+        if enabled && service.status == .requiresApproval {
+            SMAppService.openSystemSettingsLoginItems()
+            return "Allow Dynamic Island under Login Items in System Settings, then it starts at login."
+        }
+        if isEnabled == enabled { return nil }
+        let reason = failure.map { " \($0.localizedDescription)" } ?? ""
+        return "Couldn’t change launch at login.\(reason)"
     }
 }

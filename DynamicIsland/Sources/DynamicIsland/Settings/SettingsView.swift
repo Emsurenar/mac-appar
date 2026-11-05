@@ -73,8 +73,8 @@ enum SettingsPage: String, CaseIterable, Identifiable {
 /// rounded cards of rows on a soft gray background.
 struct SettingsView: View {
     @Environment(IslandModel.self) private var model
-    @State private var selection: SettingsPage = .general
     @State private var launchAtLogin = LoginItem.isEnabled
+    @State private var loginMessage: String?
     @State private var hasAccessibility = MediaKeyInterceptor.hasPermission
     var onClose: () -> Void = {}
 
@@ -86,9 +86,9 @@ struct SettingsView: View {
             Divider()
             VStack(spacing: 0) {
                 header
-                ScrollView(.vertical) { page(selection) }
+                ScrollView(.vertical) { page(model.settingsPage) }
                     .scrollIndicators(.automatic)
-                    .id(selection)
+                    .id(model.settingsPage)
             }
             .background(Color(nsColor: .windowBackgroundColor))
         }
@@ -96,6 +96,8 @@ struct SettingsView: View {
         .frame(width: SettingsWindowController.size.width, height: SettingsWindowController.size.height)
             .onReceive(permissionTimer) { _ in
                 hasAccessibility = MediaKeyInterceptor.hasPermission
+                launchAtLogin = LoginItem.isEnabled
+                if launchAtLogin { loginMessage = nil }
             }
             .onAppear {
                 model.home.refresh()
@@ -112,11 +114,13 @@ struct SettingsView: View {
         return VStack(alignment: .leading, spacing: 0) {
             switch page {
             case .general:
-                SettingsSection(footer: settings.hoverToOpen
+                SettingsSection(footer: loginMessage ?? (settings.hoverToOpen
                     ? "You feel a tap when the pointer reaches the notch and when a slider hits its end – only with a finger on the trackpad."
-                    : "Click the notch to open the island. You feel a tap when a slider hits its end.") {
-                    SettingsToggle("Launch at login", isOn: $launchAtLogin)
-                        .onChange(of: launchAtLogin) { _, enabled in setLaunchAtLogin(enabled) }
+                    : "Click the notch to open the island. You feel a tap when a slider hits its end.")) {
+                    SettingsToggle("Launch at login", isOn: Binding(
+                        get: { launchAtLogin },
+                        set: { loginMessage = LoginItem.set($0); launchAtLogin = LoginItem.isEnabled }
+                    ))
                     SettingsToggle("Open when the pointer rests on the notch", isOn: $settings.hoverToOpen)
                     SettingsToggle("Haptic feedback", isOn: $settings.hapticFeedback)
                 }
@@ -229,7 +233,7 @@ struct SettingsView: View {
                         SettingsToggle("Add new screenshots and downloads", isOn: $settings.shelveNewFiles)
                     }
                 }
-                SettingsSection("Clipboard", footer: "The last 20 things you copied, newest first. They stay in memory only, and passwords from password managers are skipped. Pasting needs Accessibility access; without it, an item is just copied.") {
+                SettingsSection("Clipboard", footer: "The last 20 things you copied (text, images and files), newest first, with their formatting. They stay in memory only, and passwords from password managers are skipped. Pasting needs Accessibility access; without it, an item is just copied.") {
                     SettingsToggle("Show clipboard history", isOn: $settings.showClipboardTab)
                     SettingsToggle("Paste the item you pick", isOn: $settings.pasteFromClipboardHistory)
                     if settings.pasteFromClipboardHistory && !hasAccessibility {
@@ -371,7 +375,7 @@ struct SettingsView: View {
                         Divider().padding(.vertical, 6).padding(.horizontal, 10)
                     }
                     ForEach(group) { page in
-                        SidebarRow(page: page, isSelected: page == selection) { selection = page }
+                        SidebarRow(page: page, isSelected: page == model.settingsPage) { model.settingsPage = page }
                     }
                 }
             }
@@ -385,7 +389,7 @@ struct SettingsView: View {
 
     private var header: some View {
         HStack(alignment: .center) {
-            Text(selection.title)
+            Text(model.settingsPage.title)
                 .font(.system(size: 22, weight: .bold))
             Spacer()
             Button(action: onClose) {
@@ -424,11 +428,6 @@ struct SettingsView: View {
     private var homeStatus: String {
         let count = model.home.shortcuts.count
         return count == 1 ? "1 in the island" : "\(count) in the island"
-    }
-
-    private func setLaunchAtLogin(_ enabled: Bool) {
-        let isEnabled = LoginItem.set(enabled)
-        if isEnabled != launchAtLogin { launchAtLogin = isEnabled }
     }
 
     private func openAccessibilitySettings() {

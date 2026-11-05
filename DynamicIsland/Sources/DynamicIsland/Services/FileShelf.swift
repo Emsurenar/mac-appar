@@ -35,6 +35,15 @@ final class FileShelf {
 
     var isEmpty: Bool { files.isEmpty }
 
+    /// Where promised files (from Photos, Mail, a browser) are written when they're dropped.
+    /// It's in the temporary folder, so macOS cleans it up after the files have left the shelf.
+    nonisolated static func promisedFilesFolder() -> URL {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Shelf", isDirectory: true)
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        return folder
+    }
+
     /// Adds file URLs at the end for `duration`. Ones already on the shelf keep their place, and their time starts over.
     func add(_ urls: [URL], for duration: TimeInterval) {
         let new = urls.filter(\.isFileURL).map(\.standardizedFileURL)

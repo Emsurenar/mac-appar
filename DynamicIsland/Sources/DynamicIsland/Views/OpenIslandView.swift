@@ -4,6 +4,8 @@ struct OpenIslandView: View {
     let namespace: Namespace.ID
     @Environment(IslandModel.self) private var model
     @Namespace private var tabNamespace
+    /// Switches to the tab under the pointer once it rests there, not while it sweeps past.
+    @State private var hoverSelect: Task<Void, Never>?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -63,7 +65,7 @@ struct OpenIslandView: View {
             if model.showsSystemTab {
                 tabButton(.system, symbol: "gauge.with.dots.needle.67percent", help: "System")
             }
-            Button { model.onOpenSettings?() } label: {
+            Button { model.openSettings() } label: {
                 Image(systemName: "gearshape.fill").font(.system(size: 12, weight: .semibold))
             }
             .buttonStyle(IslandButtonStyle(diameter: 26))
@@ -90,8 +92,16 @@ struct OpenIslandView: View {
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        // Pages switch as soon as the pointer rests on a tab, no click needed.
-        .onHover { if $0 { model.select(tab) } }
+        // Pages switch when the pointer rests on a tab, no click needed. A short wait keeps a
+        // pointer on its way to another button (say, Settings) from flipping every tab it crosses.
+        .onHover { hovering in
+            hoverSelect?.cancel()
+            guard hovering else { return }
+            hoverSelect = Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(140))
+                if !Task.isCancelled { model.select(tab) }
+            }
+        }
         .help(help)
     }
 }
@@ -166,8 +176,19 @@ private struct MediaTab: View {
                         .transition(.scale.combined(with: .opacity))
                 }
             }
-            .onTapGesture { media.openPlayer() }
-            .help(media.bundleIdentifier == nil ? "" : "Open the player")
+            .overlay {
+                // Nothing playing: the artwork becomes a button that opens Spotify.
+                if !media.hasMedia, let spotify = NowPlayingService.spotifyIcon {
+                    Image(nsImage: spotify)
+                        .resizable()
+                        .frame(width: 44, height: 44)
+                        .shadow(color: .black.opacity(0.4), radius: 4, y: 2)
+                        .transition(.scale.combined(with: .opacity))
+                }
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 14))
+            .onTapGesture { media.hasMedia ? media.openPlayer() : media.openSpotify() }
+            .help(media.hasMedia ? (media.bundleIdentifier == nil ? "" : "Open the player") : "Open Spotify")
     }
 
     private var transportControls: some View {

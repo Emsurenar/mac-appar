@@ -78,8 +78,11 @@ enum IslandLayout {
     static let clipboardRowHeight: CGFloat = 36
     static let maxClipboardRows = 5
     static let clipboardEmptyHeight: CGFloat = 112
-    /// Four rows show at once in the island's settings; more scroll.
-    static let settingsListHeight: CGFloat = 4 * systemRowHeight
+    /// One icon in the settings page's column under the gear.
+    static let settingsColumnRowHeight: CGFloat = 20
+    /// The rows beside the column are as tall as it is; more rows scroll.
+    static let settingsListHeight: CGFloat =
+        CGFloat(SettingsPage.islandSections.count) * settingsColumnRowHeight - sectionHeaderHeight
     static let screenshotThumbnailSize = CGSize(width: 96, height: 60)
 }
 
@@ -309,7 +312,7 @@ final class IslandModel {
         case .system:
             return 4 + CGFloat(system.rowCount) * IslandLayout.systemRowHeight + 16
         case .settings:
-            return 2 + 26 + IslandLayout.sectionHeaderHeight + IslandLayout.settingsListHeight + 14
+            return 2 + IslandLayout.sectionHeaderHeight + IslandLayout.settingsListHeight + 14
         }
     }
 

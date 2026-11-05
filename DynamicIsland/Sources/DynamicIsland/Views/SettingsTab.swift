@@ -1,51 +1,66 @@
 import AppKit
 import SwiftUI
 
-/// Settings as one of the island's own pages: a row of icons, one for each tab and
-/// for what pops out of the notch, and the switches for that part below it, styled
-/// like the rest of the island. Typing (the Google client, the Shortcuts folder) and
-/// colors stay in the Settings window, one click away.
+/// Settings as one of the island's own pages: a column of icons right under the gear,
+/// one for each tab and for what pops out of the notch, and that part's switches beside
+/// it, styled like the rest of the island. Typing (the Google client, the Shortcuts folder)
+/// and colors stay in the Settings window, one click away.
 struct SettingsTab: View {
     @Environment(IslandModel.self) private var model
+    /// Switches the part once the pointer rests on its icon, like the tabs above.
+    @State private var hoverSelect: Task<Void, Never>?
 
     var body: some View {
         let section = model.islandSettingsSection
-        VStack(alignment: .leading, spacing: 0) {
-            sectionBar(selected: section)
-                .padding(.top, 2)
-            Text(section.title)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.45))
-                .padding(.horizontal, 6)
-                .frame(height: IslandLayout.sectionHeaderHeight, alignment: .bottom)
-            ScrollView(.vertical) {
-                SettingsTabRows(section: section)
-                    .id(section)
-                    .transition(.islandContent(scale: 0.98))
+        HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(section.title)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.45))
+                    .padding(.horizontal, 6)
+                    .frame(height: IslandLayout.sectionHeaderHeight, alignment: .bottom)
+                ScrollView(.vertical) {
+                    SettingsTabRows(section: section)
+                        .id(section)
+                        .transition(.islandContent(scale: 0.98))
+                }
+                .scrollIndicators(.never)
+                .frame(height: IslandLayout.settingsListHeight, alignment: .top)
             }
-            .scrollIndicators(.never)
-            .frame(height: IslandLayout.settingsListHeight, alignment: .top)
+            sectionColumn(selected: section)
         }
         .padding(.horizontal, -6)
+        .padding(.top, 2)
     }
 
-    private func sectionBar(selected: SettingsPage) -> some View {
-        HStack(spacing: 2) {
+    /// Lines up under the gear: same width and look as the tab buttons in the header.
+    private func sectionColumn(selected: SettingsPage) -> some View {
+        VStack(spacing: 0) {
             ForEach(SettingsPage.islandSections) { page in
+                let isSelected = page == selected
                 Button { model.selectSettingsSection(page) } label: {
                     Image(systemName: page.symbol)
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(page == selected ? Color.black : Color.white.opacity(0.7))
-                        .frame(width: 28, height: 26)
-                        .background(Circle().fill(page == selected ? Color.white : Color.white.opacity(0.08)))
-                        .contentShape(Circle())
+                        .foregroundStyle(.white.opacity(isSelected ? 1 : 0.45))
+                        .frame(width: 34, height: IslandLayout.settingsColumnRowHeight)
+                        .background {
+                            if isSelected { Capsule().fill(.white.opacity(0.14)) }
+                        }
+                        .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
                 .help(page.title)
+                .onHover { hovering in
+                    hoverSelect?.cancel()
+                    guard hovering else { return }
+                    hoverSelect = Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(140))
+                        if !Task.isCancelled { model.selectSettingsSection(page) }
+                    }
+                }
             }
-            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 4)
+        .frame(width: 34)
     }
 }
 

@@ -114,7 +114,7 @@ struct SystemTab: View {
     // MARK: Helpers
 
     private func quitAction(_ usage: SystemService.Usage) -> SystemRow.Action? {
-        guard usage.appURL != nil else { return nil }
+        guard usage.isQuittable else { return nil }
         return SystemRow.Action(title: "Quit") { model.system.quit(usage) }
     }
 

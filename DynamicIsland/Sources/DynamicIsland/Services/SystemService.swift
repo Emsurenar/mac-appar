@@ -18,6 +18,13 @@ final class SystemService {
         let value: Double
         /// The bundle when the usage belongs to an app, so it can be quit.
         let appURL: URL?
+
+        /// Running apps other than this one can be asked to quit.
+        var isQuittable: Bool {
+            guard let path = appURL?.standardizedFileURL.path,
+                  path != Bundle.main.bundleURL.standardizedFileURL.path else { return false }
+            return NSWorkspace.shared.runningApplications.contains { $0.bundleURL?.standardizedFileURL.path == path }
+        }
     }
 
     struct Power: Equatable {
@@ -87,7 +94,7 @@ final class SystemService {
 
     /// Asks the app to quit, the same as choosing Quit from its menu.
     func quit(_ usage: Usage) {
-        guard let path = usage.appURL?.standardizedFileURL.path else { return }
+        guard usage.isQuittable, let path = usage.appURL?.standardizedFileURL.path else { return }
         NSWorkspace.shared.runningApplications
             .filter { $0.bundleURL?.standardizedFileURL.path == path }
             .forEach { $0.terminate() }
@@ -138,14 +145,32 @@ final class SystemService {
         topCPU = busiest
     }
 
-    /// The enclosing app bundle for a process, so helpers count towards their app.
+    /// The enclosing app bundle for a process, so helpers count towards their app. Processes
+    /// that macOS launches for an app, such as Safari's web pages, count towards that app too.
     private static func groupKey(for pid: pid_t) -> String? {
+        let responsible = responsiblePID(pid)
+        if responsible > 0, responsible != pid, let key = bundleKey(for: responsible), key.hasSuffix(".app") {
+            return key
+        }
+        return bundleKey(for: pid)
+    }
+
+    private static func bundleKey(for pid: pid_t) -> String? {
         var buffer = [CChar](repeating: 0, count: Int(MAXPATHLEN) * 4)
         guard proc_pidpath(pid, &buffer, UInt32(buffer.count)) > 0 else { return nil }
         let path = String(cString: buffer)
         guard let range = path.range(of: ".app/") else { return path }
         return String(path[..<range.lowerBound]) + ".app"
     }
+
+    private static func responsiblePID(_ pid: pid_t) -> pid_t {
+        typealias Function = @convention(c) (pid_t) -> pid_t
+        guard let symbol = responsibilitySymbol else { return -1 }
+        return unsafeBitCast(symbol, to: Function.self)(pid)
+    }
+
+    /// The same lookup Activity Monitor uses. Looked up at runtime because it isn't in the SDK headers.
+    private static let responsibilitySymbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "responsibility_get_pid_responsible_for_pid")
 
     private static func usage(key: String, value: Double) -> Usage {
         let isApp = key.hasSuffix(".app")
@@ -166,7 +191,8 @@ final class SystemService {
               battery["BatteryInstalled"] as? Bool ?? true else { return nil }
 
         let voltage = battery["Voltage"] as? Int ?? 0 // mV
-        let amperage = battery["InstantAmperage"] as? Int ?? battery["Amperage"] as? Int ?? 0 // mA, negative when draining
+        // mA, negative when draining. IOKit can hand the negative value over as a large unsigned number.
+        let amperage = signedInt(battery["InstantAmperage"]) ?? signedInt(battery["Amperage"]) ?? 0
         let current = battery["CurrentCapacity"] as? Int ?? 0
         let max = battery["MaxCapacity"] as? Int ?? 100
         let isOnAdapter = battery["ExternalConnected"] as? Bool ?? false
@@ -182,6 +208,11 @@ final class SystemService {
             minutesRemaining: minutes,
             adapterWatts: isOnAdapter ? (adapter?["Watts"] as? Int).flatMap { $0 > 0 ? $0 : nil } : nil
         )
+    }
+
+    private static func signedInt(_ value: Any?) -> Int? {
+        guard let number = value as? NSNumber else { return nil }
+        return Int(truncatingIfNeeded: number.int64Value)
     }
 
     private static func sysctl<T>(_ name: String, _ initial: T) -> T? {

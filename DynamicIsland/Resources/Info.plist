@@ -36,5 +36,9 @@
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Dynamic Island shows your AirPods' battery.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Posture watches how you sit through the camera. Images are analysed right on your Mac and never saved.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Posture uses the head angle from your AirPods to see whether you bend your neck.</string>
 </dict>
 </plist>

@@ -289,8 +289,10 @@ final class IslandModel {
             // Hovering the screenshot holds it in place instead of opening the island over it.
             if presentation == .screenshot {
                 screenshotTask?.cancel()
-            // The water reminder has its own buttons, so hovering it doesn't open the island.
-            } else if settings.hoverToOpen && !isOpen && presentation != .waterReminder {
+            // The water reminder has its own buttons, so hovering it holds it instead of opening the island.
+            } else if presentation == .waterReminder {
+                waterReminderTask?.cancel()
+            } else if settings.hoverToOpen && !isOpen {
                 // Trackpad haptics only play while a finger touches the pad, so they go out
                 // with the movement that reached the notch, not with the delayed open.
                 performHaptic(.levelChange)
@@ -302,6 +304,7 @@ final class IslandModel {
                 closeTask = schedule(after: 0.22) { $0.close() }
             }
             if isShowingScreenshot && !isDraggingScreenshot { scheduleScreenshotDismissal(after: 3) }
+            if isShowingWaterReminder { scheduleWaterReminderDismissal(after: 6) }
         }
     }
 
@@ -312,7 +315,11 @@ final class IslandModel {
         peekTask?.cancel()
         postureAlertTask?.cancel()
         calendarReminderTask?.cancel()
-        if isShowingWaterReminder { dismissWaterReminder(drank: false) }
+        // Tapping the water reminder opens the Water tab, so the glass can be logged there.
+        if isShowingWaterReminder {
+            dismissWaterReminder(drank: false)
+            if showsWaterTab { tab = .water }
+        }
         screenshotTask?.cancel()
         if isShowingCalendarReminder && showsCalendarTab { tab = .calendar }
         hud = nil
@@ -454,8 +461,12 @@ final class IslandModel {
         isShowingPostureAlert = false
         isShowingWaterReminder = true
         performHaptic(.generic)
+        scheduleWaterReminderDismissal(after: 20)
+    }
+
+    private func scheduleWaterReminderDismissal(after seconds: Double) {
         waterReminderTask?.cancel()
-        waterReminderTask = schedule(after: 20) { $0.dismissWaterReminder(drank: false) }
+        waterReminderTask = schedule(after: seconds) { $0.dismissWaterReminder(drank: false) }
     }
 
     func dismissWaterReminder(drank: Bool) {

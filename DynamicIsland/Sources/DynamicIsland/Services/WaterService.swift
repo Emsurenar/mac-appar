@@ -89,8 +89,13 @@ struct WaterLog: Equatable {
 final class WaterService {
     private(set) var isDue = false
     private(set) var log: WaterLog
+    /// Today's key, refreshed on every tick so an open tab rolls over at midnight.
+    private(set) var today = WaterLog.key(for: Date())
 
-    var glassesToday: Int { log.count(on: Date()) }
+    var glassesToday: Int {
+        _ = today
+        return log.count(on: Date())
+    }
 
     /// Called on every tick while a glass is due and the user is at the Mac.
     @ObservationIgnored var onDue: (() -> Void)?
@@ -105,6 +110,8 @@ final class WaterService {
         // Before the log: just today's count.
         static let glasses = "waterGlasses"
         static let day = "waterDay"
+        /// Time at the Mac since the last glass, so a relaunch doesn't restart the countdown.
+        static let activeSeconds = "waterActiveSeconds"
     }
 
     @ObservationIgnored private var schedule = WaterSchedule()
@@ -113,6 +120,7 @@ final class WaterService {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        schedule.activeSeconds = max(0, defaults.double(forKey: Key.activeSeconds))
         if let days = defaults.dictionary(forKey: Key.log) as? [String: Int] {
             log = WaterLog(days: days)
         } else {
@@ -126,9 +134,12 @@ final class WaterService {
     func start() {
         guard timer == nil else { return }
         schedule.lastTick = Date()
-        timer = Timer.scheduledTimer(withTimeInterval: Self.tickSeconds, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: Self.tickSeconds, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.tick() }
         }
+        // Common modes keep it ticking while a menu or a drag is tracking the run loop.
+        RunLoop.main.add(timer, forMode: .common)
+        self.timer = timer
     }
 
     func stop() {
@@ -140,6 +151,7 @@ final class WaterService {
         log.add(1, on: Date())
         save()
         schedule.reset()
+        saveSchedule()
         isDue = false
     }
 
@@ -156,6 +168,7 @@ final class WaterService {
 
     func snooze() {
         schedule.snooze(Self.snoozeSeconds, interval: interval())
+        saveSchedule()
         isDue = false
     }
 
@@ -163,14 +176,22 @@ final class WaterService {
         defaults.set(log.days, forKey: Key.log)
     }
 
+    private func saveSchedule() {
+        defaults.set(schedule.activeSeconds, forKey: Key.activeSeconds)
+    }
+
     private func tick() {
+        let key = WaterLog.key(for: Date())
+        if key != today { today = key }
         guard isEnabled() else {
             schedule = WaterSchedule(lastTick: Date())
+            saveSchedule()
             isDue = false
             return
         }
         let idle = Self.idleSeconds
         schedule.advance(to: Date(), idle: idle)
+        saveSchedule()
         isDue = schedule.isDue(interval: interval())
         if isDue && idle < WaterSchedule.idleThreshold { onDue?() }
     }

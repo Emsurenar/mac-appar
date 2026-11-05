@@ -75,6 +75,21 @@ final class NowPlayingService {
         NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
     }
 
+    static let spotifyBundleID = "com.spotify.client"
+
+    /// Spotify's own icon, or nil when Spotify isn't installed.
+    static let spotifyIcon: NSImage? = NSWorkspace.shared.urlForApplication(withBundleIdentifier: spotifyBundleID)
+        .map { NSWorkspace.shared.icon(forFile: $0.path) }
+
+    /// Opens Spotify, or the web player when the app isn't installed.
+    func openSpotify() {
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: Self.spotifyBundleID) {
+            NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+        } else if let web = URL(string: "https://open.spotify.com") {
+            NSWorkspace.shared.open(web)
+        }
+    }
+
     // MARK: Bridge process
 
     private static let loader = """

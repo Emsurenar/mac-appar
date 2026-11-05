@@ -166,8 +166,19 @@ private struct MediaTab: View {
                         .transition(.scale.combined(with: .opacity))
                 }
             }
-            .onTapGesture { media.openPlayer() }
-            .help(media.bundleIdentifier == nil ? "" : "Open the player")
+            .overlay {
+                // Nothing playing: the artwork becomes a button that opens Spotify.
+                if !media.hasMedia, let spotify = NowPlayingService.spotifyIcon {
+                    Image(nsImage: spotify)
+                        .resizable()
+                        .frame(width: 44, height: 44)
+                        .shadow(color: .black.opacity(0.4), radius: 4, y: 2)
+                        .transition(.scale.combined(with: .opacity))
+                }
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 14))
+            .onTapGesture { media.hasMedia ? media.openPlayer() : media.openSpotify() }
+            .help(media.hasMedia ? (media.bundleIdentifier == nil ? "" : "Open the player") : "Open Spotify")
     }
 
     private var transportControls: some View {

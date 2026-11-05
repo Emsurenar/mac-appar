@@ -318,6 +318,9 @@ final class IslandModel {
     // MARK: Interaction
 
     func setHovering(_ hovering: Bool) {
+        #if DEBUG
+        if SnapshotRenderer.isActive { return }
+        #endif
         guard hovering != isHovering else { return }
         withAnimation(.spring(response: 0.32, dampingFraction: 0.66)) { isHovering = hovering }
 

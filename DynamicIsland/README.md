@@ -48,7 +48,7 @@
 | <img src="Screenshots/calendar.png" alt="Calendar tab"><br>**Calendar** tab | <img src="Screenshots/calendar-reminder.png" alt="Calendar reminder"><br>**Calendar** reminder |
 | <img src="Screenshots/water.png" alt="Water tab"><br>**Water** tab | <img src="Screenshots/water-reminder.png" alt="Water reminder"><br>**Water** reminder |
 | <img src="Screenshots/clipboard.png" alt="Clipboard history and file shelf"><br>**Clipboard** and file shelf | <img src="Screenshots/system.png" alt="System tab"><br>**System** at a glance |
-| <img src="Screenshots/screenshot.png" alt="Screenshot shelf"><br>**Screenshot** shelf | |
+| <img src="Screenshots/screenshot.png" alt="Screenshot shelf"><br>**Screenshot** shelf | <img src="Screenshots/calendar-assistant.png" alt="Calendar assistant answering under its field"><br>**Ask your calendar** in plain words |
 
 ## Requirements
 

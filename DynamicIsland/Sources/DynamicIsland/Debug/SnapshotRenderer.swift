@@ -5,10 +5,15 @@ import SwiftUI
 /// Debug aid: `DynamicIsland --snapshots <dir>` renders every island state to PNG and quits.
 @MainActor
 enum SnapshotRenderer {
+    /// While rendering, the real window ignores the pointer, so where it happens to rest can't change a picture.
+    nonisolated static let isActive = CommandLine.arguments.contains("--snapshots")
+
     static func run(model: IslandModel, directory: URL) {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         Task {
             try? await Task.sleep(for: .seconds(3))
+            model.audio.showPreview()  // Stand-ins, so a screenshot never shows the name of a real device.
+            model.airPods.showPreview()
             model.media.showPreview(title: "Golden Hour Over the Harbor", artist: "Lumen Avenue",
                                     duration: 213, elapsed: 173, artwork: previewArtwork())
             render("1-closed", model, directory)
@@ -25,7 +30,6 @@ enum SnapshotRenderer {
             render("7-open-media", model, directory)
             renderHero("0-hero", model, directory)
             model.setChoosingOutput(true)
-            model.airPods.showPreview()
             render("8-open-output", model, directory)
             model.setChoosingOutput(false)
             model.select(.home)
@@ -78,6 +82,10 @@ enum SnapshotRenderer {
             model.select(.calendar)
             model.calendar.showPreview(events)  // Opening the tab reloads the real calendar.
             render("16-open-calendar", model, directory)
+            model.assistant.showPreview(question: "Lägg till möte med Ruben imorgon kl 17",
+                                        reply: "Added “Möte med Ruben” tomorrow, 17:00–18:00.")
+            render("16b-calendar-assistant", model, directory)
+            model.assistant.clear()
             model.select(.media)
             model.close()
             model.water.showPreview(glasses: 3)
@@ -101,9 +109,8 @@ enum SnapshotRenderer {
             model.open()
             model.select(.clipboard)
             render("20-open-clipboard", model, directory)
+            model.system.showPreview()
             model.select(.system)
-            try? await Task.sleep(for: .seconds(2.5))  // CPU needs two samples.
-            model.open()
             render("21-open-system", model, directory)
             model.select(.media)
             model.close()

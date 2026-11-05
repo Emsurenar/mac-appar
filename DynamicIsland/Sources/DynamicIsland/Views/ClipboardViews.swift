@@ -73,7 +73,7 @@ struct ClipboardTab: View {
                 Text("Nothing copied yet")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.white)
-                Text("Copy text or an image and it shows up here.")
+                Text("Copy text, an image or a file and it shows up here.")
                     .font(.system(size: 11.5))
                     .foregroundStyle(.white.opacity(0.5))
             }
@@ -147,6 +147,15 @@ private struct ClipboardRow: View {
                         .font(.system(size: 12, weight: .medium).monospacedDigit())
                         .foregroundStyle(.white.opacity(0.6))
                 }
+            case .files(let urls):
+                Image(nsImage: NSWorkspace.shared.icon(forFile: urls[0].path))
+                    .resizable()
+                    .frame(width: 26, height: 26)
+                Text(urls.count == 1 ? urls[0].lastPathComponent : "\(urls[0].lastPathComponent) + \(urls.count - 1) more")
+                    .font(.system(size: 13, weight: isCurrent ? .semibold : .medium))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
             }
         }
     }

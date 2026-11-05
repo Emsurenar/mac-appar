@@ -233,7 +233,7 @@ struct SettingsView: View {
                         SettingsToggle("Add new screenshots and downloads", isOn: $settings.shelveNewFiles)
                     }
                 }
-                SettingsSection("Clipboard", footer: "The last 20 things you copied, newest first. They stay in memory only, and passwords from password managers are skipped. Pasting needs Accessibility access; without it, an item is just copied.") {
+                SettingsSection("Clipboard", footer: "The last 20 things you copied (text, images and files), newest first, with their formatting. They stay in memory only, and passwords from password managers are skipped. Pasting needs Accessibility access; without it, an item is just copied.") {
                     SettingsToggle("Show clipboard history", isOn: $settings.showClipboardTab)
                     SettingsToggle("Paste the item you pick", isOn: $settings.pasteFromClipboardHistory)
                     if settings.pasteFromClipboardHistory && !hasAccessibility {

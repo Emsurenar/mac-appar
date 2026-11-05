@@ -45,13 +45,7 @@ final class CalendarService {
     /// The event the reminder in the island is about.
     private(set) var reminder: Event?
 
-    /// From a "Desktop app" OAuth client in Google Cloud Console.
-    var clientID: String {
-        didSet { UserDefaults.standard.set(clientID.trimmingCharacters(in: .whitespacesAndNewlines), forKey: Key.clientID) }
-    }
-    var clientSecret: String {
-        didSet { UserDefaults.standard.set(clientSecret.trimmingCharacters(in: .whitespacesAndNewlines), forKey: Key.clientSecret) }
-    }
+    /// The app's own Google client ID; a "googleClientID" default overrides it, for development.
     var hasClientID: Bool { !credentials.clientID.isEmpty }
 
     var onReminder: ((Event) -> Void)?
@@ -70,19 +64,10 @@ final class CalendarService {
     /// Event and start, so a moved meeting gets a new reminder.
     @ObservationIgnored private var reminded: Set<String> = []
 
-    private enum Key {
-        static let clientID = "googleClientID"
-        static let clientSecret = "googleClientSecret"
-    }
-
-    init() {
-        clientID = UserDefaults.standard.string(forKey: Key.clientID) ?? ""
-        clientSecret = UserDefaults.standard.string(forKey: Key.clientSecret) ?? ""
-    }
-
     private var credentials: GoogleAuth.Credentials {
-        .init(clientID: clientID.trimmingCharacters(in: .whitespacesAndNewlines),
-              clientSecret: clientSecret.trimmingCharacters(in: .whitespacesAndNewlines))
+        let override = UserDefaults.standard.string(forKey: "googleClientID")?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return .init(clientID: override.isEmpty ? GoogleAuth.builtInClientID : override)
     }
 
     func start() {
@@ -104,7 +89,7 @@ final class CalendarService {
     /// Opens Google's sign-in page in the browser.
     func signIn() {
         guard hasClientID else {
-            errorMessage = "Add your Google client ID under Settings › Calendar first."
+            errorMessage = "This build has no Google client ID."
             return
         }
         guard access != .signingIn else { return }

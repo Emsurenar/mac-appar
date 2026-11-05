@@ -46,7 +46,7 @@ struct WelcomeView: View {
                             Text("Show upcoming events")
                             Spacer()
                             status(model.calendar.access == .signedIn,
-                                   pending: model.calendar.hasClientID ? "Sign in with Google" : "Set Up in Settings")
+                                   pending: "Sign in with Google")
                         }
                         SettingsToggle("Show volume and brightness in the notch", isOn: settings.replaceSystemHUD)
                         if model.settings.replaceSystemHUD {
@@ -93,7 +93,7 @@ struct WelcomeView: View {
     private var askForCalendar: (() -> Void)? {
         let calendar = model.calendar
         guard calendar.access == .signedOut else { return nil }
-        return calendar.hasClientID ? { calendar.signIn() } : { model.onOpenSettings?() }
+        return { calendar.signIn() }
     }
 
     private var askForAccessibility: (() -> Void)? {

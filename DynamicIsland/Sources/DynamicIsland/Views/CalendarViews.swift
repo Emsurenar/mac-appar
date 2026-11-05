@@ -66,12 +66,12 @@ struct CalendarTab: View {
             CalendarMessage(title: "Signing in to Google…", detail: "Finish in your browser.",
                             action: .init(title: "Cancel") { calendar.cancelSignIn() })
         } else if !calendar.hasClientID {
-            CalendarMessage(title: "Show your Google Calendar", detail: "Add a Google client ID under Settings › Calendar.",
+            CalendarMessage(title: "Google Calendar isn't set up", detail: "This build has no Google client ID.",
                             action: .init(title: "Settings") { model.onOpenSettings?() })
         } else {
             CalendarMessage(title: "Show your Google Calendar",
                             detail: calendar.errorMessage ?? "Sign in with your Google account.",
-                            action: .init(title: "Sign In") { calendar.signIn() })
+                            action: .init(title: "Sign in with Google") { calendar.signIn() })
         }
         return message
     }

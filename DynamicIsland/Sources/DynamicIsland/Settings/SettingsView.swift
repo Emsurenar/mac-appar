@@ -107,7 +107,7 @@ struct SettingsView: View {
     /// One page of settings (also rendered on its own by `--snapshots`).
     func page(_ page: SettingsPage) -> some View {
         @Bindable var settings = model.settings
-        @Bindable var calendar = model.calendar
+        let calendar = model.calendar
         return VStack(alignment: .leading, spacing: 0) {
             switch page {
             case .general:
@@ -172,24 +172,6 @@ struct SettingsView: View {
                             Button("Cancel") { calendar.cancelSignIn() }
                         }
                     case .signedOut:
-                        SettingsRow {
-                            Text("Client ID")
-                            Spacer()
-                            TextField("….apps.googleusercontent.com", text: $calendar.clientID)
-                                .textFieldStyle(.plain)
-                                .multilineTextAlignment(.trailing)
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: 320)
-                        }
-                        SettingsRow {
-                            Text("Client secret")
-                            Spacer()
-                            SecureField("GOCSPX-…", text: $calendar.clientSecret)
-                                .textFieldStyle(.plain)
-                                .multilineTextAlignment(.trailing)
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: 320)
-                        }
                         SettingsRow(action: calendar.hasClientID ? { calendar.signIn() } : nil) {
                             Image(systemName: "person.crop.circle.badge.plus").foregroundStyle(.blue)
                             Text("Sign in with Google")
@@ -415,7 +397,9 @@ struct SettingsView: View {
         case .signingIn:
             return "Pick your account in the browser and allow access to your calendar."
         case .signedOut:
-            return "In Google Cloud Console, turn on the Google Calendar API and create an OAuth client of type Desktop app. Paste its ID and secret here, then sign in. The README has the steps."
+            return calendar.hasClientID
+                ? "Sign in with your Google account to see your Google Calendar in the island. It only reads your calendars."
+                : "This build has no Google client ID."
         }
     }
 

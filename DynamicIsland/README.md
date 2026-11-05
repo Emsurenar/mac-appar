@@ -27,11 +27,11 @@
 - **Sound and display.** Volume, mute, brightness and a one-click audio output switcher for speakers, AirPods and AirPlay, like Control Center.
 - **HUDs in the notch.** Volume, brightness and output changes appear in the island. It can also replace the system's volume and brightness overlay.
 - **Apple Home and Shortcuts.** Pick any shortcut, like a Home scene, and run it with one click from a tile.
-- **Calendar.** Your next events, Google Calendar included, with a reminder in the notch 15 minutes before each one and a Join button for Meet, Zoom and Teams links.
+- **Calendar.** Your next events from Google Calendar, after signing in with your Google account, with a reminder in the notch 15 minutes before each one and a Join button for Meet, Zoom and Teams links.
 - **Water.** A Water tab with a ring that fills towards your daily goal, a one-click **+ Glass**, the last week as bars and a streak. Plus a nudge from the notch every 45 minutes at the Mac (you pick the interval). Time away and sleep don't count.
 - **Clipboard history.** The last 20 things you copied, text and images. Click one to paste it again.
 - **Screenshot shelf.** A new screenshot pops out of the notch. Drag it straight into Mail, Slack or a folder, or copy, reveal or trash it from there. The first time, macOS may ask to let the app read the folder your screenshots go to.
-- **File shelf.** Drag files onto the notch to park them at the top of the clipboard tab. They stay there, even after a restart, until you drag them out to wherever they're going.
+- **File shelf.** Drag files onto the notch to park them at the top of the clipboard tab. New screenshots and downloads land there by themselves. Every file stays for 5 minutes, even after you drag it out or restart, unless you remove it.
 - **System at a glance.** Memory, CPU, heat, battery, charger and uptime, with the apps using the most.
 - **Posture, built in.** The island comes with the [Posture](../Posture) app. It shows your posture and nudges you when you slouch (macOS 26).
 - **Unknot, built in.** The island also comes with [Unknot](../Unknot), whose stretch breaks drop out of the notch every 20 minutes. Start one with **Stretch now** in settings.
@@ -91,7 +91,7 @@ A welcome window explains where the island is and sets up the basics in one plac
 
 - **Move to Applications**, if the app runs from somewhere else, like Downloads.
 - **Launch at login** and whether the island opens on hover.
-- **Optional permissions**, each asked for only when you turn its feature on: Calendars for upcoming events, Accessibility for showing volume and brightness in the notch.
+- **Optional permissions**, each asked for only when you turn its feature on: signing in to Google for upcoming events, Accessibility for showing volume and brightness in the notch.
 - **Home scenes**, which jumps straight to picking shortcuts.
 
 Click **Show me the island** and it opens once, so you see where it lives. You can show the welcome again under **Settings › About**.
@@ -132,7 +132,7 @@ Turn on **Replace the system volume and brightness HUD** in settings and grant *
 
 ### Files
 
-Drag files from Finder, or any app, onto the notch. The island opens on the clipboard tab, where files sit above the clipboard history, and the files you drop stay there until you drag them out again, to another folder, a mail or a chat. The shelf only keeps references, so the files never move. Double-click a file to open it, or right-click it to show it in Finder or remove it.
+Drag files from Finder, or any app, onto the notch. The island opens on the clipboard tab, where files sit above the clipboard history, and the files you drop stay there for 5 minutes, also after you drag them into another folder, a mail or a chat. New screenshots and downloads show up there by themselves too. The shelf only keeps references, so the files never move. Double-click a file to open it, or right-click it to show it in Finder or remove it. The × on a file, or Clear, removes it before its time is up.
 
 ### Screenshots
 
@@ -150,9 +150,20 @@ The System tab shows memory and CPU use with the apps using the most, the Mac's 
 
 ### Calendar
 
-The island reads events from the macOS **Calendar** app, so any account added there works, including Google. To add Google, open **System Settings › Internet Accounts**, add your Google account and turn on **Calendars**. Then open the calendar tab in the island and click **Allow Access**.
+Open the calendar tab, or **Calendar** in settings, and click **Sign in with Google**. Google's sign-in opens in a browser sheet; pick your account and allow access to your calendars (read, and add and change events for the assistant). That's all.
 
-The tab lists the rest of today's events, or tomorrow's once the day is done. A few minutes before an event starts, a reminder drops out of the notch. Choose how early, from 1 to 30 minutes, under **Calendar** in settings. Click the reminder to open the calendar tab, or **Join** to open a Meet, Zoom or Teams link. Click an event to open its day in Google Calendar in your browser.
+The account stays signed in with a refresh token in `~/Library/Application Support/Dynamic Island/google-account.json`, readable only by you. **Sign Out** in settings deletes it and revokes access.
+
+The app's own Google client ID is `GoogleClientID` in `Resources/Info.plist`: an OAuth client of type **iOS** with bundle ID `com.emresunar.DynamicIsland` in a Google Cloud project with the Google Calendar API turned on. It has no secret, and the redirect is the reversed client ID as a URL scheme.
+
+The tab lists the rest of today's events, or tomorrow's once the day is done. A few minutes before an event starts, a reminder drops out of the notch. Choose how early, from 1 to 30 minutes, under **Calendar** in settings. Click the reminder to open the calendar tab, or **Join** to open a Meet, Zoom or Teams link. Click an event to open it in Google Calendar in your browser. Under **Calendars** in settings you pick which of your calendars the island shows.
+
+**Ask your calendar.** At the top of the tab is a field where you type what you want, in Swedish or English: "Lägg till möte med Ruben imorgon kl 17", "flytta det till 18", "ta bort lunchen på fredag", "när träffade jag senast Sara?". Gemini or Claude understands it, looks things up and makes the change through the Google Calendar API, and answers under the field. Follow-ups within ten minutes keep the context. Pick the model under **Calendar › Assistant** in settings and paste its API key there:
+
+- **Gemini** (default): create a key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) in the same Google Cloud project as the sign-in, and turn on billing for that project so it is paid from the project's credit. Kept in `~/Library/Application Support/Dynamic Island/gemini-api-key`.
+- **Claude**: a key from [console.anthropic.com](https://console.anthropic.com/settings/keys). Kept in `~/Library/Application Support/Dynamic Island/claude-api-key`.
+
+Both files are readable only by you. Each question costs a few cents at most. While the field has the keyboard, the island stays open when the pointer leaves; press Esc or click elsewhere to close it.
 
 ### Clipboard
 
@@ -169,7 +180,7 @@ Right-click the island, or click the gear, and choose **Settings**. A sidebar li
 | Permission | Used for | Required |
 |---|---|:---:|
 | Accessibility | Replacing the system volume and brightness HUD, pasting from the clipboard history | Optional |
-| Calendars | The Calendar tab and event reminders | Optional |
+| Google account (sign-in, not a macOS permission) | The Calendar tab and event reminders | Optional |
 | Files and folders | Showing new screenshots from the folder macOS saves them to | Optional |
 
 Everything else, like Now Playing, volume, outputs and brightness, works without any prompts. Shortcuts may ask for access to Home the first time a Home shortcut runs.

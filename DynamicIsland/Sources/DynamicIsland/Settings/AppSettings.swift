@@ -19,6 +19,8 @@ final class AppSettings {
     var showCalendarTab: Bool { didSet { store(showCalendarTab, Key.showCalendarTab) } }
     var showCalendarReminders: Bool { didSet { store(showCalendarReminders, Key.showCalendarReminders) } }
     var showShelfTab: Bool { didSet { store(showShelfTab, Key.showShelfTab) } }
+    /// New screenshots and downloads go on the shelf for a few minutes.
+    var shelveNewFiles: Bool { didSet { store(shelveNewFiles, Key.shelveNewFiles) } }
     var showClipboardTab: Bool { didSet { store(showClipboardTab, Key.showClipboardTab) } }
     var showSystemTab: Bool { didSet { store(showSystemTab, Key.showSystemTab) } }
     /// Picking an item from the clipboard history also pastes it, not just copies it.
@@ -71,6 +73,7 @@ final class AppSettings {
         static let calendarLeadMinutes = "calendarLeadMinutes"
         static let hiddenCalendarIDs = "hiddenCalendarIDs"
         static let showShelfTab = "showShelfTab"
+        static let shelveNewFiles = "shelveNewFiles"
         static let showWaterReminders = "showWaterReminders"
         static let waterIntervalMinutes = "waterIntervalMinutes"
         static let waterDailyGoal = "waterDailyGoal"
@@ -107,6 +110,7 @@ final class AppSettings {
             Key.showScreenshots: true,
             Key.calendarLeadMinutes: 15,
             Key.showShelfTab: true,
+            Key.shelveNewFiles: true,
             Key.showWaterReminders: true,
             Key.waterIntervalMinutes: 45,
             Key.waterDailyGoal: 8,
@@ -133,6 +137,7 @@ final class AppSettings {
         showCalendarTab = defaults.bool(forKey: Key.showCalendarTab)
         showCalendarReminders = defaults.bool(forKey: Key.showCalendarReminders)
         showShelfTab = defaults.bool(forKey: Key.showShelfTab)
+        shelveNewFiles = defaults.bool(forKey: Key.shelveNewFiles)
         showScreenshots = defaults.bool(forKey: Key.showScreenshots)
         calendarLeadMinutes = defaults.integer(forKey: Key.calendarLeadMinutes)
         showClipboardTab = defaults.bool(forKey: Key.showClipboardTab)

@@ -21,7 +21,10 @@ final class IslandPanel: NSPanel {
         ignoresMouseEvents = true
     }
 
-    override var canBecomeKey: Bool { false }
+    /// Only while a text field in the island needs typing (the calendar assistant). As a nonactivating
+    /// panel it takes the keyboard without activating the app or taking focus from the app in front.
+    var acceptsKeyboard = false
+    override var canBecomeKey: Bool { acceptsKeyboard }
     override var canBecomeMain: Bool { false }
 
     // Borderless windows are otherwise pushed below the menu bar.
@@ -42,22 +45,55 @@ private final class IslandHostingView<Content: View>: NSHostingView<Content> {
     override func prepareForDragOperation(_ sender: NSDraggingInfo) -> Bool { fileDragOperation(sender) != [] }
 
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
-        let urls = sender.draggingPasteboard.readObjects(forClasses: [NSURL.self],
-                                                         options: [.urlReadingFileURLsOnly: true]) as? [URL]
-        NSLog("%@", "Shelf: drop of \(urls?.count ?? 0) files")
-        return model?.dropFiles(urls ?? []) ?? false
+        let pasteboard = sender.draggingPasteboard
+        let urls = pasteboard.readObjects(forClasses: [NSURL.self],
+                                          options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
+        if !urls.isEmpty { return model?.dropFiles(urls) ?? false }
+        // Photos, Mail attachments, images from a browser and the screenshot thumbnail only promise
+        // a file: it's written into the shelf's own folder, and shelved once it's there.
+        let promises = pasteboard.readObjects(forClasses: [NSFilePromiseReceiver.self], options: nil)
+            as? [NSFilePromiseReceiver] ?? []
+        guard !promises.isEmpty, let model, model.acceptsFileDrops else { return false }
+        let folder = FileShelf.promisedFilesFolder()
+        for promise in promises {
+            promise.receivePromisedFiles(atDestination: folder, options: [:], operationQueue: ShelfDrop.promiseQueue) { url, error in
+                guard error == nil else { return }
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated { _ = model.dropFiles([url], force: true) }
+                }
+            }
+        }
+        model.setDropTargeted(false)
+        return true
     }
 
     /// Copy over the island, nothing over the transparent rest of the window.
     private func fileDragOperation(_ sender: NSDraggingInfo) -> NSDragOperation {
         guard let model, model.acceptsFileDrops, let window,
-              sender.draggingPasteboard.canReadObject(forClasses: [NSURL.self],
-                                                      options: [.urlReadingFileURLsOnly: true]) else { return [] }
+              ShelfDrop.hasFiles(sender.draggingPasteboard) else { return [] }
         let point = window.convertPoint(toScreen: sender.draggingLocation)
         let inside = model.hoverZone.contains(point)
         model.setDropTargeted(inside)
         return inside ? .copy : []
     }
+}
+
+/// What the island takes as a file drop: file URLs, and files that apps only promise.
+enum ShelfDrop {
+    static let promiseQueue: OperationQueue = {
+        let queue = OperationQueue()
+        queue.qualityOfService = .userInitiated
+        return queue
+    }()
+
+    /// Whether a drag carries files, or promises of files.
+    static func hasFiles(_ pasteboard: NSPasteboard) -> Bool {
+        pasteboard.canReadObject(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
+            || pasteboard.canReadObject(forClasses: [NSFilePromiseReceiver.self], options: nil)
+    }
+
+    static let draggedTypes: [NSPasteboard.PasteboardType] =
+        [.fileURL] + NSFilePromiseReceiver.readableDraggedTypes.map { NSPasteboard.PasteboardType($0) }
 }
 
 @MainActor
@@ -80,7 +116,7 @@ final class IslandWindowController {
         hostingView.sizingOptions = []
         hostingView.frame = NSRect(origin: .zero, size: Self.canvasSize)
         hostingView.model = model
-        hostingView.registerForDraggedTypes([.fileURL])
+        hostingView.registerForDraggedTypes(ShelfDrop.draggedTypes)
         panel.contentView = hostingView
 
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification,
@@ -89,6 +125,7 @@ final class IslandWindowController {
         }
         installMouseMonitors()
         observeHoverZone()
+        observeKeyboard()
         #if DEBUG
         if CommandLine.arguments.contains("--trace") { trace() }
         #endif
@@ -166,9 +203,28 @@ final class IslandWindowController {
         let pasteboard = NSPasteboard(name: .drag)
         let count = pasteboard.changeCount
         guard count != dragCountAtMouseDown, count != handledDragCount,
-              pasteboard.types?.contains(.fileURL) == true else { return }
+              ShelfDrop.hasFiles(pasteboard) else { return }
         handledDragCount = count
         model.showShelfForDrop()
+    }
+
+    /// Lets the panel become key while the calendar tab is open, and gives the keyboard back when it closes.
+    private func observeKeyboard() {
+        withObservationTracking {
+            let accepts = model.acceptsKeyboard
+            if accepts != panel.acceptsKeyboard {
+                panel.acceptsKeyboard = accepts
+                if !accepts && panel.isKeyWindow {
+                    // Ordering out drops key status, so typing goes back to the app in front.
+                    panel.orderOut(nil)
+                    panel.orderFrontRegardless()
+                }
+            }
+        } onChange: { [weak self] in
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { self?.observeKeyboard() }
+            }
+        }
     }
 
     /// Re-evaluates the pointer whenever the island changes shape under it.

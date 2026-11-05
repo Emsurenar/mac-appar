@@ -3,6 +3,19 @@ import SwiftUI
 
 enum IslandTab: Hashable {
     case media, home, posture, water, calendar, clipboard, system
+
+    /// The settings page for this tab, so the island and Settings always line up.
+    var settingsPage: SettingsPage {
+        switch self {
+        case .media: .nowPlaying
+        case .home: .home
+        case .posture: .posture
+        case .water: .water
+        case .calendar: .calendar
+        case .clipboard: .clipboard
+        case .system: .system
+        }
+    }
 }
 
 enum HUDKind: Equatable {
@@ -49,6 +62,8 @@ enum IslandLayout {
     static let calendarRowHeight: CGFloat = 40
     static let maxCalendarRows = 4
     static let calendarEmptyHeight: CGFloat = 112
+    static let assistantFieldHeight: CGFloat = 38
+    static let assistantLineHeight: CGFloat = 16
     static let shelfTileWidth: CGFloat = 76
     static let shelfTileHeight: CGFloat = 78
     /// The drop target above the clipboard while no files are shelved.
@@ -70,10 +85,13 @@ final class IslandModel {
     let posture: PostureService
     let system: SystemService
     let calendar: CalendarService
+    /// Typed questions and changes in the calendar tab.
+    let assistant: CalendarAssistant
     let shelf: FileShelf
     let clipboard: ClipboardService
     let water: WaterService
     let screenshots: ScreenshotService
+    let downloads: DownloadsService
     let settings: AppSettings
     let companions: CompanionApps
 
@@ -94,11 +112,15 @@ final class IslandModel {
     private(set) var isShowingScreenshot = false
     /// The screenshot is being dragged; the island keeps it until the drag ends.
     private(set) var isDraggingScreenshot = false
+    /// The calendar assistant's field has the keyboard, so the island stays open when the pointer leaves.
+    private(set) var isTyping = false
     /// A screenshot came in while the island was open; it pops out once the island closes.
     @ObservationIgnored private var hasPendingScreenshot = false
     var tab: IslandTab = .media
 
     @ObservationIgnored var onOpenSettings: (() -> Void)?
+    /// The page the settings window shows.
+    var settingsPage: SettingsPage = .general
     @ObservationIgnored var onOpenWelcome: (() -> Void)?
     @ObservationIgnored private var openTask: Task<Void, Never>?
     @ObservationIgnored private var closeTask: Task<Void, Never>?
@@ -114,7 +136,7 @@ final class IslandModel {
 
     init(media: NowPlayingService, audio: AudioService, brightness: BrightnessService, airPods: AirPodsService,
          home: HomeService, posture: PostureService, system: SystemService, calendar: CalendarService, clipboard: ClipboardService,
-         water: WaterService, screenshots: ScreenshotService, shelf: FileShelf? = nil, settings: AppSettings) {
+         water: WaterService, screenshots: ScreenshotService, downloads: DownloadsService, shelf: FileShelf? = nil, settings: AppSettings) {
         self.media = media
         self.audio = audio
         self.brightness = brightness
@@ -123,17 +145,23 @@ final class IslandModel {
         self.posture = posture
         self.system = system
         self.calendar = calendar
+        self.assistant = CalendarAssistant(calendar: calendar)
         self.shelf = shelf ?? FileShelf()
         self.clipboard = clipboard
         self.water = water
         self.screenshots = screenshots
+        self.downloads = downloads
         self.settings = settings
         self.companions = CompanionApps(settings: settings)
 
         media.onTrackChange = { [weak self] in self?.showTrackPeek() }
         posture.onAlert = { [weak self] _ in self?.showPostureAlert() }
         calendar.onReminder = { [weak self] _ in self?.showCalendarReminder() }
-        self.screenshots.onNewScreenshot = { [weak self] _ in self?.showScreenshot() }
+        self.screenshots.onNewScreenshot = { [weak self] shot in
+            self?.shelveNewFiles([shot.url])
+            self?.showScreenshot()
+        }
+        downloads.onNewFiles = { [weak self] urls in self?.shelveNewFiles(urls) }
         calendar.leadMinutes = { [weak settings] in settings?.calendarLeadMinutes ?? 15 }
         calendar.hiddenCalendars = { [weak settings] in settings?.hiddenCalendarIDs ?? [] }
         water.onDue = { [weak self] in self?.showWaterReminder() }
@@ -144,7 +172,9 @@ final class IslandModel {
             self.showHUD(.volume)
         }
         audio.onOutputDeviceChange = { [weak self] _ in
-            guard let self, self.settings.showDeviceChanges else { return }
+            guard let self else { return }
+            self.airPods.refresh(for: self.audio.currentDevice)
+            guard self.settings.showDeviceChanges else { return }
             self.showHUD(.outputDevice)
         }
         keyInterceptor.handler = { [weak self] key, fine in
@@ -242,9 +272,15 @@ final class IslandModel {
         case .water:
             return IslandLayout.waterContentHeight
         case .calendar:
-            guard calendar.access == .granted, !calendar.events.isEmpty else { return IslandLayout.calendarEmptyHeight }
-            let rows = CGFloat(min(calendar.events.count, IslandLayout.maxCalendarRows))
-            return 4 + IslandLayout.sectionHeaderHeight + rows * IslandLayout.calendarRowHeight + 16
+            guard calendar.access == .signedIn else { return IslandLayout.calendarEmptyHeight }
+            var height = IslandLayout.assistantFieldHeight + assistantAnswerHeight
+            if calendar.events.isEmpty {
+                height += IslandLayout.calendarEmptyHeight
+            } else {
+                let rows = CGFloat(min(calendar.events.count, IslandLayout.maxCalendarRows))
+                height += 4 + IslandLayout.sectionHeaderHeight + rows * IslandLayout.calendarRowHeight + 16
+            }
+            return height
         case .clipboard:
             var height: CGFloat = 4 + 16
             if showsShelf {
@@ -266,6 +302,14 @@ final class IslandModel {
         }
     }
 
+    /// Room for the assistant's answer: about 62 characters a line, at most five lines.
+    var assistantAnswerHeight: CGFloat {
+        let text = assistant.isWorking ? (assistant.question ?? "") : (assistant.errorMessage ?? assistant.reply ?? "")
+        guard assistant.isWorking || !text.isEmpty else { return 0 }
+        let lines = assistant.isWorking ? 1 : min(max(Int((Double(text.count) / 62).rounded(.up)), 1), 5)
+        return 14 + CGFloat(lines) * IslandLayout.assistantLineHeight
+    }
+
     private var outputPanelHeight: CGFloat {
         let rows = CGFloat(min(audio.devices.count, IslandLayout.maxVisibleDevices))
         return 6 + IslandLayout.sectionHeaderHeight + rows * IslandLayout.deviceRowHeight
@@ -282,8 +326,10 @@ final class IslandModel {
             // Hovering the screenshot holds it in place instead of opening the island over it.
             if presentation == .screenshot {
                 screenshotTask?.cancel()
-            // The water reminder has its own buttons, so hovering it doesn't open the island.
-            } else if settings.hoverToOpen && !isOpen && presentation != .waterReminder {
+            // The water reminder has its own buttons, so hovering it holds it instead of opening the island.
+            } else if presentation == .waterReminder {
+                waterReminderTask?.cancel()
+            } else if settings.hoverToOpen && !isOpen {
                 // Trackpad haptics only play while a finger touches the pad, so they go out
                 // with the movement that reached the notch, not with the delayed open.
                 performHaptic(.levelChange)
@@ -291,10 +337,11 @@ final class IslandModel {
             }
         } else {
             openTask?.cancel()
-            if isOpen {
+            if isOpen && !isTyping && !assistant.isWorking {
                 closeTask = schedule(after: 0.22) { $0.close() }
             }
             if isShowingScreenshot && !isDraggingScreenshot { scheduleScreenshotDismissal(after: 3) }
+            if isShowingWaterReminder { scheduleWaterReminderDismissal(after: 6) }
         }
     }
 
@@ -306,7 +353,11 @@ final class IslandModel {
         peekTask?.cancel()
         postureAlertTask?.cancel()
         calendarReminderTask?.cancel()
-        if isShowingWaterReminder { dismissWaterReminder(drank: false) }
+        // Tapping the water reminder opens the Water tab, so the glass can be logged there.
+        if isShowingWaterReminder {
+            dismissWaterReminder(drank: false)
+            if showsWaterTab { tab = .water }
+        }
         screenshotTask?.cancel()
         if isShowingCalendarReminder && showsCalendarTab { tab = .calendar }
         hud = nil
@@ -343,13 +394,23 @@ final class IslandModel {
     /// Whether files dragged over the island can go on the shelf; not the island's own screenshot or shelf files.
     var acceptsFileDrops: Bool { showsShelf && !ShelfDragSource.isDragging && !isDraggingScreenshot }
 
-    /// Keeps the dropped files.
-    func dropFiles(_ urls: [URL]) -> Bool {
+    /// Keeps the dropped files for a few minutes.
+    /// `force` is for promised files that arrive after the drop, when another drag may be under way.
+    func dropFiles(_ urls: [URL], force: Bool = false) -> Bool {
         isDropTargeted = false
-        guard acceptsFileDrops, !urls.isEmpty else { return false }
-        shelf.add(urls)
+        guard force ? showsShelf : acceptsFileDrops, !urls.isEmpty else { return false }
+        shelf.add(urls, for: Self.shelfDuration)
         if !isOpen { showShelfForDrop() }
         return true
+    }
+
+    /// How long files stay on the shelf.
+    static let shelfDuration: TimeInterval = 5 * 60
+
+    /// Puts a new screenshot or download on the shelf for a few minutes.
+    func shelveNewFiles(_ urls: [URL]) {
+        guard showsShelf, settings.shelveNewFiles else { return }
+        shelf.add(urls, for: Self.shelfDuration)
     }
 
     func performHaptic(_ pattern: NSHapticFeedbackManager.FeedbackPattern) {
@@ -360,6 +421,8 @@ final class IslandModel {
     func close() {
         guard isOpen else { return }
         isOpen = false
+        isTyping = false
+        tab = .media  // Always reopen on the first tab.
         isChoosingShortcuts = false
         isChoosingOutput = false
         if hasPendingScreenshot { showScreenshot() }
@@ -368,6 +431,18 @@ final class IslandModel {
             if !model.isOpen { model.tab = .media }
         }
     }
+
+    func setTyping(_ typing: Bool) {
+        guard typing != isTyping else { return }
+        isTyping = typing
+        // Leaving the field with the pointer already outside closes the island, as hover-out would have.
+        if !typing && isOpen && !isHovering && !assistant.isWorking {
+            closeTask = schedule(after: 0.22) { $0.close() }
+        }
+    }
+
+    /// The island takes the keyboard only while the calendar tab, with its assistant field, is open.
+    var acceptsKeyboard: Bool { isOpen && currentTab == .calendar && calendar.access == .signedIn }
 
     func setChoosingShortcuts(_ choosing: Bool) {
         if choosing { home.refresh() }
@@ -380,6 +455,12 @@ final class IslandModel {
     }
 
     func toggle() { isOpen ? close() : open() }
+
+    /// Opens the settings window, on the given page if there is one.
+    func openSettings(_ page: SettingsPage? = nil) {
+        if let page { settingsPage = page }
+        onOpenSettings?()
+    }
 
     /// Copies an older clipboard item again and, if allowed, pastes it into the app in front.
     func useClipboardItem(_ item: ClipboardItem) {
@@ -442,8 +523,12 @@ final class IslandModel {
         isShowingPostureAlert = false
         isShowingWaterReminder = true
         performHaptic(.generic)
+        scheduleWaterReminderDismissal(after: 20)
+    }
+
+    private func scheduleWaterReminderDismissal(after seconds: Double) {
         waterReminderTask?.cancel()
-        waterReminderTask = schedule(after: 20) { $0.dismissWaterReminder(drank: false) }
+        waterReminderTask = schedule(after: seconds) { $0.dismissWaterReminder(drank: false) }
     }
 
     func dismissWaterReminder(drank: Bool) {

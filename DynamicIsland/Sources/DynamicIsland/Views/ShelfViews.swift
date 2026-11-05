@@ -1,10 +1,11 @@
 import AppKit
+import QuickLookThumbnailing
 import SwiftUI
 
 // MARK: - Section
 
-/// Files dropped on the island, in a row at the top of the clipboard tab.
-/// Drag one out to use it, and it leaves the shelf.
+/// Files on the shelf, in a row at the top of the clipboard tab. Each stays for 5 minutes,
+/// also after it's dragged out, unless it's removed.
 struct ShelfSection: View {
     @Environment(IslandModel.self) private var model
     @Environment(\.isSnapshot) private var isSnapshot
@@ -64,7 +65,7 @@ struct ShelfSection: View {
             Image(systemName: "tray.and.arrow.down.fill")
                 .font(.system(size: 14, weight: .medium))
                 .symbolEffect(.bounce, value: isTargeted)
-            Text(isTargeted ? "Drop to keep it here" : "Drag files onto the notch to keep them here")
+            Text(isTargeted ? "Drop to keep it here" : "Drag files onto the notch to keep them here for 5 minutes")
                 .font(.system(size: 12, weight: .medium))
         }
         .foregroundStyle(.white.opacity(isTargeted ? 1 : 0.55))
@@ -86,11 +87,14 @@ private struct ShelfFileTile: View {
     @Environment(IslandModel.self) private var model
     @Environment(\.isSnapshot) private var isSnapshot
     @State private var isHovering = false
+    @State private var thumbnail: NSImage?
 
     var body: some View {
         VStack(spacing: 4) {
-            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+            Image(nsImage: thumbnail ?? NSWorkspace.shared.icon(forFile: url.path))
                 .resizable()
+                .aspectRatio(contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: thumbnail == nil ? 0 : 4, style: .continuous))
                 .frame(width: 40, height: 40)
             Text(url.lastPathComponent)
                 .font(.system(size: 10, weight: .medium))
@@ -106,7 +110,7 @@ private struct ShelfFileTile: View {
             if !isSnapshot {
                 ShelfDragArea(url: url) {
                     model.close()
-                } onDraggedOut: {
+                } onRemove: {
                     model.shelf.remove(url)
                 }
             }
@@ -129,6 +133,15 @@ private struct ShelfFileTile: View {
             withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) { isHovering = hovering }
         }
         .help(url.path)
+        .task(id: url) { thumbnail = await Self.thumbnail(for: url) }
+    }
+
+    /// A preview of the file's contents, so screenshots and photos show what's in them.
+    private static func thumbnail(for url: URL) async -> NSImage? {
+        let scale = NSScreen.main?.backingScaleFactor ?? 2
+        let request = QLThumbnailGenerator.Request(fileAt: url, size: CGSize(width: 40, height: 40),
+                                                   scale: scale, representationTypes: .thumbnail)
+        return try? await QLThumbnailGenerator.shared.generateBestRepresentation(for: request).nsImage
     }
 }
 
@@ -139,12 +152,12 @@ private struct ShelfFileTile: View {
 private struct ShelfDragArea: NSViewRepresentable {
     let url: URL
     let onBegin: () -> Void
-    let onDraggedOut: () -> Void
+    let onRemove: () -> Void
 
-    init(url: URL, onBegin: @escaping () -> Void, onDraggedOut: @escaping () -> Void) {
+    init(url: URL, onBegin: @escaping () -> Void, onRemove: @escaping () -> Void) {
         self.url = url
         self.onBegin = onBegin
-        self.onDraggedOut = onDraggedOut
+        self.onRemove = onRemove
     }
 
     func makeNSView(context: Context) -> DragAreaView { DragAreaView() }
@@ -152,13 +165,13 @@ private struct ShelfDragArea: NSViewRepresentable {
     func updateNSView(_ view: DragAreaView, context: Context) {
         view.url = url
         view.onBegin = onBegin
-        view.onDraggedOut = onDraggedOut
+        view.onRemove = onRemove
     }
 
     final class DragAreaView: NSView {
         var url: URL?
         var onBegin: (() -> Void)?
-        var onDraggedOut: (() -> Void)?
+        var onRemove: (() -> Void)?
         private var mouseDownLocation: NSPoint?
 
         override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
@@ -179,7 +192,7 @@ private struct ShelfDragArea: NSViewRepresentable {
             item.setDraggingFrame(NSRect(x: (bounds.width - 40) / 2, y: bounds.height - 44, width: 40, height: 40),
                                   contents: icon)
             // The view goes away when the island closes, so the session gets a source that outlives it.
-            let source = ShelfDragSource(onDraggedOut: onDraggedOut)
+            let source = ShelfDragSource()
             ShelfDragSource.current = source
             beginDraggingSession(with: [item], event: event, source: source)
             onBegin?()
@@ -191,24 +204,18 @@ private struct ShelfDragArea: NSViewRepresentable {
             menu.addItem(ShelfMenuItem("Open") { NSWorkspace.shared.open(url) })
             menu.addItem(ShelfMenuItem("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([url]) })
             menu.addItem(.separator())
-            menu.addItem(ShelfMenuItem("Remove from Shelf") { [weak self] in self?.onDraggedOut?() })
+            menu.addItem(ShelfMenuItem("Remove from Shelf") { [weak self] in self?.onRemove?() })
             return menu
         }
     }
 }
 
-/// Removes the file from the shelf once it lands somewhere that takes it.
+/// Copies a shelf file to wherever it's dropped. The file stays on the shelf.
 @MainActor
 final class ShelfDragSource: NSObject, NSDraggingSource {
     /// The drag in progress, kept alive for the length of the session.
     static var current: ShelfDragSource?
     static var isDragging: Bool { current != nil }
-
-    private let onDraggedOut: (() -> Void)?
-
-    init(onDraggedOut: (() -> Void)?) {
-        self.onDraggedOut = onDraggedOut
-    }
 
     func draggingSession(_ session: NSDraggingSession,
                          sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
@@ -217,7 +224,6 @@ final class ShelfDragSource: NSObject, NSDraggingSource {
     }
 
     func draggingSession(_ session: NSDraggingSession, endedAt screenPoint: NSPoint, operation: NSDragOperation) {
-        if operation != [] { onDraggedOut?() }
         Self.current = nil
     }
 }

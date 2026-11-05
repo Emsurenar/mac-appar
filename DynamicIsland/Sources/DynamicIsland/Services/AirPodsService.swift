@@ -9,7 +9,25 @@ final class AirPodsService {
     /// The emptier earbud's charge in percent. Nil when the output reports no battery.
     private(set) var battery: Int?
 
+    @ObservationIgnored private var retryTask: Task<Void, Never>?
+
+    /// Reads the battery now and, while AirPods that just connected still report 0 %,
+    /// tries again for a few seconds.
     func refresh(for output: AudioOutputDevice?) {
+        retryTask?.cancel()
+        read(output)
+        guard battery == nil, output?.bluetoothAddress != nil else { return }
+        retryTask = Task { [weak self] in
+            for _ in 0..<8 {
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled, let self else { return }
+                self.read(output)
+                if self.battery != nil { return }
+            }
+        }
+    }
+
+    private func read(_ output: AudioOutputDevice?) {
         // Asking IOBluetooth before Bluetooth access is settled shows the prompt, so only
         // do it for a Bluetooth output, which is when the user is looking at the outputs.
         guard let address = output?.bluetoothAddress,

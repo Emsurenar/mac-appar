@@ -94,13 +94,20 @@ final class CompanionApps {
         }
     }
 
-    /// The copy to run: one installed on its own, otherwise the one inside the island.
+    /// The copy to run: one installed on its own in an Applications folder unless the one inside the island is
+    /// newer, otherwise the one inside the island. Other copies Launch Services knows, such as an old build in a
+    /// project folder, are skipped.
     func url(for companion: Companion) -> URL? {
-        if let installed = NSWorkspace.shared.urlForApplication(withBundleIdentifier: companion.bundleID),
-           !isInsideAnotherApp(installed) {
-            return installed
-        }
-        return bundledURL(for: companion)
+        let installed = NSWorkspace.shared.urlsForApplications(withBundleIdentifier: companion.bundleID)
+            .first { isInApplications($0) && !isInsideAnotherApp($0) }
+        guard let bundled = bundledURL(for: companion) else { return installed }
+        guard let installed else { return bundled }
+        return version(of: bundled).compare(version(of: installed), options: .numeric) == .orderedDescending
+            ? bundled : installed
+    }
+
+    private func version(of app: URL) -> String {
+        Bundle(url: app)?.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
     }
 
     func bundledURL(for companion: Companion) -> URL? {
@@ -145,6 +152,12 @@ final class CompanionApps {
     private func refresh() {
         let now = Set(Companion.allCases.filter { !instances(of: $0).isEmpty })
         if now != running { running = now }
+    }
+
+    private func isInApplications(_ url: URL) -> Bool {
+        let folder = url.deletingLastPathComponent().standardizedFileURL.path
+        let home = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Applications").path
+        return folder == "/Applications" || folder == home
     }
 
     private func isInsideAnotherApp(_ url: URL) -> Bool {

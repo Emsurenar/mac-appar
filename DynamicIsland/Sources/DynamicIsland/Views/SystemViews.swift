@@ -1,9 +1,11 @@
+import AppKit
 import SwiftUI
 
 extension SystemService {
     /// Memory, CPU, heat and uptime, plus battery and charger when there are any.
     var rowCount: Int {
-        4 + (power == nil ? 0 : 1) + (power?.isOnAdapter == true ? 1 : 0)
+        if showsEnergy { return 1 + max(energyHogs.count, 1) }
+        return 4 + (power == nil ? 0 : 1) + (power?.isOnAdapter == true ? 1 : 0)
     }
 }
 
@@ -13,6 +15,21 @@ struct SystemTab: View {
     var body: some View {
         let system = model.system
         VStack(spacing: 0) {
+            if system.showsEnergy, let power = system.power {
+                energyList(power)
+            } else {
+                overview
+            }
+        }
+        .padding(.horizontal, -6)
+        .padding(.top, 4)
+        .onAppear { system.start() }
+        .onDisappear { system.stop() }
+    }
+
+    @ViewBuilder private var overview: some View {
+        let system = model.system
+        Group {
             memoryRow
             cpuRow
             SystemRow(symbol: "thermometer.medium", title: "Heat", detail: thermalDetail,
@@ -23,10 +40,33 @@ struct SystemTab: View {
             }
             uptimeRow
         }
-        .padding(.horizontal, -6)
-        .padding(.top, 4)
-        .onAppear { system.start() }
-        .onDisappear { system.stop() }
+    }
+
+    /// What drains the battery, with a way to quit each app.
+    @ViewBuilder private func energyList(_ power: SystemService.Power) -> some View {
+        let system = model.system
+        Button { setShowsEnergy(false) } label: {
+            SystemRow(symbol: "chevron.left", title: "Battery", detail: "Apps using the most energy now",
+                      value: batteryRowValue(power), level: .normal)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        if system.energyHogs.isEmpty {
+            SystemRow(symbol: "leaf.fill", title: "Nothing heavy", detail: "No app is using much energy",
+                      value: "", level: .normal)
+        } else {
+            ForEach(system.energyHogs, id: \.name) { usage in
+                let percent = Int(usage.value.rounded())
+                SystemRow(symbol: "app.fill", title: usage.name,
+                          detail: percent >= 50 ? "High energy use" : "Some energy use",
+                          value: "\(percent) %", level: percent >= Int(SystemService.busyThreshold) ? .warning : .normal,
+                          action: quitAction(usage), appURL: usage.appURL)
+            }
+        }
+    }
+
+    private func setShowsEnergy(_ shows: Bool) {
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { model.system.showsEnergy = shows }
     }
 
     // MARK: Rows
@@ -79,15 +119,24 @@ struct SystemTab: View {
         let watts = abs(power.watts)
         let isDraining = power.watts < -0.5
         var detail = "\(power.percent) %"
-        if let minutes = power.minutesRemaining {
+        if let minutes = power.minutesRemaining, isDraining || power.isCharging {
             detail += " · " + formatDuration(TimeInterval(minutes * 60)) + (isDraining ? " left" : " to full")
         }
-        let value = isDraining ? String(format: "−%.1f W", watts)
-            : power.isCharging ? String(format: "+%.1f W", watts) : "Idle"
         let isHeavy = isDraining && watts >= 20
         if isHeavy { detail += " · heavy draw" }
-        return SystemRow(symbol: batterySymbol(power), title: "Battery", detail: detail, value: value,
-                         level: isHeavy ? .warning : .normal)
+        return Button { setShowsEnergy(true) } label: {
+            SystemRow(symbol: batterySymbol(power), title: "Battery", detail: detail, value: batteryRowValue(power),
+                      level: isHeavy ? .warning : .normal, showsChevron: true)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help("Show what uses the battery")
+    }
+
+    private func batteryRowValue(_ power: SystemService.Power) -> String {
+        let watts = abs(power.watts)
+        return power.watts < -0.5 ? String(format: "−%.1f W", watts)
+            : power.isCharging ? String(format: "+%.1f W", watts) : "Idle"
     }
 
     private func chargerRow(_ power: SystemService.Power) -> some View {
@@ -114,7 +163,7 @@ struct SystemTab: View {
     // MARK: Helpers
 
     private func quitAction(_ usage: SystemService.Usage) -> SystemRow.Action? {
-        guard usage.appURL != nil else { return nil }
+        guard usage.isQuittable else { return nil }
         return SystemRow.Action(title: "Quit") { model.system.quit(usage) }
     }
 
@@ -142,6 +191,8 @@ private struct SystemRow: View {
     var value: String
     var level: SystemService.Level
     var action: Action?
+    var appURL: URL? = nil
+    var showsChevron = false
 
     private var tint: Color {
         switch level {
@@ -153,11 +204,17 @@ private struct SystemRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: symbol)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(level == .normal ? .white : .black)
-                .frame(width: 26, height: 26)
-                .background(Circle().fill(level == .normal ? Color.white.opacity(0.14) : tint))
+            if let appURL {
+                Image(nsImage: NSWorkspace.shared.icon(forFile: appURL.path))
+                    .resizable()
+                    .frame(width: 26, height: 26)
+            } else {
+                Image(systemName: symbol)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(level == .normal ? .white : .black)
+                    .frame(width: 26, height: 26)
+                    .background(Circle().fill(level == .normal ? Color.white.opacity(0.14) : tint))
+            }
             VStack(alignment: .leading, spacing: 0) {
                 Text(title)
                     .font(.system(size: 13, weight: .medium))
@@ -177,6 +234,11 @@ private struct SystemRow: View {
                 .font(.system(size: 12, weight: .semibold).monospacedDigit())
                 .foregroundStyle(level == .normal ? .white.opacity(0.75) : tint)
                 .contentTransition(.numericText())
+            if showsChevron {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.4))
+            }
         }
         .padding(.horizontal, 6)
         .frame(height: IslandLayout.systemRowHeight)

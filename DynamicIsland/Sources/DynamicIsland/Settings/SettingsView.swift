@@ -13,7 +13,8 @@ enum SettingsPage: String, CaseIterable, Identifiable {
 
     static let groups: [[SettingsPage]] = [
         [.general],
-        [.nowPlaying, .home, .water, .calendar, .clipboard, .system, .posture, .unknot],
+        // The island's tabs, in the order they sit in the island, then Unknot.
+        [.nowPlaying, .home, .posture, .water, .calendar, .clipboard, .system, .unknot],
         [.volume, .screenshots],
         [.about],
     ]
@@ -41,7 +42,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         case .nowPlaying: "music.note"
         case .home: "house.fill"
         case .calendar: "calendar"
-        case .clipboard: "doc.on.clipboard.fill"
+        case .clipboard: "doc.on.clipboard"
         case .system: "gauge.with.dots.needle.67percent"
         case .posture: "figure.stand"
         case .unknot: "figure.cooldown"
@@ -73,8 +74,8 @@ enum SettingsPage: String, CaseIterable, Identifiable {
 /// rounded cards of rows on a soft gray background.
 struct SettingsView: View {
     @Environment(IslandModel.self) private var model
-    @State private var selection: SettingsPage = .general
     @State private var launchAtLogin = LoginItem.isEnabled
+    @State private var loginMessage: String?
     @State private var hasAccessibility = MediaKeyInterceptor.hasPermission
     var onClose: () -> Void = {}
 
@@ -86,9 +87,9 @@ struct SettingsView: View {
             Divider()
             VStack(spacing: 0) {
                 header
-                ScrollView(.vertical) { page(selection) }
+                ScrollView(.vertical) { page(model.settingsPage) }
                     .scrollIndicators(.automatic)
-                    .id(selection)
+                    .id(model.settingsPage)
             }
             .background(Color(nsColor: .windowBackgroundColor))
         }
@@ -96,6 +97,8 @@ struct SettingsView: View {
         .frame(width: SettingsWindowController.size.width, height: SettingsWindowController.size.height)
             .onReceive(permissionTimer) { _ in
                 hasAccessibility = MediaKeyInterceptor.hasPermission
+                launchAtLogin = LoginItem.isEnabled
+                if launchAtLogin { loginMessage = nil }
             }
             .onAppear {
                 model.home.refresh()
@@ -107,14 +110,18 @@ struct SettingsView: View {
     /// One page of settings (also rendered on its own by `--snapshots`).
     func page(_ page: SettingsPage) -> some View {
         @Bindable var settings = model.settings
+        let calendar = model.calendar
+        @Bindable var assistant = model.assistant
         return VStack(alignment: .leading, spacing: 0) {
             switch page {
             case .general:
-                SettingsSection(footer: settings.hoverToOpen
+                SettingsSection(footer: loginMessage ?? (settings.hoverToOpen
                     ? "You feel a tap when the pointer reaches the notch and when a slider hits its end – only with a finger on the trackpad."
-                    : "Click the notch to open the island. You feel a tap when a slider hits its end.") {
-                    SettingsToggle("Launch at login", isOn: $launchAtLogin)
-                        .onChange(of: launchAtLogin) { _, enabled in setLaunchAtLogin(enabled) }
+                    : "Click the notch to open the island. You feel a tap when a slider hits its end.")) {
+                    SettingsToggle("Launch at login", isOn: Binding(
+                        get: { launchAtLogin },
+                        set: { loginMessage = LoginItem.set($0); launchAtLogin = LoginItem.isEnabled }
+                    ))
                     SettingsToggle("Open when the pointer rests on the notch", isOn: $settings.hoverToOpen)
                     SettingsToggle("Haptic feedback", isOn: $settings.hapticFeedback)
                 }
@@ -154,7 +161,34 @@ struct SettingsView: View {
                     }
                 }
             case .calendar:
-                SettingsSection(footer: "Events come from the Calendar app. To see your Google Calendar, add your Google account under System Settings › Internet Accounts and turn on Calendars.") {
+                SettingsSection("Google Account", footer: googleFooter) {
+                    switch calendar.access {
+                    case .signedIn:
+                        SettingsRow {
+                            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                            Text(calendar.account ?? "Signed in")
+                            Spacer()
+                            Button("Sign Out") { calendar.signOut() }
+                        }
+                    case .signingIn:
+                        SettingsRow {
+                            ProgressView().controlSize(.small)
+                            Text("Finish signing in in your browser")
+                            Spacer()
+                            Button("Cancel") { calendar.cancelSignIn() }
+                        }
+                    case .signedOut:
+                        SettingsRow(action: calendar.hasClientID ? { calendar.signIn() } : nil) {
+                            Image(systemName: "person.crop.circle.badge.plus").foregroundStyle(.blue)
+                            Text("Sign in with Google")
+                            Spacer()
+                            Chevron()
+                        }
+                        .disabled(!calendar.hasClientID)
+                    }
+                }
+
+                SettingsSection {
                     SettingsToggle("Show Calendar tab", isOn: $settings.showCalendarTab)
                     SettingsToggle("Remind me before events", isOn: $settings.showCalendarReminders)
                     SettingsRow {
@@ -167,30 +201,55 @@ struct SettingsView: View {
                         .fixedSize()
                     }
                     .disabled(!settings.showCalendarReminders)
-                    SettingsRow(action: { model.calendar.requestAccess() }) {
-                        Image(systemName: calendarAccessSymbol)
-                            .foregroundStyle(model.calendar.access == .granted ? Color.green
-                                : model.calendar.access == .denied ? Color.orange : Color.secondary)
-                        Text("Calendar access")
-                        Spacer()
-                        Text(calendarAccessStatus).foregroundStyle(.secondary)
-                        if model.calendar.access != .granted { Chevron() }
-                    }
-                    .disabled(model.calendar.access == .granted)
                 }
 
-                if model.calendar.access == .granted {
-                    SettingsSection("Calendars", footer: "Missing your Google calendar? In System Settings › Internet Accounts, open your Google account and turn on Calendars, then open the Calendar app once so it syncs.") {
-                        ForEach(model.calendar.sources) { source in
+                SettingsSection("Assistant", footer: assistant.provider == .gemini
+                    ? "Type in the calendar tab to ask about your calendar or change it, like “Lägg till möte med Ruben imorgon kl 17”, “ta bort lunchen på fredag” or “när träffade jag senast Sara?”. Gemini does the understanding. Create the key in Google AI Studio in the same Google Cloud project as the sign-in, with billing turned on, so it is paid from that project's credit. The key is kept on this Mac only."
+                    : "Type in the calendar tab to ask about your calendar or change it, like “Lägg till möte med Ruben imorgon kl 17”, “ta bort lunchen på fredag” or “när träffade jag senast Sara?”. Claude does the understanding, with your own API key from console.anthropic.com. The key is kept on this Mac only.") {
+                    SettingsRow {
+                        Text("Model")
+                        Spacer()
+                        Picker("", selection: $assistant.provider) {
+                            ForEach(CalendarAssistant.Provider.allCases) { Text($0.name).tag($0) }
+                        }
+                        .labelsHidden()
+                        .fixedSize()
+                    }
+                    SettingsRow {
+                        Text("\(assistant.provider.name) API key")
+                        Spacer()
+                        SecureField(assistant.provider == .gemini ? "AIza…" : "sk-ant-…",
+                                    text: assistant.provider == .gemini ? $assistant.geminiKey : $assistant.claudeKey)
+                            .textFieldStyle(.plain)
+                            .multilineTextAlignment(.trailing)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: 320)
+                    }
+                    SettingsRow(action: {
+                        let link = assistant.provider == .gemini ? "https://aistudio.google.com/apikey" : "https://console.anthropic.com/settings/keys"
+                        NSWorkspace.shared.open(URL(string: link)!)
+                    }) {
+                        Text("Get a key")
+                        Spacer()
+                        Chevron()
+                    }
+                }
+
+                if calendar.access == .signedIn && !calendar.sources.isEmpty {
+                    SettingsSection("Calendars") {
+                        ForEach(calendar.sources) { source in
                             CalendarSourceRow(source: source)
                         }
                     }
                 }
             case .clipboard:
-                SettingsSection("Files", footer: "Drag files onto the notch to keep them at the top of this tab. They stay there until you drag them out, and the files themselves never move.") {
+                SettingsSection("Files", footer: "Drag files onto the notch to keep them at the top of this tab. New screenshots and downloads show up there by themselves. Every file stays for 5 minutes, also after you drag it out, unless you remove it. The files themselves never move.") {
                     SettingsToggle("Keep files you drop on the notch", isOn: $settings.showShelfTab)
+                    if settings.showShelfTab {
+                        SettingsToggle("Add new screenshots and downloads", isOn: $settings.shelveNewFiles)
+                    }
                 }
-                SettingsSection("Clipboard", footer: "The last 20 things you copied, newest first. They stay in memory only, and passwords from password managers are skipped. Pasting needs Accessibility access; without it, an item is just copied.") {
+                SettingsSection("Clipboard", footer: "The last 20 things you copied (text, images and files), newest first, with their formatting. They stay in memory only, and passwords from password managers are skipped. Pasting needs Accessibility access; without it, an item is just copied.") {
                     SettingsToggle("Show clipboard history", isOn: $settings.showClipboardTab)
                     SettingsToggle("Paste the item you pick", isOn: $settings.pasteFromClipboardHistory)
                     if settings.pasteFromClipboardHistory && !hasAccessibility {
@@ -332,7 +391,7 @@ struct SettingsView: View {
                         Divider().padding(.vertical, 6).padding(.horizontal, 10)
                     }
                     ForEach(group) { page in
-                        SidebarRow(page: page, isSelected: page == selection) { selection = page }
+                        SidebarRow(page: page, isSelected: page == model.settingsPage) { model.settingsPage = page }
                     }
                 }
             }
@@ -346,7 +405,7 @@ struct SettingsView: View {
 
     private var header: some View {
         HStack(alignment: .center) {
-            Text(selection.title)
+            Text(model.settingsPage.title)
                 .font(.system(size: 22, weight: .bold))
             Spacer()
             Button(action: onClose) {
@@ -367,30 +426,24 @@ struct SettingsView: View {
         .padding(.bottom, 4)
     }
 
-    private var calendarAccessSymbol: String {
-        switch model.calendar.access {
-        case .granted: "checkmark.circle.fill"
-        case .denied: "exclamationmark.triangle.fill"
-        case .unknown: "circle.dashed"
-        }
-    }
-
-    private var calendarAccessStatus: String {
-        switch model.calendar.access {
-        case .granted: "\(model.calendar.events.count) upcoming"
-        case .denied: "Open Settings"
-        case .unknown: "Allow"
+    private var googleFooter: String {
+        let calendar = model.calendar
+        if let error = calendar.errorMessage { return error }
+        switch calendar.access {
+        case .signedIn:
+            return "\(calendar.events.count) upcoming. The island only reads your calendars and checks for changes every few minutes."
+        case .signingIn:
+            return "Pick your account in the browser and allow access to your calendar."
+        case .signedOut:
+            return calendar.hasClientID
+                ? "Sign in with your Google account to see your Google Calendar in the island. It only reads your calendars."
+                : "This build has no Google client ID."
         }
     }
 
     private var homeStatus: String {
         let count = model.home.shortcuts.count
         return count == 1 ? "1 in the island" : "\(count) in the island"
-    }
-
-    private func setLaunchAtLogin(_ enabled: Bool) {
-        let isEnabled = LoginItem.set(enabled)
-        if isEnabled != launchAtLogin { launchAtLogin = isEnabled }
     }
 
     private func openAccessibilitySettings() {

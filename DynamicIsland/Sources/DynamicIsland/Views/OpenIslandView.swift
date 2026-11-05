@@ -4,6 +4,8 @@ struct OpenIslandView: View {
     let namespace: Namespace.ID
     @Environment(IslandModel.self) private var model
     @Namespace private var tabNamespace
+    /// Switches to the tab under the pointer once it rests there, not while it sweeps past.
+    @State private var hoverSelect: Task<Void, Never>?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -42,39 +44,43 @@ struct OpenIslandView: View {
     private var header: some View {
         HStack(spacing: 0) {
             HStack(spacing: 2) {
-                tabButton(.media, symbol: "music.note", help: "Now Playing")
+                tabButton(.media)
                 if model.settings.showHomeTab {
-                    tabButton(.home, symbol: "house.fill", help: "Home")
+                    tabButton(.home)
                 }
                 if model.showsPostureTab {
-                    tabButton(.posture, symbol: "figure.stand", help: "Posture")
+                    tabButton(.posture)
                 }
                 if model.showsWaterTab {
-                    tabButton(.water, symbol: "drop.fill", help: "Water")
+                    tabButton(.water)
                 }
             }
             Spacer(minLength: model.notch.width + 12)
             if model.showsCalendarTab {
-                tabButton(.calendar, symbol: "calendar", help: "Calendar")
+                tabButton(.calendar)
             }
             if model.showsClipboardTab {
-                tabButton(.clipboard, symbol: "doc.on.clipboard", help: "Clipboard and files")
+                tabButton(.clipboard)
             }
             if model.showsSystemTab {
-                tabButton(.system, symbol: "gauge.with.dots.needle.67percent", help: "System")
+                tabButton(.system)
             }
-            Button { model.onOpenSettings?() } label: {
+            // Settings opens on the page for the tab that's showing.
+            Button { model.openSettings(model.currentTab.settingsPage) } label: {
                 Image(systemName: "gearshape.fill").font(.system(size: 12, weight: .semibold))
             }
             .buttonStyle(IslandButtonStyle(diameter: 26))
-            .help("Settings")
+            .help("\(model.currentTab.settingsPage.title) Settings")
         }
         .padding(.horizontal, IslandLayout.contentPadding - 6)
         .frame(height: model.notch.height)
     }
 
-    private func tabButton(_ tab: IslandTab, symbol: String, help: String) -> some View {
+    /// Icon and name come from the tab's settings page, so both always match.
+    private func tabButton(_ tab: IslandTab) -> some View {
         let isSelected = model.currentTab == tab
+        let symbol = tab.settingsPage.symbol
+        let help = tab.settingsPage.title
         return Button { model.select(tab) } label: {
             Image(systemName: symbol)
                 .font(.system(size: 12, weight: .semibold))
@@ -90,8 +96,16 @@ struct OpenIslandView: View {
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        // Pages switch as soon as the pointer rests on a tab, no click needed.
-        .onHover { if $0 { model.select(tab) } }
+        // Pages switch when the pointer rests on a tab, no click needed. A short wait keeps a
+        // pointer on its way to another button (say, Settings) from flipping every tab it crosses.
+        .onHover { hovering in
+            hoverSelect?.cancel()
+            guard hovering else { return }
+            hoverSelect = Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(140))
+                if !Task.isCancelled { model.select(tab) }
+            }
+        }
         .help(help)
     }
 }
@@ -166,8 +180,19 @@ private struct MediaTab: View {
                         .transition(.scale.combined(with: .opacity))
                 }
             }
-            .onTapGesture { media.openPlayer() }
-            .help(media.bundleIdentifier == nil ? "" : "Open the player")
+            .overlay {
+                // Nothing playing: the artwork becomes a button that opens Spotify.
+                if !media.hasMedia, let spotify = NowPlayingService.spotifyIcon {
+                    Image(nsImage: spotify)
+                        .resizable()
+                        .frame(width: 44, height: 44)
+                        .shadow(color: .black.opacity(0.4), radius: 4, y: 2)
+                        .transition(.scale.combined(with: .opacity))
+                }
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 14))
+            .onTapGesture { media.hasMedia ? media.openPlayer() : media.openSpotify() }
+            .help(media.hasMedia ? (media.bundleIdentifier == nil ? "" : "Open the player") : "Open Spotify")
     }
 
     private var transportControls: some View {
@@ -302,7 +327,6 @@ private struct OutputPanel: View {
                    alignment: .top)
             .padding(.horizontal, -6)
         }
-        .onChange(of: audio.currentDeviceID) { model.airPods.refresh(for: audio.currentDevice) }
     }
 
     private func sectionHeader(_ title: String) -> some View {

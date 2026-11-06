@@ -58,6 +58,8 @@ final class CalendarService {
     @ObservationIgnored private var timer: Timer?
     /// Every timed event of today and tomorrow, from all calendars.
     @ObservationIgnored private var fetched: [Event] = []
+    /// Every timed event of today and tomorrow, for the assistant's context.
+    var todayAndTomorrow: [Event] { fetched }
     @ObservationIgnored private var lastFetch = Date.distantPast
     @ObservationIgnored private var fetchTask: Task<Void, Never>?
     @ObservationIgnored private var signInTask: Task<Void, Never>?

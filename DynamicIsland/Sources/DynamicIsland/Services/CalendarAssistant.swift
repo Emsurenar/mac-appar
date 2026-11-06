@@ -261,6 +261,7 @@ final class CalendarAssistant {
             "systemInstruction": ["parts": [["text": systemPrompt()]]],
             "contents": contents,
             "tools": [["functionDeclarations": declarations]],
+            "toolConfig": ["functionCallingConfig": ["mode": "AUTO"]],
         ]
         let data = try JSONSerialization.data(withJSONObject: body)
         while let model = geminiModels.first {
@@ -301,12 +302,27 @@ final class CalendarAssistant {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "EEEE yyyy-MM-dd HH:mm xxx"
         let account = calendar.account.map { " The user's Google account is \($0)." } ?? ""
+        let timeFormatter = DateFormatter()
+        timeFormatter.locale = Locale(identifier: "en_US_POSIX")
+        timeFormatter.dateFormat = "EEE yyyy-MM-dd HH:mm"
+        let known = calendar.todayAndTomorrow.map { event in
+            "- \(timeFormatter.string(from: event.start))–\(timeFormatter.string(from: event.end).suffix(5)) "
+                + "\(event.title)\(event.location.map { " (\($0))" } ?? "")"
+        }.joined(separator: "\n")
+        let snapshot = known.isEmpty ? "No timed events today or tomorrow (all-day events not listed)." : known
         return """
         You are the calendar assistant inside Dynamic Island, a small panel in the MacBook's notch. \
         The user types one line: a question about their Google Calendar or something to add, move, change or remove. \
-        Use the tools to look things up and make the change, then answer.
+        The user is signed in with Google and you have full read and write access to their calendars through the \
+        tools (search_events, create_event, update_event, delete_event, list_calendars). Never say you can't see or \
+        reach the calendar: call the tools to look things up and make the change, then answer. If a tool returns an \
+        error, say what the error was.
 
         Now: \(formatter.string(from: now)), time zone \(TimeZone.current.identifier).\(account)
+
+        Timed events today and tomorrow, already fetched from the calendar (use search_events for anything else, \
+        and for the event_id before changing an event):
+        \(snapshot)
 
         How to work:
         - Resolve relative dates ("imorgon", "on Friday", "next week") from now, in the user's time zone. \
@@ -439,6 +455,8 @@ final class CalendarAssistant {
                     .compactMap { $0["id"] as? String }
             }
             var events: [[String: Any]] = []
+            var failures = 0
+            var lastError: Error?
             for id in calendarIDs {
                 var query: [URLQueryItem] = [
                     .init(name: "timeMin", value: timeMin), .init(name: "timeMax", value: timeMax),
@@ -447,12 +465,21 @@ final class CalendarAssistant {
                 ]
                 if let text = string("query") { query.append(.init(name: "q", value: text)) }
                 // One calendar that fails, like a holiday subscription, shouldn't hide the rest.
-                guard let page = try? await calendar.call("GET", "calendars/\(CalendarService.encodedID(id))/events",
-                                                          query: query) as? [String: Any] else { continue }
+                let page: [String: Any]
+                do {
+                    page = try await calendar.call("GET", "calendars/\(CalendarService.encodedID(id))/events",
+                                                   query: query) as? [String: Any] ?? [:]
+                } catch {
+                    failures += 1
+                    lastError = error
+                    continue
+                }
                 events += (page["items"] as? [[String: Any]] ?? [])
                     .filter { $0["status"] as? String != "cancelled" }
                     .map { Self.summary(of: $0, calendarID: id) }
             }
+            // Every calendar failed: that's an error, not an empty calendar.
+            if let lastError, failures == calendarIDs.count { throw lastError }
             let newestFirst = input["newest_first"] as? Bool ?? false
             events.sort {
                 let a = $0["start"] as? String ?? "", b = $1["start"] as? String ?? ""

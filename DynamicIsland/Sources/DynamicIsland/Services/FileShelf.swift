@@ -71,6 +71,14 @@ final class FileShelf {
         scheduleExpiry()
     }
 
+    #if DEBUG
+    /// Shows these files without saving them, for `--snapshots`.
+    func showPreview(_ urls: [URL]) {
+        files = urls
+        expiries = Dictionary(uniqueKeysWithValues: urls.map { ($0, now().addingTimeInterval(300)) })
+    }
+    #endif
+
     /// Drops files that were deleted or moved since they were shelved, and ones whose time is up.
     func prune() {
         let date = now()

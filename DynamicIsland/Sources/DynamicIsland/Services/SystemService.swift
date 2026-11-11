@@ -53,7 +53,7 @@ final class SystemService {
     static let maxEnergyRows = 5
     private(set) var thermalState: ProcessInfo.ThermalState = .nominal
     private(set) var power: Power?
-    let bootDate: Date?
+    private(set) var bootDate: Date?
 
     static let busyThreshold = 80.0
     private static let interval: TimeInterval = 2
@@ -69,7 +69,25 @@ final class SystemService {
         thermalState = ProcessInfo.processInfo.thermalState
     }
 
+    #if DEBUG
+    /// Stand-in numbers for `--snapshots`, so a screenshot never shows what really runs on this Mac.
+    func showPreview() {
+        stop()
+        memoryPressure = .normal
+        swapUsed = 0
+        topMemory = Usage(name: "Safari", value: 2_400_000_000, appURL: nil)
+        topCPU = Usage(name: "Xcode", value: 62, appURL: nil)
+        thermalState = .nominal
+        power = Power(percent: 76, isOnAdapter: false, isCharging: false, watts: -6.4,
+                      minutesRemaining: 312, adapterWatts: nil)
+        bootDate = Date().addingTimeInterval(-3 * 86_400 - 5 * 3_600)
+    }
+    #endif
+
     func start() {
+        #if DEBUG
+        if SnapshotRenderer.isActive { return }
+        #endif
         guard timer == nil else { return }
         refresh()
         timer = Timer.scheduledTimer(withTimeInterval: Self.interval, repeats: true) { [weak self] _ in

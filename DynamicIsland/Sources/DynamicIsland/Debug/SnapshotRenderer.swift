@@ -5,10 +5,17 @@ import SwiftUI
 /// Debug aid: `DynamicIsland --snapshots <dir>` renders every island state to PNG and quits.
 @MainActor
 enum SnapshotRenderer {
+    /// While rendering, the real window ignores the pointer, so where it happens to rest can't change a picture.
+    nonisolated static let isActive = CommandLine.arguments.contains("--snapshots")
+
     static func run(model: IslandModel, directory: URL) {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         Task {
             try? await Task.sleep(for: .seconds(3))
+            model.audio.showPreview()  // Stand-ins, so a screenshot never shows the name of a real device.
+            model.airPods.showPreview()
+            model.media.showPreview(title: "Golden Hour Over the Harbor", artist: "Lumen Avenue",
+                                    duration: 213, elapsed: 173, artwork: previewArtwork())
             render("1-closed", model, directory)
             render("2-compact", model, directory)
             model.showTrackPeek()
@@ -23,7 +30,6 @@ enum SnapshotRenderer {
             render("7-open-media", model, directory)
             renderHero("0-hero", model, directory)
             model.setChoosingOutput(true)
-            model.airPods.showPreview()
             render("8-open-output", model, directory)
             model.setChoosingOutput(false)
             model.select(.home)
@@ -74,7 +80,12 @@ enum SnapshotRenderer {
             render("15-calendar-reminder", model, directory)
             model.open()
             model.select(.calendar)
+            model.calendar.showPreview(events)  // Opening the tab reloads the real calendar.
             render("16-open-calendar", model, directory)
+            model.assistant.showPreview(question: "Lägg till möte med Ruben imorgon kl 17",
+                                        reply: "Added “Möte med Ruben” tomorrow, 17:00–18:00.")
+            render("16b-calendar-assistant", model, directory)
+            model.assistant.clear()
             model.select(.media)
             model.close()
             model.water.showPreview(glasses: 3)
@@ -88,6 +99,21 @@ enum SnapshotRenderer {
             render("19-open-water", model, directory)
             model.select(.media)
             model.close()
+            model.clipboard.showPreview([
+                (.text("https://github.com/Emsurenar/mac-appar"), "com.apple.Safari", 1),
+                (.text("Meet you at the station at 18:30?"), "com.apple.MobileSMS", 6),
+                (.text("swift build -c release"), "com.apple.Terminal", 14),
+                (.text("Konferensrum 3, plan 4"), "com.apple.iCal", 32),
+            ])
+            model.shelf.showPreview(previewShelfFiles(in: directory))
+            model.open()
+            model.select(.clipboard)
+            render("20-open-clipboard", model, directory)
+            model.system.showPreview()
+            model.select(.system)
+            render("21-open-system", model, directory)
+            model.select(.media)
+            model.close()
             model.screenshots.showPreview(previewScreenshot())
             model.showScreenshot()
             try? await Task.sleep(for: .seconds(0.5))
@@ -95,6 +121,31 @@ enum SnapshotRenderer {
             model.dismissScreenshot()
             NSApp.terminate(nil)
         }
+    }
+
+    /// A stand-in album cover: a sunset over water.
+    private static func previewArtwork() -> NSImage {
+        let view = ZStack {
+            VStack(spacing: 0) {
+                LinearGradient(colors: [Color(red: 1, green: 0.7, blue: 0.4), Color(red: 0.98, green: 0.42, blue: 0.3)],
+                               startPoint: .top, endPoint: .bottom)
+                LinearGradient(colors: [Color(red: 0.32, green: 0.28, blue: 0.62), Color(red: 0.16, green: 0.18, blue: 0.42)],
+                               startPoint: .top, endPoint: .bottom)
+            }
+            Circle().fill(Color(red: 1, green: 0.93, blue: 0.75)).frame(width: 150, height: 150)
+                .offset(y: -10).frame(width: 300, height: 300, alignment: .center)
+                .mask(VStack(spacing: 0) { Rectangle(); Color.clear })
+            VStack(spacing: 12) {
+                ForEach(0..<5) { index in
+                    Capsule().fill(.white.opacity(0.5)).frame(width: 90 - CGFloat(index) * 12, height: 3)
+                }
+            }
+            .offset(y: 60)
+        }
+        .frame(width: 300, height: 300)
+        let renderer = ImageRenderer(content: view)
+        renderer.scale = 2
+        return renderer.nsImage ?? NSImage()
     }
 
     /// A stand-in screenshot: the wallpaper with a window on it.
@@ -107,12 +158,23 @@ enum SnapshotRenderer {
         return ImageRenderer(content: view).nsImage ?? NSImage()
     }
 
+    /// Empty files with telling names, so the shelf shows real file icons.
+    private static func previewShelfFiles(in directory: URL) -> [URL] {
+        let folder = directory.appendingPathComponent(".shelf", isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        return ["Quarterly report.pdf", "Holiday.jpg", "Slides.key"].map { name in
+            let url = folder.appendingPathComponent(name)
+            if !FileManager.default.fileExists(atPath: url.path) { FileManager.default.createFile(atPath: url.path, contents: Data()) }
+            return url
+        }
+    }
+
     /// One state on a wallpaper-like background, sized to the island.
     private static func render(_ name: String, _ model: IslandModel, _ directory: URL) {
         let height = max(model.size.height + 64, 110)
         let view = ZStack(alignment: .top) {
             Wallpaper()
-            IslandRootView().environment(model)
+            IslandRootView().environment(model).environment(\.isSnapshot, true)
         }
         .frame(width: 640, height: height)
         write(view, scale: 2, to: directory.appendingPathComponent("\(name).png"))
@@ -123,7 +185,7 @@ enum SnapshotRenderer {
         let view = ZStack(alignment: .top) {
             Wallpaper()
             MenuBar(height: model.notch.height)
-            IslandRootView().environment(model)
+            IslandRootView().environment(model).environment(\.isSnapshot, true)
         }
         .frame(width: 1000, height: 240)
         write(view, scale: 2, to: directory.appendingPathComponent("\(name).png"))

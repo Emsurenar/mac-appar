@@ -20,7 +20,7 @@ swift build -c "$CONFIG" --arch arm64
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp ".build/arm64-apple-macosx/$CONFIG/DynamicIsland" "$APP/Contents/MacOS/"
+cp "$(swift build -c "$CONFIG" --arch arm64 --show-bin-path)/DynamicIsland" "$APP/Contents/MacOS/"
 cp Resources/Info.plist "$APP/Contents/"
 [ -f Resources/AppIcon.icns ] && cp Resources/AppIcon.icns "$APP/Contents/Resources/"
 

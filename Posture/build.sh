@@ -11,7 +11,7 @@ swift build -c "$CONFIG" --arch arm64
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp ".build/arm64-apple-macosx/$CONFIG/Hallning" "$APP/Contents/MacOS/"
+cp "$(swift build -c "$CONFIG" --arch arm64 --show-bin-path)/Hallning" "$APP/Contents/MacOS/"
 cp Resources/Info.plist "$APP/Contents/"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/"
 

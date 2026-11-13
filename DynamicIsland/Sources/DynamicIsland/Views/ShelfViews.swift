@@ -5,7 +5,7 @@ import SwiftUI
 // MARK: - Section
 
 /// Files on the shelf, in a row at the top of the clipboard tab. Each stays for 5 minutes,
-/// also after it's dragged out, unless it's removed.
+/// also after it's dragged out, moved or deleted, unless it's removed.
 struct ShelfSection: View {
     @Environment(IslandModel.self) private var model
     @Environment(\.isSnapshot) private var isSnapshot
@@ -52,7 +52,7 @@ struct ShelfSection: View {
     private var tiles: some View {
         HStack(spacing: 6) {
             ForEach(model.shelf.files, id: \.self) { url in
-                ShelfFileTile(url: url)
+                ShelfFileTile(id: url, url: model.shelf.location(of: url))
                     .transition(.scale(scale: 0.6).combined(with: .opacity))
             }
         }
@@ -83,6 +83,8 @@ struct ShelfSection: View {
 // MARK: - File tile
 
 private struct ShelfFileTile: View {
+    /// The file as it was shelved; `url` is where it is now (the shelf's copy once the original is gone).
+    let id: URL
     let url: URL
     @Environment(IslandModel.self) private var model
     @Environment(\.isSnapshot) private var isSnapshot
@@ -111,13 +113,13 @@ private struct ShelfFileTile: View {
                 ShelfDragArea(url: url) {
                     model.close()
                 } onRemove: {
-                    model.shelf.remove(url)
+                    model.shelf.remove(id)
                 }
             }
         }
         .overlay(alignment: .topTrailing) {
             if isHovering {
-                Button { model.shelf.remove(url) } label: {
+                Button { model.shelf.remove(id) } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 8, weight: .bold))
                         .frame(width: 16, height: 16)

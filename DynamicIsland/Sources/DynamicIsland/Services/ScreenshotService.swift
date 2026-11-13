@@ -1,4 +1,5 @@
 import AppKit
+import QuickLookThumbnailing
 import os
 
 /// Notices new screenshots. macOS marks every capture with `kMDItemIsScreenCapture`. The service
@@ -65,6 +66,15 @@ final class ScreenshotService {
         getxattr(url.path, "com.apple.metadata:kMDItemIsScreenCapture", nil, 0, 0, 0) > 0
     }
 
+    /// How macOS names screenshots and screen recordings, in English and Swedish. A backup for
+    /// recordings that land before (or without) the capture mark.
+    nonisolated static let captureNamePrefixes = ["Screenshot", "Screen Recording", "Skärmavbild", "Skärminspelning"]
+
+    nonisolated static func hasCaptureName(_ url: URL) -> Bool {
+        let name = url.lastPathComponent
+        return captureNamePrefixes.contains { name.hasPrefix($0 + " ") }
+    }
+
     private func watchFolder() {
         let folder = Self.screenshotFolder()
         // The Desktop is protected: listing it asks for access once. Without that access Spotlight
@@ -95,7 +105,7 @@ final class ScreenshotService {
                                                                   options: .skipsHiddenFiles)) ?? []
         let candidates = files.compactMap { url -> Screenshot? in
             guard let date = try? url.resourceValues(forKeys: [.creationDateKey]).creationDate,
-                  date >= startDate, Self.isScreenCapture(url) else { return nil }
+                  date >= startDate, Self.isScreenCapture(url) || Self.hasCaptureName(url) else { return nil }
             return Screenshot(url: url, date: date)
         }
         consider(candidates)
@@ -123,7 +133,20 @@ final class ScreenshotService {
         Self.log.info("New screenshot \(shot.url.lastPathComponent, privacy: .public)")
         latest = shot
         thumbnail = NSImage(contentsOf: shot.url)
+        if thumbnail == nil { loadVideoThumbnail(for: shot) }
         onNewScreenshot?(shot)
+    }
+
+    /// Screen recordings aren't images, so their first frame comes from Quick Look.
+    private func loadVideoThumbnail(for shot: Screenshot) {
+        let request = QLThumbnailGenerator.Request(fileAt: shot.url, size: CGSize(width: 160, height: 100),
+                                                   scale: NSScreen.main?.backingScaleFactor ?? 2,
+                                                   representationTypes: .thumbnail)
+        Task { [weak self] in
+            let image = try? await QLThumbnailGenerator.shared.generateBestRepresentation(for: request).nsImage
+            guard let self, self.latest == shot else { return }
+            self.thumbnail = image
+        }
     }
 
     // MARK: Actions

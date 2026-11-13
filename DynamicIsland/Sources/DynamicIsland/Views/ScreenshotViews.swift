@@ -17,7 +17,7 @@ struct ScreenshotShelfView: View {
                     thumbnail(screenshots.thumbnail)
                         .overlay {
                             if !isSnapshot {
-                                FileDragSource(url: shot.url, image: screenshots.thumbnail,
+                                FileDragSource(url: model.shelf.location(of: shot.url), image: screenshots.thumbnail,
                                                onBegin: { model.beginScreenshotDrag() },
                                                onEnd: { model.endScreenshotDrag(dropped: $0) },
                                                onClick: { screenshots.open(shot) })
@@ -37,7 +37,11 @@ struct ScreenshotShelfView: View {
                     HStack(spacing: 2) {
                         action("doc.on.doc", "Copy") { screenshots.copy(shot); model.dismissScreenshot() }
                         action("folder", "Show in Finder") { screenshots.revealInFinder(shot); model.dismissScreenshot() }
-                        action("trash", "Move to Trash") { screenshots.moveToTrash(shot); model.dismissScreenshot() }
+                        action("trash", "Move to Trash") {
+                            model.shelf.remove(shot.url)
+                            screenshots.moveToTrash(shot)
+                            model.dismissScreenshot()
+                        }
                         action("xmark", "Dismiss") { model.dismissScreenshot() }
                     }
                 }
